@@ -45,7 +45,7 @@ export class RandomHashSet {
         this.#data.splice(index, 1);
     }
 
-    getData(): Array<unknown> {
+    get data(): Array<unknown> {
         return this.#data;
     }
 }

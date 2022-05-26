@@ -11,17 +11,17 @@ describe('dataStructures/RandomHashSet test', () => {
 
     it('creates empty data', () => {
         expect(mySet).toBeTruthy();
-        expect(mySet.getData()).toStrictEqual([]);
+        expect(mySet.data).toStrictEqual([]);
     });
 
     it('pushes/removed to the set', () => {
-        expect(mySet.getData().length).toBe(0);
+        expect(mySet.data.length).toBe(0);
         mySet.add(mockObj1);
-        expect(mySet.getData().length).toBe(1);
+        expect(mySet.data.length).toBe(1);
         mySet.remove(10);
-        expect(mySet.getData().length).toBe(1);
+        expect(mySet.data.length).toBe(1);
         mySet.remove(0);
-        expect(mySet.getData().length).toBe(0);
+        expect(mySet.data.length).toBe(0);
     });
 
     it('returned random element from set', () => {
@@ -36,9 +36,9 @@ describe('dataStructures/RandomHashSet test', () => {
     it('clears all data', () => {
         mySet.add(mockObj1);
         mySet.add(mockObj2);
-        expect(mySet.getData().length).toBe(2);
+        expect(mySet.data.length).toBe(2);
         mySet.clear();
-        expect(mySet.getData().length).toBe(0);
+        expect(mySet.data.length).toBe(0);
     });
 
     it('gets an object by index', () => {

@@ -7,12 +7,12 @@
     "rimraf": "./node_modules/rimraf/bin.js",
     "clean": "rimraf out",
     "build": "npm run clean && tsc --build --force",
-    "watch": "tsc -w",
+    "dev": "tsc -w",
     "lint": "eslint --ext .js,.ts . --ignore-path .gitignore .",
     "lint:fix": "eslint --fix --ext .js,.ts . --ignore-path .gitignore .",
     "test": "npm run lint && npm run test:unit",
     "test:unit": "jest --no-cache",
-    "test:unit:watch": "jest --no-cache --watchAll --collect-coverage=false"
+    "test:unit:watch": "jest --no-cache --watch"
   },
   "keywords": [
     "neat",

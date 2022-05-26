@@ -1,0 +1,35 @@
+import { Gene } from './gene';
+
+export class NodeGene extends Gene {
+    #x = 0;
+    #y = 0;
+
+    constructor(innovationNumber: number) {
+        super(innovationNumber);
+    }
+
+    get x(): number {
+        return this.#x;
+    }
+
+    set x(value: number) {
+        this.#x = value;
+    }
+
+    get y(): number {
+        return this.#y;
+    }
+
+    set y(value: number) {
+        this.#y = value;
+    }
+
+    equals(obj: unknown): boolean {
+        if (!(obj instanceof NodeGene)) return false;
+        return this.innovationNumber === obj.innovationNumber;
+    }
+
+    hashCode(): number {
+        return this.innovationNumber;
+    }
+}
