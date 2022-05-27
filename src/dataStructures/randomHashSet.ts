@@ -1,4 +1,4 @@
-import { ConnectionGene, NodeGene } from '../genome';
+import { ConnectionGene, Gene, NodeGene } from '../genome';
 
 export class RandomHashSet {
     #set: Set<NodeGene | ConnectionGene>;
@@ -25,6 +25,18 @@ export class RandomHashSet {
             this.#set.add(gene);
             this.#data.push(gene);
         }
+    }
+
+    addSorted(gene: NodeGene | ConnectionGene) {
+        for (let i = 0; i < this.size(); i++) {
+            const innovation = this.get(i).innovationNumber;
+            if (gene.innovationNumber < innovation) {
+                this.#data.splice(i, 0, gene);
+                this.#set.add(gene);
+                return;
+            }
+        }
+        this.add(gene);
     }
 
     size(): number {

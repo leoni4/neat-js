@@ -49,4 +49,11 @@ describe('dataStructures/RandomHashSet test', () => {
         expect(mySet.get(1)).toBe(mockObj2);
         expect(mySet.get(0)).toBe(mockObj1);
     });
+
+    it('addSorted right', () => {
+        mySet.addSorted(mockObj2);
+        expect(mySet.get(0).innovationNumber).toBe(2);
+        mySet.addSorted(mockObj1);
+        expect(mySet.get(0).innovationNumber).toBe(1);
+    });
 });
