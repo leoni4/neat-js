@@ -10,7 +10,7 @@
     "lint:fix": "eslint --fix --ext .js,.ts . --ignore-path .eslintignore .",
     "test": "npm run lint && npm run test:unit",
     "test:unit": "jest --no-cache",
-    "test:unit:watch": "jest --no-cache --watch"
+    "test:unit:watch": "jest --no-cache --watch --coverage=false"
   },
   "keywords": [
     "neat",

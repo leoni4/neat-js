@@ -53,7 +53,8 @@ export class Frame {
         });
 
         let radius = this.#height / this.#genome.nodes.size() / 2;
-        radius = radius < this.#height / 40 ? this.#height / 40 : radius;
+        radius =
+            radius < this.#height / 40 ? this.#height / 40 : radius > this.#height / 20 ? this.#height / 20 : radius;
         this.#genome.nodes.data.forEach(item => {
             if (item instanceof ConnectionGene) {
                 return;

@@ -32,14 +32,7 @@ export class Genome {
 
         const higInnovationG1 = higGene1 instanceof ConnectionGene ? higGene1.innovationNumber : 0;
         const higInnovationG2 = higGene2 instanceof ConnectionGene ? higGene2.innovationNumber : 0;
-        console.log('--------');
-        console.log('higGene1 ', higGene1 instanceof ConnectionGene);
-        console.log('higGene1 ', higGene2 instanceof ConnectionGene);
-        console.log('higInnovationG1 ', higInnovationG1);
-        console.log('higInnovationG2 ', higInnovationG2);
         if (higInnovationG1 < higInnovationG2) {
-            console.log('--------');
-            console.log('higInnovationG1 < higInnovationG2');
             const tempG = g1;
             g1 = g2;
             g2 = tempG;
@@ -52,8 +45,6 @@ export class Genome {
         let weightDiff = 0;
         let similar = 0;
         while (indexG1 < g1.connections.size() && indexG2 < g2.connections.size()) {
-            console.log('--------');
-            console.log('indexG1 < g1.connections.size() && indexG2 < g2.connections.size()');
             const gene1: ConnectionGene | NodeGene = g1.connections.get(indexG1);
             const gene2: ConnectionGene | NodeGene = g2.connections.get(indexG2);
             if (!(gene1 instanceof ConnectionGene) || !(gene2 instanceof ConnectionGene)) {
@@ -133,10 +124,11 @@ export class Genome {
         }
     }
 
-    mutateLink() {
+    mutateLink(): ConnectionGene | null {
         for (let i = 0; i < 100; i++) {
             const geneA = this.#nodes.randomElement();
             const geneB = this.#nodes.randomElement();
+
             if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
                 continue;
             }
@@ -157,14 +149,15 @@ export class Genome {
             con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
 
             this.#connections.addSorted(con);
-            return;
+            return con;
         }
+        return null;
     }
 
-    mutateNode() {
+    mutateNode(): NodeGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
-            return;
+            return null;
         }
 
         const from: NodeGene = con.from;
@@ -186,46 +179,59 @@ export class Genome {
         this.#connections.add(con2);
 
         this.#nodes.add(middle);
+        return middle;
     }
 
-    mutateWeightShift() {
+    mutateWeightShift(): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
-            return;
+            return null;
         }
-        con.weight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
-    }
-
-    mutateWeightRandom() {
-        const con = this.#connections.randomElement();
-        if (!(con instanceof ConnectionGene)) {
-            return;
+        let newWeight = con.weight;
+        while (newWeight === con.weight) {
+            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
         }
-        con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+        con.weight = newWeight;
+        return con;
     }
 
-    mutateLinkToggle() {
+    mutateWeightRandom(): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
-            return;
+            return null;
+        }
+
+        let newWeight = con.weight;
+        while (newWeight === con.weight) {
+            newWeight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+        }
+        con.weight = newWeight;
+        return con;
+    }
+
+    mutateLinkToggle(): ConnectionGene | null {
+        const con = this.#connections.randomElement();
+        if (!(con instanceof ConnectionGene)) {
+            return null;
         }
         con.enabled = !con.enabled;
+        return con;
     }
 
-    mutate() {
-        if (this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
+    mutate(force = false) {
+        if (force || this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
             this.mutateLink();
         }
-        if (this.#neat.PROBABILITY_MUTATE_NODES > Math.random()) {
+        if (force || this.#neat.PROBABILITY_MUTATE_NODES > Math.random()) {
             this.mutateNode();
         }
-        if (this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK > Math.random()) {
+        if (force || this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK > Math.random()) {
             this.mutateLinkToggle();
         }
-        if (this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT > Math.random()) {
+        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT > Math.random()) {
             this.mutateWeightShift();
         }
-        if (this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM > Math.random()) {
+        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM > Math.random()) {
             this.mutateWeightRandom();
         }
     }
