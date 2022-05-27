@@ -1,8 +1,9 @@
-import { RandomHashSet } from '../../src/dataStructures/RandomHashSet';
+import { RandomHashSet } from '../../src/dataStructures';
+import { NodeGene } from '../../src/genome';
 
 describe('dataStructures/RandomHashSet test', () => {
-    const mockObj1 = { test: 1 };
-    const mockObj2 = { test: 2 };
+    const mockObj1 = new NodeGene(1);
+    const mockObj2 = new NodeGene(2);
     let mySet: RandomHashSet;
 
     beforeEach(() => {
@@ -44,7 +45,7 @@ describe('dataStructures/RandomHashSet test', () => {
     it('gets an object by index', () => {
         mySet.add(mockObj1);
         mySet.add(mockObj2);
-        expect(mySet.get(3)).toBe(null);
+        expect(mySet.get(3)).toBe(undefined);
         expect(mySet.get(1)).toBe(mockObj2);
         expect(mySet.get(0)).toBe(mockObj1);
     });

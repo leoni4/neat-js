@@ -1,6 +1,8 @@
+import { NodeGene } from '../genome';
+
 export class RandomHashSet {
     #set: Set<unknown>;
-    #data: Array<unknown>;
+    #data: Array<NodeGene>;
 
     constructor() {
         this.#set = new Set();
@@ -18,11 +20,15 @@ export class RandomHashSet {
         return this.#data[Math.floor(this.#data.length * Math.random())];
     }
 
-    add(object: unknown) {
+    add(object: NodeGene) {
         if (!this.contains(object)) {
             this.#set.add(object);
             this.#data.push(object);
         }
+    }
+
+    size(): number {
+        return this.#data.length;
     }
 
     clear() {
@@ -30,10 +36,7 @@ export class RandomHashSet {
         this.#data = [];
     }
 
-    get(index: number): unknown | null {
-        if (index < 0 || index >= this.#set.size) {
-            return null;
-        }
+    get(index: number): NodeGene {
         return this.#data[index];
     }
 

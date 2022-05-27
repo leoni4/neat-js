@@ -1,4 +1,4 @@
-import { RandomHashSet } from '../dataStructures/randomHashSet';
+import { RandomHashSet } from '../dataStructures';
 import { Neat } from '../neat';
 
 export class Genome {

@@ -1,4 +1,4 @@
-import { RandomSelector } from '../../src/dataStructures/RandomSelector';
+import { RandomSelector } from '../../src/dataStructures';
 
 describe('dataStructures/RandomSelector test', () => {
     const testObj = { test: 1 },

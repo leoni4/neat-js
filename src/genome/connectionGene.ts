@@ -53,9 +53,6 @@ export class ConnectionGene extends Gene {
     }
 
     hashCode(): number {
-        return (
-            this.from.innovationNumber * Neat.MAX_NODES +
-            this.to.innovationNumber
-        );
+        return this.from.innovationNumber * Neat.MAX_NODES + this.to.innovationNumber;
     }
 }

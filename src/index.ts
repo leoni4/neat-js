@@ -1,1 +1,3 @@
-console.log('Hello World!');
+import { Neat } from './neat';
+
+Neat.main();

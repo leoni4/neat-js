@@ -6,7 +6,7 @@ describe('Genome test', () => {
     let neat: Neat;
 
     beforeEach(() => {
-        neat = new Neat();
+        neat = new Neat(2, 1, 10);
         genome = new Genome(neat);
     });
 
