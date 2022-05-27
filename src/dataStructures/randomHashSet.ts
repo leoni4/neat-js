@@ -1,16 +1,16 @@
-import { NodeGene } from '../genome';
+import { ConnectionGene, NodeGene } from '../genome';
 
 export class RandomHashSet {
-    #set: Set<unknown>;
-    #data: Array<NodeGene>;
+    #set: Set<NodeGene | ConnectionGene>;
+    #data: Array<NodeGene | ConnectionGene>;
 
     constructor() {
         this.#set = new Set();
         this.#data = [];
     }
 
-    contains(object: unknown): boolean {
-        return this.#set.has(object);
+    contains(gene: NodeGene | ConnectionGene): boolean {
+        return this.#set.has(gene);
     }
 
     randomElement(): unknown | null {
@@ -20,10 +20,10 @@ export class RandomHashSet {
         return this.#data[Math.floor(this.#data.length * Math.random())];
     }
 
-    add(object: NodeGene) {
-        if (!this.contains(object)) {
-            this.#set.add(object);
-            this.#data.push(object);
+    add(gene: NodeGene | ConnectionGene) {
+        if (!this.contains(gene)) {
+            this.#set.add(gene);
+            this.#data.push(gene);
         }
     }
 
@@ -36,7 +36,7 @@ export class RandomHashSet {
         this.#data = [];
     }
 
-    get(index: number): NodeGene {
+    get(index: number): NodeGene | ConnectionGene {
         return this.#data[index];
     }
 

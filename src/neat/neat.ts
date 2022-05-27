@@ -6,6 +6,10 @@ export class Neat {
         return Math.pow(2, 20);
     }
 
+    #C1 = 1;
+    #C2 = 1;
+    #C3 = 1;
+
     #inputNodes = 0;
     #outputNodes = 0;
     #clients = 0;
@@ -22,6 +26,16 @@ export class Neat {
     }
     get allNodes(): RandomHashSet {
         return this.#allNodes;
+    }
+
+    get C1(): number {
+        return this.#C1;
+    }
+    get C2(): number {
+        return this.#C2;
+    }
+    get C3(): number {
+        return this.#C3;
     }
 
     reset(inputNodes: number, outputNodes: number, clients: number) {
@@ -75,9 +89,12 @@ export class Neat {
     }
 
     getNode(id?: number): NodeGene {
-        let nodeGene: NodeGene;
+        let nodeGene;
         if (id && id <= this.#allNodes.size()) {
             nodeGene = this.#allNodes.get(id - 1);
+            if (!(nodeGene instanceof NodeGene)) {
+                throw new Error('getNode returns not a NodeGene');
+            }
         } else {
             nodeGene = new NodeGene(this.#allNodes.size() + 1);
             this.#allNodes.add(nodeGene);
