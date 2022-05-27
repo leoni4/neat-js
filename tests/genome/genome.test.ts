@@ -1,4 +1,4 @@
-import { Genome, NodeGene } from '../../src/genome';
+import { Genome } from '../../src/genome';
 import { Neat } from '../../src/neat';
 
 describe('Genome test', () => {

@@ -1,4 +1,4 @@
-import { ConnectionGene, Gene, NodeGene } from '../genome';
+import { ConnectionGene, NodeGene } from '../genome';
 
 export class RandomHashSet {
     #set: Set<NodeGene | ConnectionGene>;
@@ -60,7 +60,7 @@ export class RandomHashSet {
         this.#data.splice(index, 1);
     }
 
-    get data(): Array<unknown> {
+    get data(): Array<NodeGene | ConnectionGene> {
         return this.#data;
     }
 }

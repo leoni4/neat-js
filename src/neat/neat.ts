@@ -1,5 +1,6 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome';
 import { RandomHashSet } from '../dataStructures';
+import { Frame } from '../visual';
 
 export class Neat {
     static get MAX_NODES(): number {
@@ -105,8 +106,6 @@ export class Neat {
     static main() {
         const neat: Neat = new Neat(3, 3, 100);
 
-        const genome: Genome = neat.emptyGenome();
-
-        console.log(genome.nodes.size());
+        new Frame(neat.emptyGenome());
     }
 }
