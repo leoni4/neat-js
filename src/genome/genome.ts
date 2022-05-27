@@ -30,13 +30,16 @@ export class Genome {
         const higGene1: ConnectionGene | NodeGene = g1.connections.get(g1.connections.size() - 1);
         const higGene2: ConnectionGene | NodeGene = g2.connections.get(g2.connections.size() - 1);
 
-        if (!(higGene1 instanceof ConnectionGene) || !(higGene2 instanceof ConnectionGene)) {
-            throw new Error('higGene is not a ConnectionGene');
-        }
-        const higInnovationG1: number = higGene1.innovationNumber;
-        const higInnovationG2: number = higGene2.innovationNumber;
-
+        const higInnovationG1 = higGene1 instanceof ConnectionGene ? higGene1.innovationNumber : 0;
+        const higInnovationG2 = higGene2 instanceof ConnectionGene ? higGene2.innovationNumber : 0;
+        console.log('--------');
+        console.log('higGene1 ', higGene1 instanceof ConnectionGene);
+        console.log('higGene1 ', higGene2 instanceof ConnectionGene);
+        console.log('higInnovationG1 ', higInnovationG1);
+        console.log('higInnovationG2 ', higInnovationG2);
         if (higInnovationG1 < higInnovationG2) {
+            console.log('--------');
+            console.log('higInnovationG1 < higInnovationG2');
             const tempG = g1;
             g1 = g2;
             g2 = tempG;
@@ -49,6 +52,8 @@ export class Genome {
         let weightDiff = 0;
         let similar = 0;
         while (indexG1 < g1.connections.size() && indexG2 < g2.connections.size()) {
+            console.log('--------');
+            console.log('indexG1 < g1.connections.size() && indexG2 < g2.connections.size()');
             const gene1: ConnectionGene | NodeGene = g1.connections.get(indexG1);
             const gene2: ConnectionGene | NodeGene = g2.connections.get(indexG2);
             if (!(gene1 instanceof ConnectionGene) || !(gene2 instanceof ConnectionGene)) {
@@ -71,7 +76,7 @@ export class Genome {
             }
         }
 
-        weightDiff /= similar;
+        weightDiff /= similar || 1;
 
         const excess = g1.connections.size() - indexG1;
         let N = Math.max(g1.connections.size(), g2.connections.size());

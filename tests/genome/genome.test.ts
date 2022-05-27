@@ -1,4 +1,4 @@
-import { Genome } from '../../src/genome';
+import { Genome, NodeGene } from '../../src/genome';
 import { Neat } from '../../src/neat';
 
 describe('Genome test', () => {
@@ -14,7 +14,7 @@ describe('Genome test', () => {
         expect(genome instanceof Genome).toBe(true);
     });
 
+    it.todo('calculate distance right');
     it.todo('crossOver');
-    it.todo('distance');
     it.todo('mutate');
 });
