@@ -11,6 +11,15 @@ export class Neat {
     #C2 = 1;
     #C3 = 1;
 
+    #WEIGHT_SHIFT_STRENGTH = 0.3;
+    #WEIGHT_RANDOM_STRENGTH = 1;
+
+    #PROBABILITY_MUTATE_LINK = 0.5;
+    #PROBABILITY_MUTATE_NODES = 0.5;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.5;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.5;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.5;
+
     #inputNodes = 0;
     #outputNodes = 0;
     #clients = 0;
@@ -27,6 +36,34 @@ export class Neat {
     }
     get allNodes(): RandomHashSet {
         return this.#allNodes;
+    }
+
+    get WEIGHT_SHIFT_STRENGTH(): number {
+        return this.#WEIGHT_SHIFT_STRENGTH;
+    }
+
+    get WEIGHT_RANDOM_STRENGTH(): number {
+        return this.#WEIGHT_RANDOM_STRENGTH;
+    }
+
+    get PROBABILITY_MUTATE_LINK(): number {
+        return this.#PROBABILITY_MUTATE_LINK;
+    }
+
+    get PROBABILITY_MUTATE_NODES(): number {
+        return this.#PROBABILITY_MUTATE_NODES;
+    }
+
+    get PROBABILITY_MUTATE_WEIGHT_SHIFT(): number {
+        return this.#PROBABILITY_MUTATE_WEIGHT_SHIFT;
+    }
+
+    get PROBABILITY_MUTATE_WEIGHT_RANDOM(): number {
+        return this.#PROBABILITY_MUTATE_WEIGHT_RANDOM;
+    }
+
+    get PROBABILITY_MUTATE_TOGGLE_LINK(): number {
+        return this.#PROBABILITY_MUTATE_TOGGLE_LINK;
     }
 
     get C1(): number {
@@ -104,7 +141,7 @@ export class Neat {
     }
 
     static main() {
-        const neat: Neat = new Neat(3, 3, 100);
+        const neat: Neat = new Neat(2, 1, 100);
 
         new Frame(neat.emptyGenome());
     }

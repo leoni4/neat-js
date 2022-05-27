@@ -13,7 +13,7 @@ export class RandomHashSet {
         return this.#set.has(gene);
     }
 
-    randomElement(): unknown | null {
+    randomElement(): NodeGene | ConnectionGene | null {
         if (!this.#set.size) {
             return null;
         }
@@ -52,12 +52,18 @@ export class RandomHashSet {
         return this.#data[index];
     }
 
-    remove(index: number) {
-        if (index < 0 || index >= this.#set.size) {
-            return;
+    remove(arg: number | ConnectionGene) {
+        if (arg instanceof ConnectionGene) {
+            this.#set.delete(arg);
+            const index = this.#data.indexOf(arg);
+            this.#data.splice(index, 1);
+        } else {
+            if (arg < 0 || arg >= this.#set.size) {
+                return;
+            }
+            this.#set.delete(this.#data[arg]);
+            this.#data.splice(arg, 1);
         }
-        this.#set.delete(this.#data[index]);
-        this.#data.splice(index, 1);
     }
 
     get data(): Array<NodeGene | ConnectionGene> {
