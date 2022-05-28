@@ -114,13 +114,13 @@ export class Neat {
 
     getConnection(node1: NodeGene, node2: NodeGene): ConnectionGene {
         const connectionGene = new ConnectionGene(0, node1, node2);
-
-        if (this.#allConnections.has(JSON.stringify(connectionGene))) {
-            const foundCon = this.#allConnections.get(JSON.stringify(connectionGene));
+        const hashKey = JSON.stringify(connectionGene);
+        if (this.#allConnections.has(hashKey)) {
+            const foundCon = this.#allConnections.get(hashKey);
             connectionGene.innovationNumber = foundCon ? foundCon.innovationNumber : 0;
         } else {
+            this.#allConnections.set(hashKey, connectionGene);
             connectionGene.innovationNumber = this.#allConnections.size + 1;
-            this.#allConnections.set(JSON.stringify(connectionGene), connectionGene);
         }
 
         return connectionGene;

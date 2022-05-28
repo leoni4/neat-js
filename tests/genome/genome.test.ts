@@ -67,6 +67,7 @@ describe('Genome test', () => {
         expect(genome.nodes.size()).toBe(5);
     });
 
+    it.todo('distance');
     it.todo('calculate distance right');
     it.todo('crossOver');
 });
