@@ -76,7 +76,7 @@ export class Genome {
         return (this.#neat.C1 * excess) / N + (this.#neat.C2 * disjoint) / N + this.#neat.C3 * weightDiff;
     }
 
-    static crossOver(g1: Genome, g2: Genome) {
+    static crossOver(g1: Genome, g2: Genome): Genome {
         const genome: Genome = g1.neat.emptyGenome();
 
         let indexG1 = 0;
@@ -122,6 +122,8 @@ export class Genome {
             genome.nodes.add(conn.from);
             genome.nodes.add(conn.to);
         }
+
+        return genome;
     }
 
     mutateLink(): ConnectionGene | null {

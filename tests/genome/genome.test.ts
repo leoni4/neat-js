@@ -67,7 +67,37 @@ describe('Genome test', () => {
         expect(genome.nodes.size()).toBe(5);
     });
 
-    it.todo('distance');
+    it('distance', () => {
+        const genome2 = neat.emptyGenome();
+        expect(genome.distance(genome2)).toBe(0);
+        genome2.mutateLink();
+        expect(genome.distance(genome2)).toBe(1);
+        const con = genome2.connections.randomElement();
+        if (con instanceof ConnectionGene) {
+            const newCon = Neat.getConnection(con);
+            genome.connections.add(newCon);
+        }
+        expect(genome.distance(genome2)).toBe(0);
+        genome.mutateWeightRandom();
+        expect(genome.distance(genome2)).not.toBe(0);
+    });
+
+    it('static crossOver', () => {
+        const genome2 = neat.emptyGenome();
+        const genome3 = Genome.crossOver(genome, genome2);
+        expect(genome3.distance(genome)).toBe(genome3.distance(genome2));
+
+        genome2.mutateLink();
+        genome2.mutateLink();
+        genome2.mutateLink();
+        genome2.mutateNode();
+        genome2.mutateNode();
+        genome3.mutateLink();
+        genome3.mutateLink();
+        genome2.mutateNode();
+        const genome4 = Genome.crossOver(genome3, genome2);
+        expect(genome4.distance(genome2)).not.toBe(genome4.distance(genome3));
+    });
+
     it.todo('calculate distance right');
-    it.todo('crossOver');
 });
