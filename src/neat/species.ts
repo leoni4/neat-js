@@ -62,7 +62,7 @@ export class Species {
         this.#score = 0;
     }
 
-    kill(percentage: number) {
+    kill(percentage = 0.1) {
         this.#clients.sort((a, b) => {
             return a.score > b.score ? 1 : -1;
         });
