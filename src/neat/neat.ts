@@ -11,6 +11,8 @@ export class Neat {
     #C2 = 1;
     #C3 = 1;
 
+    #CP = 4;
+
     #WEIGHT_SHIFT_STRENGTH = 0.3;
     #WEIGHT_RANDOM_STRENGTH = 1;
 
@@ -64,6 +66,10 @@ export class Neat {
 
     get PROBABILITY_MUTATE_TOGGLE_LINK(): number {
         return this.#PROBABILITY_MUTATE_TOGGLE_LINK;
+    }
+
+    get CP(): number {
+        return this.#CP;
     }
 
     get C1(): number {

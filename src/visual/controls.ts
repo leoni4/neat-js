@@ -28,7 +28,7 @@ export class Controls {
             this.#genome.mutate();
         });
         document.getElementById('c')?.addEventListener('click', () => {
-            alert(JSON.stringify(this.#genome.calculate([1, 1])));
+            //  alert(JSON.stringify(this.#genome.calculate([1, 1])));
         });
     }
 }

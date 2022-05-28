@@ -2,17 +2,14 @@ import { RandomHashSet } from '../dataStructures';
 import { Neat } from '../neat';
 import { ConnectionGene } from './connectionGene';
 import { NodeGene } from './nodeGene';
-import { Calculator } from '../calculations';
 
 export class Genome {
     #connections: RandomHashSet = new RandomHashSet();
     #nodes: RandomHashSet = new RandomHashSet();
     #neat: Neat;
-    #calculator: Calculator;
 
     constructor(neat: Neat) {
         this.#neat = neat;
-        this.#calculator = new Calculator(this);
     }
 
     get connections(): RandomHashSet {
@@ -25,11 +22,6 @@ export class Genome {
 
     get neat(): Neat {
         return this.#neat;
-    }
-
-    calculate(input: Array<number>): Array<number> {
-        this.#calculator = new Calculator(this);
-        return this.#calculator.calculate(input);
     }
 
     distance(g2: Genome): number {

@@ -50,9 +50,9 @@ export class Node {
 
     compereTo(node: Node): number {
         if (this.x > node.x) {
-            return -1;
-        } else if (this.x < node.x) {
             return 1;
+        } else if (this.x < node.x) {
+            return -1;
         } else {
             return 0;
         }
