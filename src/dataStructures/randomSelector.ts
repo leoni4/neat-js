@@ -1,37 +1,38 @@
+import { Species } from '../neat';
+
 export class RandomSelector {
-    #objects: Array<unknown> = [];
+    #objects: Array<Species> = [];
     #scores: Array<number> = [];
     #totalScore = 0;
 
-    getObjects(): Array<unknown> {
+    get objects(): Array<Species> {
         return this.#objects;
     }
 
-    getScores(): Array<number> {
+    get scores(): Array<number> {
         return this.#scores;
     }
 
-    getTotalScore(): number {
+    get totalScore(): number {
         return this.#totalScore;
     }
 
-    add(object: unknown, score: number) {
+    add(object: Species, score: number) {
         this.#objects.push(object);
         this.#scores.push(score);
         this.#totalScore += score;
     }
 
-    random(): unknown | null {
+    random(): Species {
         const randomScore = Math.random() * this.#totalScore;
         let scoreIndex = 0;
-
         for (let i = 0; i < this.#objects.length; i++) {
             scoreIndex += this.#scores[i];
             if (scoreIndex > randomScore) {
                 return this.#objects[i];
             }
         }
-        return null;
+        throw new Error('random Species not found');
     }
 
     reset() {

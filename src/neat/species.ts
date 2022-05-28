@@ -9,7 +9,7 @@ export class Species {
     constructor(client: Client) {
         this.#representative = client;
         this.#representative.species = this;
-        this.#clients.push(this.#representative);
+        this.#clients.push(client);
     }
 
     get clients(): Array<Client> {
@@ -76,7 +76,6 @@ export class Species {
     breed(): Genome {
         const c1 = this.#getRandomClient();
         const c2 = this.#getRandomClient();
-
         if (c1.score > c2.score) {
             return Genome.crossOver(c1.genome, c2.genome);
         } else {

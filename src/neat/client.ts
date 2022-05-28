@@ -38,7 +38,7 @@ export class Client {
         this.#species = value;
     }
 
-    #generateCalculator() {
+    generateCalculator() {
         this.#calculator = new Calculator(this.#genome);
     }
 
@@ -52,7 +52,7 @@ export class Client {
 
     calculate(input: Array<number>): Array<number> {
         if (!this.#calculator) {
-            this.#generateCalculator();
+            this.generateCalculator();
         }
         return this.#calculator?.calculate(input) || [];
     }

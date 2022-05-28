@@ -22,6 +22,14 @@ export class Frame {
         this.#init();
     }
 
+    get genome(): Genome {
+        return this.#genome;
+    }
+
+    set genome(value: Genome) {
+        this.#genome = value;
+    }
+
     #init() {
         this.#stage.add(this.#layer);
         this.#layer.draw();

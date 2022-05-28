@@ -1,6 +1,8 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome';
-import { RandomHashSet } from '../dataStructures';
+import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Frame } from '../visual';
+import { Client } from './client';
+import { Species } from './species';
 
 export class Neat {
     static get MAX_NODES(): number {
@@ -16,15 +18,20 @@ export class Neat {
     #WEIGHT_SHIFT_STRENGTH = 0.3;
     #WEIGHT_RANDOM_STRENGTH = 1;
 
-    #PROBABILITY_MUTATE_LINK = 0.5;
-    #PROBABILITY_MUTATE_NODES = 0.5;
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.5;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.5;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.5;
+    #SURVIVORS = 0.9;
+
+    #PROBABILITY_MUTATE_LINK = 0.01;
+    #PROBABILITY_MUTATE_NODES = 0.003;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.002;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.002;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.001;
 
     #inputNodes = 0;
     #outputNodes = 0;
-    #clients = 0;
+    #maxClients = 0;
+
+    #clients: Array<Client> = [];
+    #species: Array<Species> = [];
 
     #allConnections: Map<string, ConnectionGene> = new Map<string, ConnectionGene>();
     #allNodes: RandomHashSet = new RandomHashSet();
@@ -85,10 +92,11 @@ export class Neat {
     reset(inputNodes: number, outputNodes: number, clients: number) {
         this.#inputNodes = inputNodes;
         this.#outputNodes = outputNodes;
-        this.#clients = clients;
+        this.#maxClients = clients;
 
         this.#allConnections.clear();
         this.#allNodes.clear();
+        this.#clients = [];
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -101,6 +109,15 @@ export class Neat {
             nodeGene.x = 0.9;
             nodeGene.y = (i + 1) / (this.#outputNodes + 1);
         }
+        for (let i = 0; i < this.#maxClients; i += 1) {
+            const c: Client = new Client(this.emptyGenome());
+            c.generateCalculator();
+            this.#clients.push(c);
+        }
+    }
+
+    getClient(index: number): Client {
+        return this.#clients[index];
     }
 
     emptyGenome(): Genome {
@@ -146,9 +163,119 @@ export class Neat {
         return nodeGene;
     }
 
-    static main() {
-        const neat: Neat = new Neat(2, 1, 100);
+    evolve() {
+        this.#genSpecies();
+        this.#kill();
+        this.#removeExtinct();
+        this.#reproduce();
+        this.#mutate();
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            this.#clients[i].generateCalculator();
+        }
+    }
 
-        new Frame(neat.emptyGenome());
+    printSpecies() {
+        console.log('###################');
+        for (let i = 0; i < this.#species.length; i += 1) {
+            console.log(this.#species[i].score, ' ', this.#species[i].size());
+        }
+    }
+
+    #mutate() {
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            this.#clients[i].mutate();
+        }
+    }
+
+    #reproduce() {
+        const selector = new RandomSelector();
+        for (let i = 0; i < this.#species.length; i += 1) {
+            selector.add(this.#species[i], this.#species[i].score);
+        }
+        if (this.#species.length === 0) {
+            console.log('this.#species.length === 0');
+        }
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            const c = this.#clients[i];
+            if (c.species === null) {
+                const s = selector.random();
+                c.genome = s.breed();
+                s.put(c, true);
+            }
+        }
+    }
+
+    #removeExtinct() {
+        for (let i = this.#species.length - 1; i >= 0; i--) {
+            if (this.#species[i].size() <= 1) {
+                this.#species[i].goExtinct();
+                this.#species.splice(i, 1);
+            }
+        }
+    }
+
+    #kill() {
+        for (let i = 0; i < this.#species.length; i += 1) {
+            this.#species[i].kill(1 - this.#SURVIVORS);
+        }
+    }
+
+    #genSpecies() {
+        for (let i = 0; i < this.#species.length; i += 1) {
+            this.#species[i].reset();
+        }
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            const c = this.#clients[i];
+            if (c.species !== null) {
+                continue;
+            }
+
+            let found = false;
+            for (let k = 0; k < this.#species.length; k += 1) {
+                const s = this.#species[k];
+                if (s.put(c)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                this.#species.push(new Species(c));
+            }
+        }
+        for (let i = 0; i < this.#species.length; i += 1) {
+            this.#species[i].evaluateScore();
+        }
+    }
+
+    static main() {
+        const neat: Neat = new Neat(10, 1, 1000);
+
+        const arr: Array<number> = [];
+        for (let i = 0; i < 10; i++) arr.push(Math.random());
+
+        let frame: Frame | null = null;
+        if (typeof document !== 'undefined') {
+            console.log('Create frame');
+            frame = new Frame(neat.#clients[0].genome);
+        }
+        let k = 0;
+        const epochs = 1000;
+        setTimeout(function run() {
+            if (k > epochs) {
+                return;
+            }
+            k++;
+            for (let i = 0; i < neat.#clients.length; i += 1) {
+                const c = neat.#clients[i];
+                c.score = c.calculate(arr)[0];
+            }
+            neat.evolve();
+            console.log('EPOCH: ', k);
+            neat.printSpecies();
+            if (frame) {
+                frame.genome = neat.#clients[0].genome;
+            }
+            setTimeout(run, 1);
+        }, 1);
     }
 }
