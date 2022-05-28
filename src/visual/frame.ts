@@ -7,7 +7,7 @@ export class Frame {
     #stage: Konva.Stage;
     #layer: Konva.Layer;
 
-    #width = 600;
+    #width = 800;
     #height = 400;
 
     constructor(genome: Genome) {

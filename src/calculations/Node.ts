@@ -1,0 +1,60 @@
+import { Connection } from './Connection';
+
+export class Node {
+    #x: number;
+    #output = 0;
+    #connections: Array<Connection> = [];
+
+    constructor(x: number) {
+        this.#x = x;
+    }
+
+    get x(): number {
+        return this.#x;
+    }
+
+    set x(value: number) {
+        this.#x = value;
+    }
+
+    get output(): number {
+        return this.#output;
+    }
+
+    set output(value: number) {
+        this.#output = value;
+    }
+
+    get connections(): Array<Connection> {
+        return this.#connections;
+    }
+
+    set connections(value: Array<Connection>) {
+        this.#connections = value;
+    }
+
+    #activation(sum: number): number {
+        return 1 / (1 + Math.exp(-sum));
+    }
+
+    calculate() {
+        let sum = 0;
+        for (let i = 0; i < this.#connections.length; i += 1) {
+            const c = this.#connections[i];
+            if (c.enabled) {
+                sum += c.weight * c.from.output;
+            }
+        }
+        this.#output = this.#activation(sum);
+    }
+
+    compereTo(node: Node): number {
+        if (this.x > node.x) {
+            return -1;
+        } else if (this.x < node.x) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
