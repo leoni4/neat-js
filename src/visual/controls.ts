@@ -1,11 +1,30 @@
 import { Genome } from '../genome';
+import { Client } from '../neat';
 
 export class Controls {
     #genome: Genome;
+    #client: Client;
     constructor(genome: Genome) {
         this.#genome = genome;
+        this.#client = new Client(genome);
 
         this.#initControls();
+    }
+
+    get client(): Client {
+        return this.#client;
+    }
+
+    set client(value: Client) {
+        this.#client = value;
+    }
+
+    get genome(): Genome {
+        return this.#genome;
+    }
+
+    set genome(value: Genome) {
+        this.#genome = value;
     }
 
     #initControls() {
@@ -28,7 +47,15 @@ export class Controls {
             this.#genome.mutate();
         });
         document.getElementById('c')?.addEventListener('click', () => {
-            //  alert(JSON.stringify(this.#genome.calculate([1, 1])));
+            const input = (<HTMLInputElement>document.getElementById('inp')).value.split(',');
+
+            alert(
+                this.#client.calculate(
+                    input.map(a => {
+                        return parseInt(a);
+                    })
+                )[0]
+            );
         });
     }
 }

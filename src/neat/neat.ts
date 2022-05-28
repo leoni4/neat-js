@@ -20,11 +20,11 @@ export class Neat {
 
     #SURVIVORS = 0.9;
 
-    #PROBABILITY_MUTATE_LINK = 0.01;
-    #PROBABILITY_MUTATE_NODES = 0.003;
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.002;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.002;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.001;
+    #PROBABILITY_MUTATE_LINK = 0.1;
+    #PROBABILITY_MUTATE_NODES = 0.1;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.1;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.1;
 
     #inputNodes = 0;
     #outputNodes = 0;
@@ -116,8 +116,22 @@ export class Neat {
         }
     }
 
-    getClient(index: number): Client {
-        return this.#clients[index];
+    setReplaceIndex(node1: NodeGene, node2: NodeGene, index: number) {
+        const connectionGene = new ConnectionGene(0, node1, node2);
+        const hashKey = connectionGene.getHashKey();
+        const foundCon = this.#allConnections.get(hashKey);
+        if (foundCon) {
+            foundCon.replaceIndex = index;
+        } else {
+            throw new Error('setReplaceIndex to no connection');
+        }
+    }
+    getReplaceIndex(node1: NodeGene, node2: NodeGene): number {
+        const connectionGene = new ConnectionGene(0, node1, node2);
+        const hashKey = connectionGene.getHashKey();
+        const foundCon = this.#allConnections.get(hashKey);
+        if (!foundCon) return 0;
+        return foundCon.replaceIndex;
     }
 
     emptyGenome(): Genome {
@@ -137,7 +151,7 @@ export class Neat {
 
     getConnection(node1: NodeGene, node2: NodeGene): ConnectionGene {
         const connectionGene = new ConnectionGene(0, node1, node2);
-        const hashKey = JSON.stringify(connectionGene);
+        const hashKey = connectionGene.getHashKey();
         if (this.#allConnections.has(hashKey)) {
             const foundCon = this.#allConnections.get(hashKey);
             connectionGene.innovationNumber = foundCon ? foundCon.innovationNumber : 0;
@@ -177,7 +191,7 @@ export class Neat {
     printSpecies() {
         console.log('###################');
         for (let i = 0; i < this.#species.length; i += 1) {
-            console.log(this.#species[i].score, ' ', this.#species[i].size());
+            console.log(this.#species[i].score, this.#species[i].size());
         }
     }
 
@@ -191,9 +205,6 @@ export class Neat {
         const selector = new RandomSelector();
         for (let i = 0; i < this.#species.length; i += 1) {
             selector.add(this.#species[i], this.#species[i].score);
-        }
-        if (this.#species.length === 0) {
-            console.log('this.#species.length === 0');
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -248,10 +259,17 @@ export class Neat {
     }
 
     static main() {
-        const neat: Neat = new Neat(10, 1, 1000);
+        const neat: Neat = new Neat(2, 1, 1000);
 
-        const arr: Array<number> = [];
-        for (let i = 0; i < 10; i++) arr.push(Math.random());
+        const test = {
+            input: [
+                [0, 0],
+                [1, 0],
+                [1, 1],
+                [0, 1],
+            ],
+            output: [0, 1, 0, 1],
+        };
 
         let frame: Frame | null = null;
         if (typeof document !== 'undefined') {
@@ -267,12 +285,17 @@ export class Neat {
             k++;
             for (let i = 0; i < neat.#clients.length; i += 1) {
                 const c = neat.#clients[i];
-                c.score = c.calculate(arr)[0];
+                c.score += 1 - Math.abs(c.calculate(test.input[0])[0] - test.output[0]);
+                c.score += 1 - Math.abs(c.calculate(test.input[1])[0] - test.output[1]);
+                c.score += 1 - Math.abs(c.calculate(test.input[2])[0] - test.output[2]);
+                c.score += 1 - Math.abs(c.calculate(test.input[3])[0] - test.output[3]);
+                c.score /= 4;
             }
             neat.evolve();
-            console.log('EPOCH: ', k);
-            neat.printSpecies();
+            console.log('EPOCH:', k, '| error:', 1 - neat.#species[0].score);
+            // neat.printSpecies();
             if (frame) {
+                frame.client = neat.#clients[0];
                 frame.genome = neat.#clients[0].genome;
             }
             setTimeout(run, 1);

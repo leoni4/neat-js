@@ -8,10 +8,20 @@ export class ConnectionGene extends Gene {
     #weight = 0;
     #enabled = true;
 
+    #replaceIndex = 0;
+
     constructor(innovationNumber: number, from: NodeGene, to: NodeGene) {
         super(innovationNumber);
         this.#from = from;
         this.#to = to;
+    }
+
+    get replaceIndex(): number {
+        return this.#replaceIndex;
+    }
+
+    set replaceIndex(value: number) {
+        this.#replaceIndex = value;
     }
 
     get from(): NodeGene {
@@ -44,6 +54,10 @@ export class ConnectionGene extends Gene {
 
     set enabled(value: boolean) {
         this.#enabled = value;
+    }
+
+    getHashKey(): string {
+        return `${this.from.innovationNumber}-${this.to.innovationNumber}`;
     }
 
     equals(obj: unknown): boolean {

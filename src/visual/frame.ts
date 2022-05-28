@@ -1,18 +1,22 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome';
 import Konva from 'konva';
 import { Controls } from './controls';
+import { Client } from '../neat';
 
 export class Frame {
     #genome: Genome;
     #stage: Konva.Stage;
     #layer: Konva.Layer;
+    #controls: Controls;
+    #client: Client;
 
     #width = 800;
     #height = 400;
 
     constructor(genome: Genome) {
         this.#genome = genome;
-        new Controls(genome);
+        this.#client = new Client(genome);
+        this.#controls = new Controls(genome);
         this.#stage = new Konva.Stage({
             container: 'container',
             width: this.#width,
@@ -28,6 +32,16 @@ export class Frame {
 
     set genome(value: Genome) {
         this.#genome = value;
+        this.#controls.genome = value;
+    }
+
+    get client(): Client {
+        return this.#client;
+    }
+
+    set client(value: Client) {
+        this.#client = value;
+        this.#controls.client = value;
     }
 
     #init() {

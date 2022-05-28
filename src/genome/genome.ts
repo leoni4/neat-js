@@ -164,11 +164,18 @@ export class Genome {
 
         const from: NodeGene = con.from;
         const to: NodeGene = con.to;
-        const middle: NodeGene = this.#neat.getNode();
+        const replaceIndex = this.#neat.getReplaceIndex(from, to);
+        let middle: NodeGene;
+        if (replaceIndex === 0) {
+            middle = this.#neat.getNode();
+            middle.x = (from.x + to.x) / 2;
+            middle.y = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
+            middle.y = middle.y < 0.1 ? 0.1 : middle.y > 0.9 ? 0.9 : middle.y;
+            this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
+        } else {
+            middle = this.#neat.getNode(replaceIndex);
+        }
 
-        middle.x = (from.x + to.x) / 2;
-        middle.y = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
-        middle.y = middle.y < 0.1 ? 0.1 : middle.y > 0.9 ? 0.9 : middle.y;
         const con1: ConnectionGene = this.#neat.getConnection(from, middle);
         const con2: ConnectionGene = this.#neat.getConnection(middle, to);
 
