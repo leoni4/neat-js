@@ -2,7 +2,6 @@ import { ConnectionGene, Genome, NodeGene } from '../genome';
 import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Client } from './client';
 import { Species } from './species';
-import { Frame } from '../visual';
 
 export class Neat {
     static get MAX_NODES(): number {
@@ -20,16 +19,15 @@ export class Neat {
 
     #SURVIVORS = 0.9;
 
-    #PROBABILITY_MUTATE_LINK = 0.01;
-    #PROBABILITY_MUTATE_NODES = 0.01;
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.01;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.01;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.01;
+    #PROBABILITY_MUTATE_LINK = 0.005;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.005;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.005;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.005;
+    #PROBABILITY_MUTATE_NODES = 0.005;
 
     #inputNodes = 0;
     #outputNodes = 0;
     #maxClients = 0;
-    #maxHiddenNodes = 0;
 
     #clients: Array<Client> = [];
     #species: Array<Species> = [];
@@ -39,6 +37,10 @@ export class Neat {
 
     constructor(inputNodes: number, outputNodes: number, clients: number) {
         this.reset(inputNodes, outputNodes, clients);
+    }
+
+    get clients(): Array<Client> {
+        return this.#clients;
     }
 
     get allConnections(): Map<string, ConnectionGene> {
@@ -79,7 +81,6 @@ export class Neat {
     get CP(): number {
         return this.#CP;
     }
-
     get C1(): number {
         return this.#C1;
     }
@@ -90,18 +91,6 @@ export class Neat {
         return this.#C3;
     }
 
-    get inputNodes(): number {
-        return this.#inputNodes;
-    }
-
-    get outputNodes(): number {
-        return this.#outputNodes;
-    }
-
-    get maxHiddenNodes(): number {
-        return this.#maxHiddenNodes;
-    }
-
     reset(inputNodes: number, outputNodes: number, clients: number) {
         this.#inputNodes = inputNodes;
         this.#outputNodes = outputNodes;
@@ -110,8 +99,6 @@ export class Neat {
         this.#allConnections.clear();
         this.#allNodes.clear();
         this.#clients = [];
-
-        this.#maxHiddenNodes = (inputNodes + outputNodes) * 2;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -204,7 +191,6 @@ export class Neat {
     }
 
     printSpecies() {
-        console.log('--------');
         for (let i = 0; i < this.#species.length; i += 1) {
             console.log(this.#species[i].score, this.#species[i].size());
         }
@@ -271,64 +257,5 @@ export class Neat {
         for (let i = 0; i < this.#species.length; i += 1) {
             this.#species[i].evaluateScore();
         }
-    }
-
-    static main() {
-        const neat: Neat = new Neat(2, 1, 100);
-
-        const test = {
-            input: [
-                [0, 0],
-                [1, 1],
-                [1, 0],
-                [0, 1],
-            ],
-            output: [0, 0, 1, 1],
-        };
-
-        let frame: Frame | null = null;
-        if (typeof document !== 'undefined') {
-            console.log('Create frame');
-            frame = new Frame(neat.#clients[0].genome);
-        }
-        let k = 0;
-        let error = 1;
-        const epochs = 10000;
-        setTimeout(function run() {
-            //  console.time('run()');
-            let topScore = 0;
-            let topClient: Client = neat.#clients[0];
-            for (let i = 0; i < neat.#clients.length; i += 1) {
-                const c = neat.#clients[i];
-                let score = c.score;
-                test.input.forEach((inp, i) => {
-                    const out = c.calculate(inp)[0];
-                    score += 1 - Math.abs(test.output[i] - out);
-                });
-                score /= 4;
-                c.score = score;
-                if (c.score > topScore) {
-                    topScore = c.score;
-                    topClient = c;
-                }
-            }
-            error = 1 - topScore;
-            console.log('###################');
-            console.log('EPOCH:', k, '| error:', error);
-            neat.printSpecies();
-            if (frame) {
-                frame.client = topClient;
-                frame.genome = topClient.genome;
-            }
-            if (k > epochs || error < 0.0000001) {
-                //   console.timeEnd('run()');
-                console.log('Finished');
-                return;
-            }
-            k++;
-            neat.evolve();
-            // console.timeEnd('run()');
-            setTimeout(run, 1);
-        }, 1);
     }
 }

@@ -47,15 +47,15 @@ export class Controls {
             this.#genome.mutate();
         });
         document.getElementById('c')?.addEventListener('click', () => {
-            const input = (<HTMLInputElement>document.getElementById('inp')).value.split(',');
-
-            alert(
-                this.#client.calculate(
-                    input.map(a => {
-                        return parseInt(a);
-                    })
-                )[0]
-            );
+            const rawInput = (<HTMLInputElement>document.getElementById('inp')).value.split(',');
+            console.log('- predicting -');
+            const input = rawInput.map(a => {
+                return parseInt(a);
+            });
+            console.log('input:', input);
+            const output = this.#client.calculate(input)[0];
+            console.log('output:', Math.round(output));
+            console.log('outputRaw:', output);
         });
     }
 }

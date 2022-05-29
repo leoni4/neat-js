@@ -63,7 +63,7 @@ export class Species {
             return a.score > b.score ? -1 : 1;
         });
 
-        const elems = survivors * (this.#clients.length - 1);
+        const elems = survivors * this.#clients.length;
         for (let i = this.#clients.length - 1; i > elems; i -= 1) {
             this.#clients[i].species = null;
             this.#clients.splice(i, 1);
@@ -73,7 +73,7 @@ export class Species {
     breed(): Genome {
         const c1 = this.#getRandomClient();
         const c2 = this.#getRandomClient();
-        if (c1.score > c2.score) {
+        if (c1.score >= c2.score) {
             return Genome.crossOver(c1.genome, c2.genome);
         } else {
             return Genome.crossOver(c2.genome, c1.genome);

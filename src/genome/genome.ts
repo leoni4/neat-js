@@ -92,9 +92,14 @@ export class Genome {
             const inn2: number = gene2.innovationNumber;
 
             if (inn1 > inn2) {
+                if (Math.random() > 0.5) {
+                    genome.connections.add(Neat.getConnection(gene2));
+                }
                 indexG2++;
             } else if (inn1 < inn2) {
-                genome.connections.add(Neat.getConnection(gene1));
+                if (Math.random() > 0.5) {
+                    genome.connections.add(Neat.getConnection(gene1));
+                }
                 indexG1++;
             } else {
                 if (gene1.enabled || gene2.enabled) {
