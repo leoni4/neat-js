@@ -33,6 +33,7 @@ export class Frame {
     set genome(value: Genome) {
         this.#genome = value;
         this.#controls.genome = value;
+        this.#renderGenome();
     }
 
     get client(): Client {
@@ -47,19 +48,21 @@ export class Frame {
     #init() {
         this.#stage.add(this.#layer);
         this.#layer.draw();
-        setInterval(() => {
-            this.#renderGenome();
-        }, 1000 / 30);
     }
 
     #renderGenome() {
         this.#layer.removeChildren();
+
+        let radius = this.#height / this.#genome.nodes.size() / 2;
+        radius =
+            radius < this.#height / 40 ? this.#height / 40 : radius > this.#height / 20 ? this.#height / 20 : radius;
         this.#genome.connections.data.forEach(item => {
             if (item instanceof NodeGene) {
                 return;
             }
             let strokeWidth = item.weight * 5;
             strokeWidth = strokeWidth < 1 || !item.enabled ? 1 : strokeWidth;
+            strokeWidth = strokeWidth > radius / 2 ? radius / 2 : strokeWidth;
             const line = new Konva.Line({
                 points: [
                     this.#width * item.from.x,
@@ -74,9 +77,6 @@ export class Frame {
             this.#layer.add(line);
         });
 
-        let radius = this.#height / this.#genome.nodes.size() / 2;
-        radius =
-            radius < this.#height / 40 ? this.#height / 40 : radius > this.#height / 20 ? this.#height / 20 : radius;
         this.#genome.nodes.data.forEach(item => {
             if (item instanceof ConnectionGene) {
                 return;

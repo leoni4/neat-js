@@ -12,16 +12,12 @@ export class Species {
         this.#clients.push(client);
     }
 
-    get clients(): Array<Client> {
-        return this.#clients;
-    }
-
-    get representative(): Client {
-        return this.#representative;
-    }
-
     get score(): number {
         return this.#score;
+    }
+
+    get clients(): Array<Client> {
+        return this.#clients;
     }
 
     put(client: Client, force = false): boolean {
@@ -62,14 +58,15 @@ export class Species {
         this.#score = 0;
     }
 
-    kill(percentage = 0.1) {
+    kill(survivors = 0.5) {
         this.#clients.sort((a, b) => {
-            return a.score > b.score ? 1 : -1;
+            return a.score > b.score ? -1 : 1;
         });
-        const elems = percentage * this.#clients.length;
-        for (let i = 0; i < elems; i += 1) {
-            this.#clients[0].species = null;
-            this.#clients.splice(0, 1);
+
+        const elems = survivors * (this.#clients.length - 1);
+        for (let i = this.#clients.length - 1; i > elems; i -= 1) {
+            this.#clients[i].species = null;
+            this.#clients.splice(i, 1);
         }
     }
 

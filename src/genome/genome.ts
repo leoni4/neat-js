@@ -127,33 +127,38 @@ export class Genome {
     }
 
     mutateLink(): ConnectionGene | null {
-        for (let i = 0; i < 100; i++) {
-            const geneA = this.#nodes.randomElement();
-            const geneB = this.#nodes.randomElement();
+        let geneA = this.#nodes.randomElement();
+        let geneB = this.#nodes.randomElement();
 
-            if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
-                continue;
-            }
-            if (geneA.x === geneB.x) {
-                continue;
-            }
-
-            let con: ConnectionGene;
-            if (geneA.x < geneB.x) {
-                con = new ConnectionGene(0, geneA, geneB);
-            } else {
-                con = new ConnectionGene(0, geneB, geneA);
-            }
-            if (this.#connections.contains(con)) {
-                continue;
-            }
-            con = this.#neat.getConnection(con.from, con.to);
-            con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
-
-            this.#connections.addSorted(con);
-            return con;
+        if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
+            return null;
         }
-        return null;
+        if (geneA.x === geneB.x) {
+            return null;
+        }
+
+        if (geneA.x > geneB.x) {
+            const temp = geneA;
+            geneA = geneB;
+            geneB = temp;
+        }
+        let exists = false;
+        this.#connections.data.forEach(item => {
+            if (item instanceof NodeGene) return;
+            if (item.from === geneA && item.to === geneB) {
+                exists = true;
+            }
+        });
+
+        if (exists) {
+            return null;
+        }
+
+        const con: ConnectionGene = this.#neat.getConnection(geneA, geneB);
+        con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+
+        this.#connections.addSorted(con);
+        return con;
     }
 
     mutateNode(): NodeGene | null {
@@ -182,7 +187,6 @@ export class Genome {
         con1.weight = 1;
         con2.weight = con.weight;
         con2.enabled = con.enabled;
-
         this.#connections.remove(con);
         this.#connections.add(con1);
         this.#connections.add(con2);
