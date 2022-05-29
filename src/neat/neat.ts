@@ -295,7 +295,9 @@ export class Neat {
         let error = 1;
         const epochs = 10000;
         setTimeout(function run() {
-            console.time('run()');
+            //  console.time('run()');
+            let topScore = 0;
+            let topClient: Client = neat.#clients[0];
             for (let i = 0; i < neat.#clients.length; i += 1) {
                 const c = neat.#clients[i];
                 let score = c.score;
@@ -305,24 +307,27 @@ export class Neat {
                 });
                 score /= 4;
                 c.score = score;
+                if (c.score > topScore) {
+                    topScore = c.score;
+                    topClient = c;
+                }
             }
-            if (neat.#species.length) error = 1 - neat.#species[0].score;
+            error = 1 - topScore;
             console.log('###################');
             console.log('EPOCH:', k, '| error:', error);
             neat.printSpecies();
-            if (frame && neat.#species.length) {
-                const topClient = neat.#species[0].clients[0];
+            if (frame) {
                 frame.client = topClient;
                 frame.genome = topClient.genome;
             }
             if (k > epochs || error < 0.0000001) {
-                console.timeEnd('run()');
+                //   console.timeEnd('run()');
                 console.log('Finished');
                 return;
             }
             k++;
             neat.evolve();
-            console.timeEnd('run()');
+            // console.timeEnd('run()');
             setTimeout(run, 1);
         }, 1);
     }

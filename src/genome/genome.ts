@@ -97,10 +97,12 @@ export class Genome {
                 genome.connections.add(Neat.getConnection(gene1));
                 indexG1++;
             } else {
-                if (Math.random() > 0.5) {
-                    genome.connections.add(Neat.getConnection(gene1));
-                } else {
-                    genome.connections.add(Neat.getConnection(gene2));
+                if (gene1.enabled || gene2.enabled) {
+                    if (Math.random() > 0.5) {
+                        genome.connections.add(Neat.getConnection(gene1));
+                    } else {
+                        genome.connections.add(Neat.getConnection(gene2));
+                    }
                 }
                 indexG1++;
                 indexG2++;
