@@ -12,18 +12,19 @@ export class Neat {
     #C2 = 1;
     #C3 = 1;
 
-    #CP = 4;
+    #CP = 1;
+    #CT = 1;
 
     #WEIGHT_SHIFT_STRENGTH = 0.3;
     #WEIGHT_RANDOM_STRENGTH = 1;
 
-    #SURVIVORS = 0.9;
+    #SURVIVORS = 0.8;
 
-    #PROBABILITY_MUTATE_LINK = 0.005;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.005;
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.005;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.005;
-    #PROBABILITY_MUTATE_NODES = 0.005;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.5;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.05;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.05;
+    #PROBABILITY_MUTATE_LINK = 0.01;
+    #PROBABILITY_MUTATE_NODES = 0.01;
 
     #inputNodes = 0;
     #outputNodes = 0;
@@ -78,15 +79,22 @@ export class Neat {
         return this.#PROBABILITY_MUTATE_TOGGLE_LINK;
     }
 
+    get CT(): number {
+        return this.#CT;
+    }
+
     get CP(): number {
         return this.#CP;
     }
+
     get C1(): number {
         return this.#C1;
     }
+
     get C2(): number {
         return this.#C2;
     }
+
     get C3(): number {
         return this.#C3;
     }

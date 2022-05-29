@@ -1,10 +1,13 @@
 import { Genome } from '../genome';
 import { Client } from '../neat';
+import { Frame } from './frame';
 
 export class Controls {
     #genome: Genome;
     #client: Client;
-    constructor(genome: Genome) {
+    #frame: Frame;
+    constructor(genome: Genome, frame: Frame) {
+        this.#frame = frame;
         this.#genome = genome;
         this.#client = new Client(genome);
 
@@ -44,7 +47,10 @@ export class Controls {
             this.#genome.mutateLinkToggle();
         });
         document.getElementById('m')?.addEventListener('click', () => {
-            this.#genome.mutate();
+            this.#genome.mutate(true);
+        });
+        document.getElementById('cross')?.addEventListener('click', () => {
+            this.#frame.genome = Genome.crossOver(this.#genome, this.#genome);
         });
         document.getElementById('c')?.addEventListener('click', () => {
             const rawInput = (<HTMLInputElement>document.getElementById('inp')).value.split(',');

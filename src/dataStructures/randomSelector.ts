@@ -28,7 +28,7 @@ export class RandomSelector {
         let scoreIndex = 0;
         for (let i = 0; i < this.#objects.length; i++) {
             scoreIndex += this.#scores[i];
-            if (scoreIndex > randomScore) {
+            if (scoreIndex >= randomScore) {
                 return this.#objects[i];
             }
         }

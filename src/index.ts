@@ -14,10 +14,11 @@ import { Frame } from './visual';
         output: [0, 0, 1, 1],
     };
 
+    neat.evolve();
     let frame: Frame | null = null;
     if (typeof document !== 'undefined') {
         console.log('Create frame');
-        frame = new Frame(neat.clients[0].genome);
+        frame = new Frame(neat.clients[0]);
     }
     let k = 0;
     let error = 1;

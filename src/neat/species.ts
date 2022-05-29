@@ -59,6 +59,15 @@ export class Species {
     }
 
     kill(survivors = 0.5) {
+        let complexity = 0;
+        this.#clients.forEach(item => {
+            const allCons = item.genome.connections.size() + item.genome.nodes.size();
+            complexity = complexity < allCons ? allCons : complexity;
+        });
+        this.#clients.forEach(item => {
+            const allCons = item.genome.connections.size() + item.genome.nodes.size();
+            item.score += (1 / complexity / allCons) * 0.05;
+        });
         this.#clients.sort((a, b) => {
             return a.score > b.score ? -1 : 1;
         });
