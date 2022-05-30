@@ -2,7 +2,7 @@ import { Client, Neat } from './neat';
 import { Frame } from './visual';
 
 (function main() {
-    const neat: Neat = new Neat(2, 1, 100);
+    const neat: Neat = new Neat(2, 1, 10);
 
     const test = {
         input: [

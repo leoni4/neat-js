@@ -90,24 +90,23 @@ export class Genome {
             }
             const inn1: number = gene1.innovationNumber;
             const inn2: number = gene2.innovationNumber;
-
+            let addedCon: ConnectionGene | null = null;
             if (inn1 > inn2) {
                 indexG2++;
             } else if (inn1 < inn2) {
-                if (gene1.enabled || g1.connections.size() < g1.neat.CT) {
-                    genome.connections.addSorted(Neat.getConnection(gene1));
-                }
+                addedCon = Neat.getConnection(gene1);
                 indexG1++;
             } else {
-                if (gene1.enabled || gene2.enabled || g1.connections.size() < 20) {
-                    if (Math.random() > 0.5) {
-                        genome.connections.addSorted(Neat.getConnection(gene1));
-                    } else {
-                        genome.connections.addSorted(Neat.getConnection(gene2));
-                    }
+                if (Math.random() > 0.3) {
+                    addedCon = Neat.getConnection(gene1);
+                } else {
+                    addedCon = Neat.getConnection(gene2);
                 }
                 indexG1++;
                 indexG2++;
+            }
+            if (addedCon instanceof ConnectionGene && (Math.random() < 0.99 || g1.connections.size() < g1.neat.CT)) {
+                genome.connections.addSorted(addedCon);
             }
         }
         while (indexG1 < g1.connections.size()) {
@@ -115,7 +114,10 @@ export class Genome {
             if (!(gene1 instanceof ConnectionGene)) {
                 throw new Error('gene is not a ConnectionGene');
             }
-            genome.connections.addSorted(Neat.getConnection(gene1));
+
+            if (Math.random() > 0.99 || g1.connections.size() < g1.neat.CT) {
+                genome.connections.addSorted(Neat.getConnection(gene1));
+            }
             indexG1++;
         }
         for (let i = 0; i < genome.connections.data.length; i++) {
@@ -238,9 +240,9 @@ export class Genome {
             return null;
         }
 
-        let newWeight = con.weight;
+        let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
         }
         con.weight = newWeight;
         return con;
