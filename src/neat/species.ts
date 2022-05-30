@@ -66,7 +66,9 @@ export class Species {
         });
         this.#clients.forEach(item => {
             const allCons = item.genome.connections.size() + item.genome.nodes.size();
-            item.score += (1 / complexity / allCons) * 0.05;
+            if (item.score > 0.95) {
+                item.score += (1 - (1 / complexity) * allCons) * 0.5;
+            }
         });
         this.#clients.sort((a, b) => {
             return a.score > b.score ? -1 : 1;

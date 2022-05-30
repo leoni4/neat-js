@@ -8,23 +8,23 @@ export class Neat {
         return Math.pow(2, 20);
     }
 
-    #C1 = 1;
-    #C2 = 1;
+    #C1 = 3;
+    #C2 = 2;
     #C3 = 1;
 
-    #CP = 1;
+    #CP = 5;
     #CT = 1;
 
-    #WEIGHT_SHIFT_STRENGTH = 0.3;
-    #WEIGHT_RANDOM_STRENGTH = 1;
+    #WEIGHT_SHIFT_STRENGTH = 0.1;
+    #WEIGHT_RANDOM_STRENGTH = 10;
 
-    #SURVIVORS = 0.8;
+    #SURVIVORS = 0.25;
 
     #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.5;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.05;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.05;
-    #PROBABILITY_MUTATE_LINK = 0.01;
-    #PROBABILITY_MUTATE_NODES = 0.01;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.1;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
+    #PROBABILITY_MUTATE_LINK = 0.1;
+    #PROBABILITY_MUTATE_NODES = 0.05;
 
     #inputNodes = 0;
     #outputNodes = 0;
@@ -79,6 +79,10 @@ export class Neat {
         return this.#PROBABILITY_MUTATE_TOGGLE_LINK;
     }
 
+    set CT(value: number) {
+        this.#CT = value;
+    }
+
     get CT(): number {
         return this.#CT;
     }
@@ -107,6 +111,8 @@ export class Neat {
         this.#allConnections.clear();
         this.#allNodes.clear();
         this.#clients = [];
+
+        this.CT = (inputNodes + outputNodes) * 2;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();

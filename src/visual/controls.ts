@@ -49,8 +49,8 @@ export class Controls {
         document.getElementById('m')?.addEventListener('click', () => {
             this.#genome.mutate(true);
         });
-        document.getElementById('cross')?.addEventListener('click', () => {
-            this.#frame.genome = Genome.crossOver(this.#genome, this.#genome);
+        document.getElementById('toggle')?.addEventListener('click', () => {
+            this.#frame.toggle = !this.#frame.toggle;
         });
         document.getElementById('c')?.addEventListener('click', () => {
             const rawInput = (<HTMLInputElement>document.getElementById('inp')).value.split(',');

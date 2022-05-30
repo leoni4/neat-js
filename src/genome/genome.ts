@@ -92,16 +92,22 @@ export class Genome {
             const inn2: number = gene2.innovationNumber;
 
             if (inn1 > inn2) {
-                if (Math.random() > 0.5) genome.connections.add(Neat.getConnection(gene2));
+                if ((Math.random() > 0.5 && gene2.enabled) || g1.connections.size() < g1.neat.CT) {
+                    genome.connections.add(Neat.getConnection(gene2));
+                }
                 indexG2++;
             } else if (inn1 < inn2) {
-                genome.connections.add(Neat.getConnection(gene1));
+                if (gene1.enabled || g1.connections.size() < g1.neat.CT) {
+                    genome.connections.add(Neat.getConnection(gene1));
+                }
                 indexG1++;
             } else {
-                if (Math.random() > 0.5) {
-                    genome.connections.add(Neat.getConnection(gene1));
-                } else {
-                    genome.connections.add(Neat.getConnection(gene2));
+                if (gene1.enabled || gene2.enabled || g1.connections.size() < 20) {
+                    if (Math.random() > 0.5) {
+                        genome.connections.add(Neat.getConnection(gene1));
+                    } else {
+                        genome.connections.add(Neat.getConnection(gene2));
+                    }
                 }
                 indexG1++;
                 indexG2++;
@@ -134,7 +140,12 @@ export class Genome {
         if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
             return null;
         }
-        if (geneA.x === geneB.x) {
+
+        while (geneB instanceof NodeGene && geneA.x === geneB.x) {
+            geneB = this.#nodes.randomElement();
+        }
+
+        if (!(geneB instanceof NodeGene)) {
             return null;
         }
 
@@ -143,15 +154,14 @@ export class Genome {
             geneA = geneB;
             geneB = temp;
         }
-        let exists: ConnectionGene | false = false;
+        let exists = false;
         this.#connections.data.forEach(item => {
             if (item instanceof NodeGene) return;
             if (item.from === geneA && item.to === geneB) {
-                exists = item;
+                exists = true;
             }
         });
         if (exists) {
-            if (Math.random() > 0.5) this.#connections.remove(exists);
             return null;
         }
 
@@ -204,7 +214,9 @@ export class Genome {
             con2.enabled = con.enabled;
             this.#connections.add(con2);
         }
-        this.#connections.remove(con);
+        if (!exists1 && !exists2) {
+            con.enabled = false;
+        }
 
         this.#nodes.add(middle);
         return middle;
@@ -247,7 +259,7 @@ export class Genome {
     }
 
     mutate(force = false) {
-        if (force || this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
+        if (force || this.#connections.size() < this.#neat.CT || this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
             this.mutateLink();
         }
         if (force || this.#neat.PROBABILITY_MUTATE_NODES > Math.random()) {

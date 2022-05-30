@@ -22,7 +22,7 @@ import { Frame } from './visual';
     }
     let k = 0;
     let error = 1;
-    const epochs = 1000;
+    const epochs = 10000;
     setTimeout(function run() {
         //  console.time('run()');
         let topScore = 0;
@@ -47,10 +47,11 @@ import { Frame } from './visual';
         console.log('-------');
         console.log('EPOCH:', k, '| error:', error);
         if (frame) {
+            frame.text = 'EPOCH: ' + k + ' | error: ' + error;
             frame.client = topClient;
             frame.genome = topClient.genome;
         }
-        if (k > epochs || error < 0.0000001) {
+        if (k > epochs || error < 0.0000000000000001) {
             //   console.timeEnd('run()');
             console.log('Finished');
             return;

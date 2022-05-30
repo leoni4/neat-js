@@ -10,7 +10,13 @@ export class RandomHashSet {
     }
 
     contains(gene: NodeGene | ConnectionGene): boolean {
-        return this.#set.has(gene);
+        let contains = false;
+        for (let i = 0; i < this.data.length; i += 1) {
+            if (this.data[i].innovationNumber === gene.innovationNumber) {
+                contains = true;
+            }
+        }
+        return contains;
     }
 
     randomElement(): NodeGene | ConnectionGene | null {
@@ -54,9 +60,9 @@ export class RandomHashSet {
 
     remove(arg: number | ConnectionGene) {
         if (arg instanceof ConnectionGene) {
-            this.#set.delete(arg);
             const index = this.#data.indexOf(arg);
             this.#data.splice(index, 1);
+            this.#set.delete(arg);
         } else {
             if (arg < 0 || arg >= this.#set.size) {
                 return;
