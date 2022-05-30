@@ -34,15 +34,18 @@ export class RandomHashSet {
     }
 
     addSorted(gene: NodeGene | ConnectionGene) {
-        for (let i = 0; i < this.size(); i++) {
-            const innovation = this.get(i).innovationNumber;
-            if (gene.innovationNumber < innovation) {
-                this.#data.splice(i, 0, gene);
-                this.#set.add(gene);
-                return;
+        if (!this.contains(gene)) {
+            for (let i = 0; i < this.size(); i++) {
+                const innovation = this.get(i).innovationNumber;
+                if (gene.innovationNumber < innovation) {
+                    this.#data.splice(i, 0, gene);
+                    this.#set.add(gene);
+                    return;
+                }
             }
+            this.#set.add(gene);
+            this.#data.push(gene);
         }
-        this.add(gene);
     }
 
     size(): number {

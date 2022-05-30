@@ -2,32 +2,26 @@ import { Species } from '../neat';
 
 export class RandomSelector {
     #objects: Array<Species> = [];
-    #scores: Array<number> = [];
+    #survivors: number;
     #totalScore = 0;
 
-    get objects(): Array<Species> {
-        return this.#objects;
+    constructor(survivors: number) {
+        this.#survivors = survivors;
     }
 
-    get scores(): Array<number> {
-        return this.#scores;
-    }
-
-    get totalScore(): number {
-        return this.#totalScore;
-    }
-
-    add(object: Species, score: number) {
+    add(object: Species) {
         this.#objects.push(object);
-        this.#scores.push(score);
-        this.#totalScore += score;
+        this.#totalScore += object.score;
+        this.#objects.sort((a, b) => {
+            return a.score > b.score ? -1 : 1;
+        });
     }
 
     random(): Species {
-        const randomScore = Math.random() * this.#totalScore;
+        const randomScore = Math.random() * this.#totalScore * this.#survivors;
         let scoreIndex = 0;
         for (let i = 0; i < this.#objects.length; i++) {
-            scoreIndex += this.#scores[i];
+            scoreIndex += this.#objects[i].score;
             if (scoreIndex >= randomScore) {
                 return this.#objects[i];
             }
@@ -37,7 +31,6 @@ export class RandomSelector {
 
     reset() {
         this.#objects = [];
-        this.#scores = [];
         this.#totalScore = 0;
     }
 }

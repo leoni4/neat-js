@@ -8,7 +8,7 @@ export class Neat {
         return Math.pow(2, 20);
     }
 
-    #C1 = 3;
+    #C1 = 2;
     #C2 = 2;
     #C3 = 1;
 
@@ -18,13 +18,13 @@ export class Neat {
     #WEIGHT_SHIFT_STRENGTH = 0.1;
     #WEIGHT_RANDOM_STRENGTH = 10;
 
-    #SURVIVORS = 0.25;
+    #SURVIVORS = 0.8;
 
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.5;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.1;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
-    #PROBABILITY_MUTATE_LINK = 0.1;
-    #PROBABILITY_MUTATE_NODES = 0.05;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.9;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.2;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.02;
+    #PROBABILITY_MUTATE_LINK = 0.05;
+    #PROBABILITY_MUTATE_NODES = 0.01;
 
     #inputNodes = 0;
     #outputNodes = 0;
@@ -36,8 +36,18 @@ export class Neat {
     #allConnections: Map<string, ConnectionGene> = new Map<string, ConnectionGene>();
     #allNodes: RandomHashSet = new RandomHashSet();
 
+    #optimization = false;
+
     constructor(inputNodes: number, outputNodes: number, clients: number) {
         this.reset(inputNodes, outputNodes, clients);
+    }
+
+    get optimization(): boolean {
+        return this.#optimization;
+    }
+
+    set optimization(value: boolean) {
+        this.#optimization = value;
     }
 
     get clients(): Array<Client> {
@@ -217,9 +227,9 @@ export class Neat {
     }
 
     #reproduce() {
-        const selector = new RandomSelector();
+        const selector = new RandomSelector(this.#SURVIVORS);
         for (let i = 0; i < this.#species.length; i += 1) {
-            selector.add(this.#species[i], this.#species[i].score);
+            selector.add(this.#species[i]);
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -265,7 +275,7 @@ export class Neat {
                 }
             }
             if (!found) {
-                this.#species.push(new Species(c));
+                this.#species.push(new Species(c, this.optimization));
             }
         }
         for (let i = 0; i < this.#species.length; i += 1) {

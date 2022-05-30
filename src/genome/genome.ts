@@ -92,21 +92,18 @@ export class Genome {
             const inn2: number = gene2.innovationNumber;
 
             if (inn1 > inn2) {
-                if ((Math.random() > 0.5 && gene2.enabled) || g1.connections.size() < g1.neat.CT) {
-                    genome.connections.add(Neat.getConnection(gene2));
-                }
                 indexG2++;
             } else if (inn1 < inn2) {
                 if (gene1.enabled || g1.connections.size() < g1.neat.CT) {
-                    genome.connections.add(Neat.getConnection(gene1));
+                    genome.connections.addSorted(Neat.getConnection(gene1));
                 }
                 indexG1++;
             } else {
                 if (gene1.enabled || gene2.enabled || g1.connections.size() < 20) {
                     if (Math.random() > 0.5) {
-                        genome.connections.add(Neat.getConnection(gene1));
+                        genome.connections.addSorted(Neat.getConnection(gene1));
                     } else {
-                        genome.connections.add(Neat.getConnection(gene2));
+                        genome.connections.addSorted(Neat.getConnection(gene2));
                     }
                 }
                 indexG1++;
@@ -118,7 +115,7 @@ export class Genome {
             if (!(gene1 instanceof ConnectionGene)) {
                 throw new Error('gene is not a ConnectionGene');
             }
-            genome.connections.add(Neat.getConnection(gene1));
+            genome.connections.addSorted(Neat.getConnection(gene1));
             indexG1++;
         }
         for (let i = 0; i < genome.connections.data.length; i++) {
@@ -208,13 +205,13 @@ export class Genome {
         if (!exists1) {
             con1.weight = 1;
             con2.weight = con.weight;
-            this.#connections.add(con1);
+            this.#connections.addSorted(con1);
         }
         if (!exists2) {
             con2.enabled = con.enabled;
-            this.#connections.add(con2);
+            this.#connections.addSorted(con2);
         }
-        if (!exists1 && !exists2) {
+        if (!exists1 || !exists2) {
             con.enabled = false;
         }
 

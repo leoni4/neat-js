@@ -5,8 +5,10 @@ export class Species {
     #clients: Array<Client> = [];
     #representative: Client;
     #score = 0;
+    #optimization = false;
 
-    constructor(client: Client) {
+    constructor(client: Client, optimization: boolean) {
+        this.#optimization = optimization;
         this.#representative = client;
         this.#representative.species = this;
         this.#clients.push(client);
@@ -59,17 +61,20 @@ export class Species {
     }
 
     kill(survivors = 0.5) {
-        let complexity = 0;
-        this.#clients.forEach(item => {
-            const allCons = item.genome.connections.size() + item.genome.nodes.size();
-            complexity = complexity < allCons ? allCons : complexity;
-        });
-        this.#clients.forEach(item => {
-            const allCons = item.genome.connections.size() + item.genome.nodes.size();
-            if (item.score > 0.95) {
-                item.score += (1 - (1 / complexity) * allCons) * 0.5;
-            }
-        });
+        if (this.#optimization) {
+            let complexity = 0;
+            this.#clients.forEach(item => {
+                const allCons = item.genome.connections.size() + item.genome.nodes.size();
+                complexity = complexity < allCons ? allCons : complexity;
+            });
+            this.#clients.forEach(item => {
+                const allCons = item.genome.connections.size() + item.genome.nodes.size();
+                if (item.score > 0.95) {
+                    item.score += Math.sqrt(complexity - allCons) / complexity;
+                }
+            });
+        }
+
         this.#clients.sort((a, b) => {
             return a.score > b.score ? -1 : 1;
         });

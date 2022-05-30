@@ -2,7 +2,7 @@ import { Client, Neat } from './neat';
 import { Frame } from './visual';
 
 (function main() {
-    const neat: Neat = new Neat(2, 1, 1000);
+    const neat: Neat = new Neat(2, 1, 100);
 
     const test = {
         input: [
@@ -44,6 +44,7 @@ import { Frame } from './visual';
         error = 1 - topScore;
         console.log('###################');
         neat.printSpecies();
+        neat.optimization = error < 0.05;
         console.log('-------');
         console.log('EPOCH:', k, '| error:', error);
         if (frame) {
