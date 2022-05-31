@@ -97,15 +97,20 @@ export class Genome {
                 addedCon = Neat.getConnection(gene1);
                 indexG1++;
             } else {
-                if (Math.random() > 0.3) {
-                    addedCon = Neat.getConnection(gene1);
-                } else {
-                    addedCon = Neat.getConnection(gene2);
+                if (gene1.enabled || gene2.enabled) {
+                    if (Math.random() > 0.4) {
+                        addedCon = Neat.getConnection(gene1);
+                    } else {
+                        addedCon = Neat.getConnection(gene2);
+                    }
                 }
                 indexG1++;
                 indexG2++;
             }
-            if (addedCon instanceof ConnectionGene && (Math.random() < 0.99 || g1.connections.size() < g1.neat.CT)) {
+            if (!(addedCon instanceof ConnectionGene)) {
+                continue;
+            }
+            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
                 genome.connections.addSorted(addedCon);
             }
         }
@@ -115,7 +120,7 @@ export class Genome {
                 throw new Error('gene is not a ConnectionGene');
             }
 
-            if (Math.random() > 0.99 || g1.connections.size() < g1.neat.CT) {
+            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
                 genome.connections.addSorted(Neat.getConnection(gene1));
             }
             indexG1++;

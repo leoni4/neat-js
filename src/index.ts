@@ -2,7 +2,7 @@ import { Client, Neat } from './neat';
 import { Frame } from './visual';
 
 (function main() {
-    const neat: Neat = new Neat(2, 1, 10);
+    const neat: Neat = new Neat(2, 1, 25);
 
     const test = {
         input: [
@@ -22,7 +22,7 @@ import { Frame } from './visual';
     }
     let k = 0;
     let error = 1;
-    const epochs = 10000;
+    const epochs = 1000000;
     setTimeout(function run() {
         //  console.time('run()');
         let topScore = 0;
@@ -42,24 +42,25 @@ import { Frame } from './visual';
             }
         }
         error = 1 - topScore;
-        console.log('###################');
-        neat.printSpecies();
-        neat.optimization = error < 0.05;
-        console.log('-------');
-        console.log('EPOCH:', k, '| error:', error);
+        // console.log('###################');
+        // neat.printSpecies();
+        // // neat.optimization = error < 0.05;
+        // console.log('-------');
+        // console.log('EPOCH:', k, '| error:', error);
         if (frame) {
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
             frame.client = topClient;
             frame.genome = topClient.genome;
         }
-        if (k > epochs || error < 0.0000000000000001) {
+        if (k > epochs || error < 0) {
             //   console.timeEnd('run()');
             console.log('Finished');
+            if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
             return;
         }
         k++;
         neat.evolve();
         // console.timeEnd('run()');
-        setTimeout(run, 1);
+        setTimeout(run, 100);
     }, 1);
 })();

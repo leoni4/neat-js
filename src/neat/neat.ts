@@ -15,20 +15,22 @@ export class Neat {
     #CP = 5;
     #CT = 1;
 
-    #WEIGHT_SHIFT_STRENGTH = 0.1;
+    #WEIGHT_SHIFT_STRENGTH = 1;
     #WEIGHT_RANDOM_STRENGTH = 10;
 
     #SURVIVORS = 0.8;
 
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.9;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 1;
+    #PROBABILITY_MUTATE_LINK = 0.3;
     #PROBABILITY_MUTATE_TOGGLE_LINK = 0.2;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.02;
-    #PROBABILITY_MUTATE_LINK = 0.2;
-    #PROBABILITY_MUTATE_NODES = 0.01;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
+    #PROBABILITY_MUTATE_NODES = 0.05;
 
     #inputNodes = 0;
     #outputNodes = 0;
     #maxClients = 0;
+
+    #evolveCounts = 0;
 
     #clients: Array<Client> = [];
     #species: Array<Species> = [];
@@ -122,7 +124,7 @@ export class Neat {
         this.#allNodes.clear();
         this.#clients = [];
 
-        this.CT = (inputNodes + outputNodes) * 2;
+        this.CT = (inputNodes + outputNodes) * 4;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -204,6 +206,11 @@ export class Neat {
     }
 
     evolve() {
+        this.#evolveCounts++;
+        if (this.#evolveCounts % 50 === 0) {
+            this.#optimization = true;
+        }
+        this.#setBestScore();
         this.#genSpecies();
         this.#kill();
         this.#removeExtinct();
@@ -251,14 +258,19 @@ export class Neat {
     }
 
     #kill() {
+        let complexity = 0;
+        this.#clients.forEach(item => {
+            const allCons = item.genome.nodes.size() + item.genome.connections.size();
+            complexity = complexity < allCons ? allCons : complexity;
+        });
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].kill(this.#SURVIVORS);
+            this.#species[i].kill(this.#SURVIVORS, complexity);
         }
     }
 
     #genSpecies() {
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].reset();
+            this.#species[i].reset(this.optimization);
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -275,11 +287,24 @@ export class Neat {
                 }
             }
             if (!found) {
-                this.#species.push(new Species(c, this.optimization));
+                this.#species.push(new Species(c));
             }
         }
         for (let i = 0; i < this.#species.length; i += 1) {
             this.#species[i].evaluateScore();
+        }
+    }
+    #setBestScore() {
+        let bestScore = 0;
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            this.#clients[i].bestScore = false;
+            bestScore = this.#clients[i].score > bestScore ? this.#clients[i].score : bestScore;
+        }
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            if (this.#clients[i].score === bestScore) {
+                this.#clients[i].bestScore = true;
+                return;
+            }
         }
     }
 }
