@@ -13,7 +13,7 @@ export class Frame {
     #text = '';
 
     #width = 800;
-    #height = 680;
+    #height = 650;
 
     constructor(client: Client) {
         this.#genome = client.genome;

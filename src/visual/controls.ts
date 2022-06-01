@@ -52,7 +52,7 @@ export class Controls {
             this.#frame.genome = this.#genome;
         });
         document.getElementById('m')?.addEventListener('click', () => {
-            this.#genome.mutate(true);
+            this.#genome.mutate();
             this.#frame.genome = this.#genome;
         });
         document.getElementById('toggle')?.addEventListener('click', () => {

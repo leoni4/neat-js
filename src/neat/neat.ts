@@ -8,22 +8,22 @@ export class Neat {
         return Math.pow(2, 20);
     }
 
-    #C1 = 2;
-    #C2 = 2;
-    #C3 = 1;
+    #C1 = 1;
+    #C2 = 1;
+    #C3 = 0.1;
 
-    #CP = 5;
+    #CP = 10;
     #CT = 1;
 
-    #WEIGHT_SHIFT_STRENGTH = 1;
+    #WEIGHT_SHIFT_STRENGTH = 5;
     #WEIGHT_RANDOM_STRENGTH = 10;
 
     #SURVIVORS = 0.8;
 
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 1;
-    #PROBABILITY_MUTATE_LINK = 0.3;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.2;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 4;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.5;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.2;
+    #PROBABILITY_MUTATE_LINK = 0.05;
     #PROBABILITY_MUTATE_NODES = 0.05;
 
     #inputNodes = 0;
@@ -124,7 +124,7 @@ export class Neat {
         this.#allNodes.clear();
         this.#clients = [];
 
-        this.CT = (inputNodes + outputNodes) * 4;
+        this.CT = (inputNodes + outputNodes) * 3;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -250,7 +250,7 @@ export class Neat {
 
     #removeExtinct() {
         for (let i = this.#species.length - 1; i >= 0; i--) {
-            if (this.#species[i].size() <= 1) {
+            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0].bestScore) {
                 this.#species[i].goExtinct();
                 this.#species.splice(i, 1);
             }

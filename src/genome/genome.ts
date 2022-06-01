@@ -262,21 +262,42 @@ export class Genome {
         return con;
     }
 
-    mutate(force = false) {
-        if (force || this.#connections.size() < this.#neat.CT || this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
-            this.mutateLink();
-        }
-        if (force || this.#neat.PROBABILITY_MUTATE_NODES > Math.random()) {
+    mutate() {
+        let prob: number;
+
+        prob = this.#neat.PROBABILITY_MUTATE_NODES;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateNode();
         }
-        if (force || this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK > Math.random()) {
+
+        prob = this.#neat.PROBABILITY_MUTATE_LINK;
+        prob = prob < this.#neat.CT ? this.#neat.CT : prob;
+        while (prob > Math.random()) {
+            prob--;
+            this.mutateLink();
+        }
+
+        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateLinkToggle();
         }
-        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT > Math.random()) {
-            this.mutateWeightShift();
-        }
-        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM > Math.random()) {
+
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateWeightRandom();
+        }
+
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
+            this.mutateWeightShift();
         }
     }
 }

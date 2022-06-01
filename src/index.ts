@@ -22,7 +22,7 @@ import { Frame } from './visual';
     }
     let k = 0;
     let error = 1;
-    const epochs = 1000000;
+    const epochs = 1000;
     setTimeout(function run() {
         //  console.time('run()');
         let topScore = 0;
@@ -42,11 +42,10 @@ import { Frame } from './visual';
             }
         }
         error = 1 - topScore;
-        // console.log('###################');
-        // neat.printSpecies();
-        // // neat.optimization = error < 0.05;
-        // console.log('-------');
-        // console.log('EPOCH:', k, '| error:', error);
+        console.log('###################');
+        neat.printSpecies();
+        console.log('-------');
+        console.log('EPOCH:', k, '| error:', error);
         if (frame) {
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
             frame.client = topClient;

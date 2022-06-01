@@ -61,10 +61,12 @@ export class Species {
     }
 
     kill(survivors = 0.5, complexity: number) {
-        if (this.#optimization && complexity) {
+        const cof = this.#optimization ? 1 : 0.5;
+
+        if (complexity) {
             this.#clients.forEach(item => {
                 const allCons = item.genome.nodes.size() + item.genome.connections.size();
-                item.score += Math.sqrt(complexity - allCons) / complexity;
+                item.score += (Math.sqrt(complexity - allCons) / complexity) * cof;
             });
         }
 
@@ -74,6 +76,9 @@ export class Species {
 
         const elems = survivors * this.#clients.length;
         for (let i = this.#clients.length - 1; i > elems; i -= 1) {
+            if (this.#clients[i].bestScore) {
+                continue;
+            }
             this.#clients[i].species = null;
             this.#clients.splice(i, 1);
         }
