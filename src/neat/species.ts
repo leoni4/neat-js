@@ -5,6 +5,7 @@ export class Species {
     #clients: Array<Client> = [];
     #representative: Client;
     #score = 0;
+    #optimization = false;
 
     constructor(client: Client) {
         this.#representative = client;
@@ -12,16 +13,12 @@ export class Species {
         this.#clients.push(client);
     }
 
-    get clients(): Array<Client> {
-        return this.#clients;
-    }
-
-    get representative(): Client {
-        return this.#representative;
-    }
-
     get score(): number {
         return this.#score;
+    }
+
+    get clients(): Array<Client> {
+        return this.#clients;
     }
 
     put(client: Client, force = false): boolean {
@@ -53,7 +50,8 @@ export class Species {
         return this.#clients[Math.floor(Math.random() * this.#clients.length)];
     }
 
-    reset() {
+    reset(optimization: boolean) {
+        this.#optimization = optimization;
         this.#representative = this.#getRandomClient();
         this.goExtinct();
         this.#clients = [];
@@ -62,21 +60,34 @@ export class Species {
         this.#score = 0;
     }
 
-    kill(percentage = 0.1) {
+    kill(survivors = 0.5, complexity: number) {
+        const cof = this.#optimization ? 1 : 0.5;
+
+        if (complexity) {
+            this.#clients.forEach(item => {
+                const allCons = item.genome.nodes.size() + item.genome.connections.size();
+                item.score += (Math.sqrt(complexity - allCons) / complexity) * cof;
+            });
+        }
+
         this.#clients.sort((a, b) => {
-            return a.score > b.score ? 1 : -1;
+            return a.score > b.score ? -1 : 1;
         });
-        const elems = percentage * this.#clients.length;
-        for (let i = 0; i < elems; i += 1) {
-            this.#clients[0].species = null;
-            this.#clients.splice(0, 1);
+
+        const elems = survivors * this.#clients.length;
+        for (let i = this.#clients.length - 1; i > elems; i -= 1) {
+            if (this.#clients[i].bestScore) {
+                continue;
+            }
+            this.#clients[i].species = null;
+            this.#clients.splice(i, 1);
         }
     }
 
     breed(): Genome {
         const c1 = this.#getRandomClient();
         const c2 = this.#getRandomClient();
-        if (c1.score > c2.score) {
+        if (c1.score >= c2.score) {
             return Genome.crossOver(c1.genome, c2.genome);
         } else {
             return Genome.crossOver(c2.genome, c1.genome);

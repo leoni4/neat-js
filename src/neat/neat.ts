@@ -1,6 +1,5 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome';
 import { RandomHashSet, RandomSelector } from '../dataStructures';
-import { Frame } from '../visual';
 import { Client } from './client';
 import { Species } from './species';
 
@@ -11,24 +10,27 @@ export class Neat {
 
     #C1 = 1;
     #C2 = 1;
-    #C3 = 1;
+    #C3 = 0.1;
 
-    #CP = 4;
+    #CP = 10;
+    #CT = 1;
 
-    #WEIGHT_SHIFT_STRENGTH = 0.3;
-    #WEIGHT_RANDOM_STRENGTH = 1;
+    #WEIGHT_SHIFT_STRENGTH = 5;
+    #WEIGHT_RANDOM_STRENGTH = 10;
 
-    #SURVIVORS = 0.9;
+    #SURVIVORS = 0.8;
 
-    #PROBABILITY_MUTATE_LINK = 0.1;
-    #PROBABILITY_MUTATE_NODES = 0.1;
-    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 0.1;
-    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.1;
-    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.1;
+    #PROBABILITY_MUTATE_WEIGHT_SHIFT = 4;
+    #PROBABILITY_MUTATE_TOGGLE_LINK = 0.5;
+    #PROBABILITY_MUTATE_WEIGHT_RANDOM = 0.2;
+    #PROBABILITY_MUTATE_LINK = 0.05;
+    #PROBABILITY_MUTATE_NODES = 0.05;
 
     #inputNodes = 0;
     #outputNodes = 0;
     #maxClients = 0;
+
+    #evolveCounts = 0;
 
     #clients: Array<Client> = [];
     #species: Array<Species> = [];
@@ -36,8 +38,22 @@ export class Neat {
     #allConnections: Map<string, ConnectionGene> = new Map<string, ConnectionGene>();
     #allNodes: RandomHashSet = new RandomHashSet();
 
+    #optimization = false;
+
     constructor(inputNodes: number, outputNodes: number, clients: number) {
         this.reset(inputNodes, outputNodes, clients);
+    }
+
+    get optimization(): boolean {
+        return this.#optimization;
+    }
+
+    set optimization(value: boolean) {
+        this.#optimization = value;
+    }
+
+    get clients(): Array<Client> {
+        return this.#clients;
     }
 
     get allConnections(): Map<string, ConnectionGene> {
@@ -75,6 +91,14 @@ export class Neat {
         return this.#PROBABILITY_MUTATE_TOGGLE_LINK;
     }
 
+    set CT(value: number) {
+        this.#CT = value;
+    }
+
+    get CT(): number {
+        return this.#CT;
+    }
+
     get CP(): number {
         return this.#CP;
     }
@@ -82,9 +106,11 @@ export class Neat {
     get C1(): number {
         return this.#C1;
     }
+
     get C2(): number {
         return this.#C2;
     }
+
     get C3(): number {
         return this.#C3;
     }
@@ -97,6 +123,8 @@ export class Neat {
         this.#allConnections.clear();
         this.#allNodes.clear();
         this.#clients = [];
+
+        this.CT = (inputNodes + outputNodes) * 3;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -178,6 +206,11 @@ export class Neat {
     }
 
     evolve() {
+        this.#evolveCounts++;
+        if (this.#evolveCounts % 50 === 0) {
+            this.#optimization = true;
+        }
+        this.#setBestScore();
         this.#genSpecies();
         this.#kill();
         this.#removeExtinct();
@@ -189,7 +222,6 @@ export class Neat {
     }
 
     printSpecies() {
-        console.log('###################');
         for (let i = 0; i < this.#species.length; i += 1) {
             console.log(this.#species[i].score, this.#species[i].size());
         }
@@ -202,9 +234,9 @@ export class Neat {
     }
 
     #reproduce() {
-        const selector = new RandomSelector();
+        const selector = new RandomSelector(this.#SURVIVORS);
         for (let i = 0; i < this.#species.length; i += 1) {
-            selector.add(this.#species[i], this.#species[i].score);
+            selector.add(this.#species[i]);
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -218,7 +250,7 @@ export class Neat {
 
     #removeExtinct() {
         for (let i = this.#species.length - 1; i >= 0; i--) {
-            if (this.#species[i].size() <= 1) {
+            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0].bestScore) {
                 this.#species[i].goExtinct();
                 this.#species.splice(i, 1);
             }
@@ -226,14 +258,19 @@ export class Neat {
     }
 
     #kill() {
+        let complexity = 0;
+        this.#clients.forEach(item => {
+            const allCons = item.genome.nodes.size() + item.genome.connections.size();
+            complexity = complexity < allCons ? allCons : complexity;
+        });
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].kill(1 - this.#SURVIVORS);
+            this.#species[i].kill(this.#SURVIVORS, complexity);
         }
     }
 
     #genSpecies() {
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].reset();
+            this.#species[i].reset(this.optimization);
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -257,48 +294,17 @@ export class Neat {
             this.#species[i].evaluateScore();
         }
     }
-
-    static main() {
-        const neat: Neat = new Neat(2, 1, 1000);
-
-        const test = {
-            input: [
-                [0, 0],
-                [1, 0],
-                [1, 1],
-                [0, 1],
-            ],
-            output: [0, 1, 0, 1],
-        };
-
-        let frame: Frame | null = null;
-        if (typeof document !== 'undefined') {
-            console.log('Create frame');
-            frame = new Frame(neat.#clients[0].genome);
+    #setBestScore() {
+        let bestScore = 0;
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            this.#clients[i].bestScore = false;
+            bestScore = this.#clients[i].score > bestScore ? this.#clients[i].score : bestScore;
         }
-        let k = 0;
-        const epochs = 1000;
-        setTimeout(function run() {
-            if (k > epochs) {
+        for (let i = 0; i < this.#clients.length; i += 1) {
+            if (this.#clients[i].score === bestScore) {
+                this.#clients[i].bestScore = true;
                 return;
             }
-            k++;
-            for (let i = 0; i < neat.#clients.length; i += 1) {
-                const c = neat.#clients[i];
-                c.score += 1 - Math.abs(c.calculate(test.input[0])[0] - test.output[0]);
-                c.score += 1 - Math.abs(c.calculate(test.input[1])[0] - test.output[1]);
-                c.score += 1 - Math.abs(c.calculate(test.input[2])[0] - test.output[2]);
-                c.score += 1 - Math.abs(c.calculate(test.input[3])[0] - test.output[3]);
-                c.score /= 4;
-            }
-            neat.evolve();
-            console.log('EPOCH:', k, '| error:', 1 - neat.#species[0].score);
-            // neat.printSpecies();
-            if (frame) {
-                frame.client = neat.#clients[0];
-                frame.genome = neat.#clients[0].genome;
-            }
-            setTimeout(run, 1);
-        }, 1);
+        }
     }
 }

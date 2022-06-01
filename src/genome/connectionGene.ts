@@ -57,7 +57,7 @@ export class ConnectionGene extends Gene {
     }
 
     getHashKey(): string {
-        return `${this.from.innovationNumber}-${this.to.innovationNumber}`;
+        return `${this.from.innovationNumber}-${this.from.x}-${this.to.innovationNumber}-${this.to.x}`;
     }
 
     equals(obj: unknown): boolean {

@@ -71,7 +71,7 @@ export class Genome {
 
         const excess = g1.connections.size() - indexG1;
         let N = Math.max(g1.connections.size(), g2.connections.size());
-        N = N < 20 ? 1 : N;
+        N = N < this.#neat.CT ? 1 : N;
 
         return (this.#neat.C1 * excess) / N + (this.#neat.C2 * disjoint) / N + this.#neat.C3 * weightDiff;
     }
@@ -90,20 +90,28 @@ export class Genome {
             }
             const inn1: number = gene1.innovationNumber;
             const inn2: number = gene2.innovationNumber;
-
+            let addedCon: ConnectionGene | null = null;
             if (inn1 > inn2) {
                 indexG2++;
             } else if (inn1 < inn2) {
-                genome.connections.add(Neat.getConnection(gene1));
+                addedCon = Neat.getConnection(gene1);
                 indexG1++;
             } else {
-                if (Math.random() > 0.5) {
-                    genome.connections.add(Neat.getConnection(gene1));
-                } else {
-                    genome.connections.add(Neat.getConnection(gene2));
+                if (gene1.enabled || gene2.enabled) {
+                    if (Math.random() > 0.4) {
+                        addedCon = Neat.getConnection(gene1);
+                    } else {
+                        addedCon = Neat.getConnection(gene2);
+                    }
                 }
                 indexG1++;
                 indexG2++;
+            }
+            if (!(addedCon instanceof ConnectionGene)) {
+                continue;
+            }
+            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
+                genome.connections.addSorted(addedCon);
             }
         }
         while (indexG1 < g1.connections.size()) {
@@ -111,7 +119,10 @@ export class Genome {
             if (!(gene1 instanceof ConnectionGene)) {
                 throw new Error('gene is not a ConnectionGene');
             }
-            genome.connections.add(Neat.getConnection(gene1));
+
+            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
+                genome.connections.addSorted(Neat.getConnection(gene1));
+            }
             indexG1++;
         }
         for (let i = 0; i < genome.connections.data.length; i++) {
@@ -127,33 +138,42 @@ export class Genome {
     }
 
     mutateLink(): ConnectionGene | null {
-        for (let i = 0; i < 100; i++) {
-            const geneA = this.#nodes.randomElement();
-            const geneB = this.#nodes.randomElement();
+        let geneA = this.#nodes.randomElement();
+        let geneB = this.#nodes.randomElement();
 
-            if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
-                continue;
-            }
-            if (geneA.x === geneB.x) {
-                continue;
-            }
-
-            let con: ConnectionGene;
-            if (geneA.x < geneB.x) {
-                con = new ConnectionGene(0, geneA, geneB);
-            } else {
-                con = new ConnectionGene(0, geneB, geneA);
-            }
-            if (this.#connections.contains(con)) {
-                continue;
-            }
-            con = this.#neat.getConnection(con.from, con.to);
-            con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
-
-            this.#connections.addSorted(con);
-            return con;
+        if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
+            return null;
         }
-        return null;
+
+        while (geneB instanceof NodeGene && geneA.x === geneB.x) {
+            geneB = this.#nodes.randomElement();
+        }
+
+        if (!(geneB instanceof NodeGene)) {
+            return null;
+        }
+
+        if (geneA.x > geneB.x) {
+            const temp = geneA;
+            geneA = geneB;
+            geneB = temp;
+        }
+        let exists = false;
+        this.#connections.data.forEach(item => {
+            if (item instanceof NodeGene) return;
+            if (item.from === geneA && item.to === geneB) {
+                exists = true;
+            }
+        });
+        if (exists) {
+            return null;
+        }
+
+        const con: ConnectionGene = this.#neat.getConnection(geneA, geneB);
+        con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+
+        this.#connections.addSorted(con);
+        return con;
     }
 
     mutateNode(): NodeGene | null {
@@ -178,14 +198,29 @@ export class Genome {
 
         const con1: ConnectionGene = this.#neat.getConnection(from, middle);
         const con2: ConnectionGene = this.#neat.getConnection(middle, to);
-
-        con1.weight = 1;
-        con2.weight = con.weight;
-        con2.enabled = con.enabled;
-
-        this.#connections.remove(con);
-        this.#connections.add(con1);
-        this.#connections.add(con2);
+        let exists1 = false;
+        let exists2 = false;
+        this.#connections.data.forEach(item => {
+            if (item instanceof NodeGene) return;
+            if (item.from === from && item.to === middle) {
+                exists1 = true;
+            }
+            if (item.from === middle && item.to === to) {
+                exists2 = true;
+            }
+        });
+        if (!exists1) {
+            con1.weight = 1;
+            con2.weight = con.weight;
+            this.#connections.addSorted(con1);
+        }
+        if (!exists2) {
+            con2.enabled = con.enabled;
+            this.#connections.addSorted(con2);
+        }
+        if (!exists1 || !exists2) {
+            con.enabled = false;
+        }
 
         this.#nodes.add(middle);
         return middle;
@@ -210,9 +245,9 @@ export class Genome {
             return null;
         }
 
-        let newWeight = con.weight;
+        let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
         }
         con.weight = newWeight;
         return con;
@@ -227,21 +262,42 @@ export class Genome {
         return con;
     }
 
-    mutate(force = false) {
-        if (force || this.#neat.PROBABILITY_MUTATE_LINK > Math.random()) {
-            this.mutateLink();
-        }
-        if (force || this.#neat.PROBABILITY_MUTATE_NODES > Math.random()) {
+    mutate() {
+        let prob: number;
+
+        prob = this.#neat.PROBABILITY_MUTATE_NODES;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateNode();
         }
-        if (force || this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK > Math.random()) {
+
+        prob = this.#neat.PROBABILITY_MUTATE_LINK;
+        prob = prob < this.#neat.CT ? this.#neat.CT : prob;
+        while (prob > Math.random()) {
+            prob--;
+            this.mutateLink();
+        }
+
+        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateLinkToggle();
         }
-        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT > Math.random()) {
-            this.mutateWeightShift();
-        }
-        if (force || this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM > Math.random()) {
+
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
             this.mutateWeightRandom();
+        }
+
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT;
+        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        while (prob > Math.random()) {
+            prob--;
+            this.mutateWeightShift();
         }
     }
 }
