@@ -1,39 +1,42 @@
 import { RandomSelector } from '../../src/dataStructures';
+import { Neat, Species, Client } from '../../src/neat';
+import { Genome } from '../../src/genome';
 
 describe('dataStructures/RandomSelector test', () => {
-    const testObj = { test: 1 },
-        testScore = 100;
+    const testNeat = new Neat(2, 1, 1);
+    const testGenome = new Genome(testNeat);
+    const testClient = new Client(testGenome);
+    testClient.score = 100;
+    const testSpecies = new Species(testClient);
+    testSpecies.evaluateScore(false);
     let mySelector: RandomSelector;
     beforeEach(() => {
-        mySelector = new RandomSelector();
-    });
-
-    it('creates empty selector', () => {
-        expect(mySelector.getScores().length).toBe(0);
-        expect(mySelector.getObjects().length).toBe(0);
-        expect(mySelector.getTotalScore()).toBe(0);
+        mySelector = new RandomSelector(0.8);
     });
 
     it('add score item', () => {
-        mySelector.add(testObj, testScore);
-        expect(mySelector.getScores().length).toBe(1);
-        expect(mySelector.getObjects().length).toBe(1);
-        expect(mySelector.getTotalScore()).toBe(testScore);
-        mySelector.add(testObj, testScore);
-        expect(mySelector.getScores().length).toBe(2);
-        expect(mySelector.getObjects().length).toBe(2);
-        expect(mySelector.getTotalScore()).toBe(testScore * 2);
+        mySelector.add(testSpecies);
+        expect(mySelector.objects.length).toBe(1);
+        expect(mySelector.objects.length).toBe(1);
+        expect(mySelector.totalScore).toBe(testClient.score);
+        mySelector.add(testSpecies);
+        expect(mySelector.objects.length).toBe(2);
+        expect(mySelector.objects.length).toBe(2);
+        expect(mySelector.totalScore).toBe(testClient.score * 2);
     });
 
     it('returns random score item', () => {
-        expect(mySelector.random()).toBe(null);
-        mySelector.add(testObj, testScore);
-        expect(mySelector.random()).toBe(testObj);
+        const errorTest = () => {
+            mySelector.random();
+        };
+        expect(errorTest).toThrow('random Species not found');
+        mySelector.add(testSpecies);
+        expect(mySelector.random()).toBe(testSpecies);
     });
 
     it('resets all set', () => {
-        mySelector.add(testObj, testScore);
+        mySelector.add(testSpecies);
         mySelector.reset();
-        expect(mySelector.getTotalScore()).toBe(0);
+        expect(mySelector.totalScore).toBe(0);
     });
 });

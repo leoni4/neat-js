@@ -56,17 +56,6 @@ describe('Genome test', () => {
         expect(link?.enabled).toBe(false);
     });
 
-    it('mutates all', () => {
-        expect(genome.connections.size()).toBe(0);
-        expect(genome.nodes.size()).toBe(3);
-        genome.mutate(true);
-        expect(genome.connections.size()).toBe(2);
-        expect(genome.nodes.size()).toBe(4);
-        genome.mutate(true);
-        expect(genome.connections.size()).toBe(4);
-        expect(genome.nodes.size()).toBe(5);
-    });
-
     it('distance', () => {
         const genome2 = neat.emptyGenome();
         expect(genome.distance(genome2)).toBe(0);

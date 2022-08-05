@@ -38,7 +38,7 @@ export class Species {
         this.#clients = [];
     }
 
-    evaluateScore(optimization: boolean) {
+    evaluateScore(optimization = false) {
         this.#optimization = optimization;
         let value = 0;
         for (let i = 0; i < this.#clients.length; i += 1) {

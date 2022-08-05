@@ -1,7 +1,7 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome';
 import Konva from 'konva';
 import { Controls } from './controls';
-import { Client, Neat } from '../neat';
+import { Client } from '../neat';
 
 export class Frame {
     #genome: Genome;

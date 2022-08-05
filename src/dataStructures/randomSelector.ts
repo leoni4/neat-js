@@ -9,6 +9,14 @@ export class RandomSelector {
         this.#survivors = survivors;
     }
 
+    get objects(): Array<Species> {
+        return this.#objects;
+    }
+
+    get totalScore(): number {
+        return this.#totalScore;
+    }
+
     add(object: Species) {
         this.#objects.push(object);
         this.#totalScore += object.score;
