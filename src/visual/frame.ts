@@ -25,7 +25,6 @@ export class Frame {
             height: this.#height,
         });
         this.#layer = new Konva.Layer();
-        this.#init();
     }
 
     get text(): string {
@@ -63,16 +62,10 @@ export class Frame {
         this.#controls.client = value;
     }
 
-    #init() {
-        this.#stage.add(this.#layer);
-        this.#layer.draw();
-        // setInterval(() => {
-        //     this.#renderGenome();
-        // }, 1);
-    }
-
     #renderGenome() {
-        this.#layer.removeChildren();
+        this.#stage.destroyChildren();
+        this.#layer = new Konva.Layer();
+        this.#stage.add(this.#layer);
 
         let radius = this.#height / this.#genome.nodes.size() / 20;
         radius =
@@ -153,5 +146,6 @@ export class Frame {
         this.#layer.add(summary);
         this.#layer.add(constText);
         this.#layer.add(gensText);
+        this.#layer.draw();
     }
 }

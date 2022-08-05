@@ -7,9 +7,20 @@ export class Genome {
     #connections: RandomHashSet = new RandomHashSet();
     #nodes: RandomHashSet = new RandomHashSet();
     #neat: Neat;
+    #optErrTrashhold: number;
+    #selfOpt = false;
 
     constructor(neat: Neat) {
         this.#neat = neat;
+        this.#optErrTrashhold = neat.OPT_ERR_TRASHHOLD;
+    }
+
+    get selfOpt(): boolean {
+        return this.#selfOpt;
+    }
+
+    get optErrTrashhold(): number {
+        return this.#optErrTrashhold;
     }
 
     get connections(): RandomHashSet {
@@ -94,10 +105,12 @@ export class Genome {
             if (inn1 > inn2) {
                 indexG2++;
             } else if (inn1 < inn2) {
-                addedCon = Neat.getConnection(gene1);
+                if (!g1.selfOpt || !genome.neat.optimization || gene1.enabled) {
+                    addedCon = Neat.getConnection(gene1);
+                }
                 indexG1++;
             } else {
-                if (gene1.enabled || gene2.enabled) {
+                if ((!g1.selfOpt && !g2.selfOpt) || !genome.neat.optimization || (gene1.enabled && gene2.enabled)) {
                     if (Math.random() > 0.4) {
                         addedCon = Neat.getConnection(gene1);
                     } else {
@@ -110,9 +123,7 @@ export class Genome {
             if (!(addedCon instanceof ConnectionGene)) {
                 continue;
             }
-            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
-                genome.connections.addSorted(addedCon);
-            }
+            genome.connections.addSorted(addedCon);
         }
         while (indexG1 < g1.connections.size()) {
             const gene1 = g1.connections.get(indexG1);
@@ -120,7 +131,7 @@ export class Genome {
                 throw new Error('gene is not a ConnectionGene');
             }
 
-            if (!g1.neat.optimization || Math.random() < 0.99 || g1.nodes.size() < g1.neat.CT) {
+            if (!g1.neat.optimization || gene1.enabled) {
                 genome.connections.addSorted(Neat.getConnection(gene1));
             }
             indexG1++;
@@ -258,29 +269,50 @@ export class Genome {
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
-        con.enabled = !con.enabled;
+        if (!this.#selfOpt || con.enabled) {
+            con.enabled = !con.enabled;
+        }
         return con;
     }
 
-    mutate() {
-        let prob: number;
-
-        prob = this.#neat.PROBABILITY_MUTATE_NODES;
-        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
-        while (prob > Math.random()) {
-            prob--;
-            this.mutateNode();
+    #optimization() {
+        let maxWeight = 0;
+        for (let i = 0; i < this.#connections.size(); i += 1) {
+            const c = this.#connections.get(i);
+            if (!(c instanceof ConnectionGene)) continue;
+            if (!c.enabled) {
+                this.#connections.remove(i);
+                i--;
+                continue;
+            }
+            maxWeight = c.weight > maxWeight ? c.weight : maxWeight;
         }
+    }
 
-        prob = this.#neat.PROBABILITY_MUTATE_LINK;
-        prob = prob < this.#neat.CT ? this.#neat.CT : prob;
-        while (prob > Math.random()) {
-            prob--;
-            this.mutateLink();
+    mutate(selfOpt = false) {
+        this.#selfOpt = selfOpt;
+
+        if (this.#selfOpt || this.#neat.optimization) {
+            this.#optimization();
+        }
+        let prob: number;
+        if (!selfOpt || !this.#neat.optimization || this.#connections.size() < this.#neat.CT) {
+            prob = this.#neat.PROBABILITY_MUTATE_NODES;
+            prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+            while (prob > Math.random()) {
+                prob--;
+                this.mutateNode();
+            }
+
+            prob = this.#neat.PROBABILITY_MUTATE_LINK;
+            prob = prob < this.#neat.CT ? this.#neat.CT : prob;
+            while (prob > Math.random()) {
+                prob--;
+                this.mutateLink();
+            }
         }
 
         prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
-        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
         while (prob > Math.random()) {
             prob--;
             this.mutateLinkToggle();

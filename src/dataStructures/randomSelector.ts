@@ -18,10 +18,10 @@ export class RandomSelector {
     }
 
     random(): Species {
-        const randomScore = Math.random() * this.#totalScore * this.#survivors;
+        const randomScore = Math.abs(Math.random() * this.#totalScore * this.#survivors);
         let scoreIndex = 0;
         for (let i = 0; i < this.#objects.length; i++) {
-            scoreIndex += this.#objects[i].score;
+            scoreIndex += Math.abs(this.#objects[i].score);
             if (scoreIndex >= randomScore) {
                 return this.#objects[i];
             }

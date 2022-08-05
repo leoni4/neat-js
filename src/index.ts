@@ -1,1 +1,1 @@
-export * from './neat';
+export { Neat } from './neat';

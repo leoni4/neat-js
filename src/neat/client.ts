@@ -5,6 +5,7 @@ import { Calculator } from '../calculations';
 export class Client {
     #genome: Genome;
     #score = 0;
+    #error = 0;
     #bestScore = false;
     #species: Species | null;
     #calculator: Calculator | null;
@@ -29,6 +30,14 @@ export class Client {
 
     set genome(value: Genome) {
         this.#genome = value;
+    }
+
+    get error(): number {
+        return this.#error;
+    }
+
+    set error(value: number) {
+        this.#error = value;
     }
 
     get score(): number {
@@ -59,7 +68,7 @@ export class Client {
         if (this.bestScore) {
             return;
         }
-        this.genome.mutate();
+        this.genome.mutate(this.error < this.genome.optErrTrashhold);
     }
 
     calculate(input: Array<number>): Array<number> {

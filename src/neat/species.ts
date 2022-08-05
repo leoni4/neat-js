@@ -35,9 +35,11 @@ export class Species {
             const c = this.#clients[i];
             c.species = null;
         }
+        this.#clients = [];
     }
 
-    evaluateScore() {
+    evaluateScore(optimization: boolean) {
+        this.#optimization = optimization;
         let value = 0;
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -50,26 +52,15 @@ export class Species {
         return this.#clients[Math.floor(Math.random() * this.#clients.length)];
     }
 
-    reset(optimization: boolean) {
-        this.#optimization = optimization;
+    reset() {
         this.#representative = this.#getRandomClient();
         this.goExtinct();
-        this.#clients = [];
         this.#clients.push(this.#representative);
         this.#representative.species = this;
         this.#score = 0;
     }
 
-    kill(survivors = 0.5, complexity: number) {
-        const cof = this.#optimization ? 1 : 0.5;
-
-        if (complexity) {
-            this.#clients.forEach(item => {
-                const allCons = item.genome.nodes.size() + item.genome.connections.size();
-                item.score += (Math.sqrt(complexity - allCons) / complexity) * cof;
-            });
-        }
-
+    kill(survivors = 0.5) {
         this.#clients.sort((a, b) => {
             return a.score > b.score ? -1 : 1;
         });

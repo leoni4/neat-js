@@ -5,7 +5,7 @@ export * from './frame';
 export * from './controls';
 
 export function main() {
-    const neat: Neat = new Neat(2, 1, 100);
+    const neat: Neat = new Neat(2, 1, 25);
 
     const test = {
         input: [
@@ -25,7 +25,7 @@ export function main() {
     }
     let k = 0;
     let error = 1;
-    const epochs = 1000;
+    const epochs = Infinity;
     setTimeout(function run() {
         //  console.time('run()');
         let topScore = 0;
@@ -38,17 +38,27 @@ export function main() {
                 const out = c.calculate(inp)[0];
                 localError += Math.abs(out - test.output[i]);
             });
-            c.score = 1 - localError / 4;
+            c.error = localError / 4;
+            c.score = 1 - c.error;
             if (c.score > topScore) {
                 topScore = c.score;
                 topClient = c;
             }
         }
         error = 1 - topScore;
-        // console.log('###################');
-        // neat.printSpecies();
-        // console.log('-------');
-        // console.log('EPOCH:', k, '| error:', error);
+        if (k % 100 === 0) {
+            console.log('###################');
+            neat.printSpecies();
+            console.log('-------');
+            console.log(
+                'EPOCH:',
+                k,
+                '| comp:',
+                topClient.genome.connections.size() + topClient.genome.nodes.size(),
+                '| err:',
+                error
+            );
+        }
         if (frame) {
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
             frame.client = topClient;
@@ -61,8 +71,8 @@ export function main() {
             return;
         }
         k++;
-        neat.evolve();
+        neat.evolve(error < 0.0005);
         // console.timeEnd('run()');
-        setTimeout(run, 100);
+        setTimeout(run, 1);
     }, 1);
 }

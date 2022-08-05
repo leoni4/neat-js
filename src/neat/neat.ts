@@ -26,6 +26,8 @@ export class Neat {
     #PROBABILITY_MUTATE_LINK = 0.05;
     #PROBABILITY_MUTATE_NODES = 0.05;
 
+    #OPT_ERR_TRASHHOLD = 0.005;
+
     #inputNodes = 0;
     #outputNodes = 0;
     #maxClients = 0;
@@ -44,12 +46,12 @@ export class Neat {
         this.reset(inputNodes, outputNodes, clients);
     }
 
-    get optimization(): boolean {
-        return this.#optimization;
+    get OPT_ERR_TRASHHOLD(): number {
+        return this.#OPT_ERR_TRASHHOLD;
     }
 
-    set optimization(value: boolean) {
-        this.#optimization = value;
+    get optimization(): boolean {
+        return this.#optimization;
     }
 
     get clients(): Array<Client> {
@@ -205,12 +207,16 @@ export class Neat {
         return nodeGene;
     }
 
-    evolve() {
-        this.#evolveCounts++;
-        if (this.#evolveCounts % 50 === 0) {
-            this.#optimization = true;
+    printSpecies() {
+        for (let i = 0; i < this.#species.length; i += 1) {
+            console.log(this.#species[i].score, this.#species[i].size());
         }
-        this.#setBestScore();
+    }
+
+    evolve(optimization = false) {
+        this.#evolveCounts++;
+        this.#optimization = optimization || this.#evolveCounts % 50 === 0;
+        this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
         this.#removeExtinct();
@@ -218,12 +224,6 @@ export class Neat {
         this.#mutate();
         for (let i = 0; i < this.#clients.length; i += 1) {
             this.#clients[i].generateCalculator();
-        }
-    }
-
-    printSpecies() {
-        for (let i = 0; i < this.#species.length; i += 1) {
-            console.log(this.#species[i].score, this.#species[i].size());
         }
     }
 
@@ -246,6 +246,7 @@ export class Neat {
                 s.put(c, true);
             }
         }
+        selector.reset();
     }
 
     #removeExtinct() {
@@ -258,19 +259,14 @@ export class Neat {
     }
 
     #kill() {
-        let complexity = 0;
-        this.#clients.forEach(item => {
-            const allCons = item.genome.nodes.size() + item.genome.connections.size();
-            complexity = complexity < allCons ? allCons : complexity;
-        });
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].kill(this.#SURVIVORS, complexity);
+            this.#species[i].kill(this.#SURVIVORS);
         }
     }
 
     #genSpecies() {
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].reset(this.optimization);
+            this.#species[i].reset();
         }
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];
@@ -291,20 +287,46 @@ export class Neat {
             }
         }
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].evaluateScore();
+            this.#species[i].evaluateScore(this.optimization);
         }
     }
-    #setBestScore() {
-        let bestScore = 0;
+
+    #normalizeScore() {
+        let maxScore = 0;
+        const bestScoreSet = [];
+        let minScore = Infinity;
+
         for (let i = 0; i < this.#clients.length; i += 1) {
-            this.#clients[i].bestScore = false;
-            bestScore = this.#clients[i].score > bestScore ? this.#clients[i].score : bestScore;
+            const item = this.#clients[i];
+            item.bestScore = false;
+            maxScore = item.score > maxScore ? item.score : maxScore;
+            minScore = item.score < minScore ? item.score : minScore;
         }
+
         for (let i = 0; i < this.#clients.length; i += 1) {
-            if (this.#clients[i].score === bestScore) {
-                this.#clients[i].bestScore = true;
-                return;
+            const item = this.#clients[i];
+            if (item.score === maxScore) {
+                bestScoreSet.push(i);
+                item.bestScore = true;
+                item.score = 1;
+            } else if (item.score === minScore) {
+                item.score = 0;
+            } else {
+                item.score = (item.score - minScore) / (maxScore - minScore);
             }
         }
+
+        if (bestScoreSet.length > 1) {
+            bestScoreSet.forEach(i => {
+                this.#clients[i].bestScore = false;
+            });
+        }
+
+        const cof = this.#optimization ? 0.1 : 0.0001;
+
+        this.#clients.forEach(item => {
+            const allCons = item.genome.connections.size();
+            item.score -= Math.sqrt(Math.sqrt(allCons)) * cof;
+        });
     }
 }
