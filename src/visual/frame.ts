@@ -15,12 +15,12 @@ export class Frame {
     #width = 800;
     #height = 650;
 
-    constructor(client: Client) {
+    constructor(client: Client, containerId: string) {
         this.#genome = client.genome;
         this.#client = new Client(client.genome);
         this.#controls = new Controls(client.genome, this);
         this.#stage = new Konva.Stage({
-            container: 'container',
+            container: containerId,
             width: this.#width,
             height: this.#height,
         });
