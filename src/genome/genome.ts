@@ -296,19 +296,21 @@ export class Genome {
             this.#optimization();
         }
         let prob: number;
-        if (!selfOpt || !this.#neat.optimization || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_NODES;
-            prob = prob > this.#connections.size() ? this.#connections.size() : prob;
-            while (prob > Math.random()) {
-                prob--;
-                this.mutateNode();
-            }
 
+        if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
             prob = this.#neat.PROBABILITY_MUTATE_LINK;
             prob = prob < this.#neat.CT ? this.#neat.CT : prob;
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
+            }
+
+            prob = this.#neat.PROBABILITY_MUTATE_NODES;
+            prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT / 2 : prob;
+            prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+            while (prob > Math.random()) {
+                prob--;
+                this.mutateNode();
             }
         }
 

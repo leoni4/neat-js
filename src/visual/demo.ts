@@ -2,7 +2,7 @@ import { Client, Neat } from '../neat';
 import { Frame } from './frame';
 
 export function main() {
-    const neat: Neat = new Neat(2, 1, 100);
+    const neat: Neat = new Neat(2, 1, 25);
 
     const test = {
         input: [
@@ -30,8 +30,10 @@ export function main() {
         let topScore = 0;
         let topClient: Client = neat.clients[0];
         let localError = 0;
+        let complexity = 0;
         for (let i = 0; i < neat.clients.length; i += 1) {
             const c = neat.clients[i];
+            complexity += c.genome.connections.size() + c.genome.nodes.size();
             localError = 0;
             test.input.forEach((inp, i) => {
                 const out = c.calculate(inp)[0];
@@ -45,18 +47,11 @@ export function main() {
             }
         }
         error = 1 - topScore;
-        if (k % 100 === 0) {
+        if (k % 100 === 0 || k > epochs || error === 0) {
             console.log('###################');
             neat.printSpecies();
             console.log('-------');
-            console.log(
-                'EPOCH:',
-                k,
-                '| comp:',
-                topClient.genome.connections.size() + topClient.genome.nodes.size(),
-                '| err:',
-                error
-            );
+            console.log('EPOCH:', k, '| comp:', complexity, '| err:', error);
         }
         if (frame) {
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
@@ -64,7 +59,7 @@ export function main() {
             frame.genome = topClient.genome;
         }
         if (k > epochs || error === 0) {
-            //   console.timeEnd('run()');
+            console.log('###################');
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
             return;

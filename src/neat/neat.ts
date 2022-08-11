@@ -215,7 +215,7 @@ export class Neat {
 
     evolve(optimization = false) {
         this.#evolveCounts++;
-        this.#optimization = optimization || this.#evolveCounts % 50 === 0;
+        this.#optimization = optimization || this.#evolveCounts % 10 === 0;
         this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
