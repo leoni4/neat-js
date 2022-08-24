@@ -17,7 +17,7 @@ export class Frame {
 
     constructor(client: Client, containerId: string) {
         this.#genome = client.genome;
-        this.#client = new Client(client.genome);
+        this.#client = new Client(client.genome, 'none');
         this.#controls = new Controls(client.genome, this);
         this.#stage = new Konva.Stage({
             container: containerId,

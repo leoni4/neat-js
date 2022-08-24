@@ -9,7 +9,7 @@ export class Controls {
     constructor(genome: Genome, frame: Frame) {
         this.#frame = frame;
         this.#genome = genome;
-        this.#client = new Client(genome);
+        this.#client = new Client(genome, 'none');
 
         this.#initControls();
     }

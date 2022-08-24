@@ -9,8 +9,10 @@ export class Client {
     #bestScore = false;
     #species: Species | null;
     #calculator: Calculator | null;
+    #outputActivation: string;
 
-    constructor(genome: Genome) {
+    constructor(genome: Genome, outputActivation: string) {
+        this.#outputActivation = outputActivation;
         this.#genome = genome;
         this.#calculator = null;
         this.#species = null;
@@ -57,7 +59,7 @@ export class Client {
     }
 
     generateCalculator() {
-        this.#calculator = new Calculator(this.#genome);
+        this.#calculator = new Calculator(this.#genome, this.#outputActivation);
     }
 
     distance(client: Client): number {

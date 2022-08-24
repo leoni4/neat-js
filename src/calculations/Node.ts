@@ -37,7 +37,7 @@ export class Node {
         return 1 / (1 + Math.exp(-sum));
     }
 
-    calculate() {
+    calculate(outputActivation: string) {
         let sum = 0;
         for (let i = 0; i < this.#connections.length; i += 1) {
             const c = this.#connections[i];
@@ -45,7 +45,7 @@ export class Node {
                 sum += c.weight * c.from.output;
             }
         }
-        this.#output = this.#activation(sum);
+        this.#output = outputActivation === 'none' ? sum : this.#activation(sum);
     }
 
     compereTo(node: Node): number {

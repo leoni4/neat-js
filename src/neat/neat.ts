@@ -42,7 +42,10 @@ export class Neat {
 
     #optimization = false;
 
-    constructor(inputNodes: number, outputNodes: number, clients: number) {
+    #outputActivation: string;
+
+    constructor(inputNodes: number, outputNodes: number, clients: number, outputActivation = 'sigmoid') {
+        this.#outputActivation = outputActivation;
         this.reset(inputNodes, outputNodes, clients);
     }
 
@@ -140,7 +143,7 @@ export class Neat {
             nodeGene.y = (i + 1) / (this.#outputNodes + 1);
         }
         for (let i = 0; i < this.#maxClients; i += 1) {
-            const c: Client = new Client(this.emptyGenome());
+            const c: Client = new Client(this.emptyGenome(), this.#outputActivation);
             c.generateCalculator();
             this.#clients.push(c);
         }

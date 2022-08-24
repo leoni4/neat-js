@@ -7,7 +7,10 @@ export class Calculator {
     #hiddenNodes: Array<Node> = [];
     #outputNodes: Array<Node> = [];
 
-    constructor(genome: Genome) {
+    #outputActivation: string;
+
+    constructor(genome: Genome, outputActivation: string) {
+        this.#outputActivation = outputActivation;
         const nodes = genome.nodes;
         const connections = genome.connections;
 
@@ -56,11 +59,11 @@ export class Calculator {
             this.#inputNodes[i].output = input[i];
         }
         for (let i = 0; i < this.#hiddenNodes.length; i++) {
-            this.#hiddenNodes[i].calculate();
+            this.#hiddenNodes[i].calculate('sigmoid');
         }
         const output = new Array<number>(this.#outputNodes.length);
         for (let i = 0; i < this.#outputNodes.length; i++) {
-            this.#outputNodes[i].calculate();
+            this.#outputNodes[i].calculate(this.#outputActivation);
             output[i] = this.#outputNodes[i].output;
         }
         return output;

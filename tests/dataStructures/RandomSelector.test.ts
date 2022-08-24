@@ -5,7 +5,7 @@ import { Genome } from '../../src/genome';
 describe('dataStructures/RandomSelector test', () => {
     const testNeat = new Neat(2, 1, 1);
     const testGenome = new Genome(testNeat);
-    const testClient = new Client(testGenome);
+    const testClient = new Client(testGenome, 'none');
     testClient.score = 100;
     const testSpecies = new Species(testClient);
     testSpecies.evaluateScore(false);
