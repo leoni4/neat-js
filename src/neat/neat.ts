@@ -3,6 +3,18 @@ import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Client } from './client';
 import { Species } from './species';
 
+interface NeatParams {
+    SURVIVORS?: number;
+    WEIGHT_SHIFT_STRENGTH?: number;
+    WEIGHT_RANDOM_STRENGTH?: number;
+    PROBABILITY_MUTATE_WEIGHT_SHIFT?: number;
+    PROBABILITY_MUTATE_TOGGLE_LINK?: number;
+    PROBABILITY_MUTATE_WEIGHT_RANDOM?: number;
+    PROBABILITY_MUTATE_LINK?: number;
+    PROBABILITY_MUTATE_NODES?: number;
+    OPT_ERR_TRASHHOLD?: number;
+}
+
 export class Neat {
     static get MAX_NODES(): number {
         return Math.pow(2, 20);
@@ -15,10 +27,10 @@ export class Neat {
     #CP = 10;
     #CT = 1;
 
+    #SURVIVORS = 0.8;
+
     #WEIGHT_SHIFT_STRENGTH = 5;
     #WEIGHT_RANDOM_STRENGTH = 10;
-
-    #SURVIVORS = 0.8;
 
     #PROBABILITY_MUTATE_WEIGHT_SHIFT = 4;
     #PROBABILITY_MUTATE_TOGGLE_LINK = 0.5;
@@ -44,7 +56,24 @@ export class Neat {
 
     #outputActivation: string;
 
-    constructor(inputNodes: number, outputNodes: number, clients: number, outputActivation = 'sigmoid') {
+    constructor(
+        inputNodes: number,
+        outputNodes: number,
+        clients: number,
+        outputActivation = 'sigmoid',
+        params?: NeatParams
+    ) {
+        if (params) {
+            this.#SURVIVORS = params.SURVIVORS || 0.8;
+            this.#WEIGHT_SHIFT_STRENGTH = params.WEIGHT_SHIFT_STRENGTH || 5;
+            this.#WEIGHT_RANDOM_STRENGTH = params.WEIGHT_RANDOM_STRENGTH || 10;
+            this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
+            this.#PROBABILITY_MUTATE_TOGGLE_LINK = params.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
+            this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
+            this.#PROBABILITY_MUTATE_LINK = params.PROBABILITY_MUTATE_LINK || 0.05;
+            this.#PROBABILITY_MUTATE_NODES = params.PROBABILITY_MUTATE_NODES || 0.05;
+            this.#OPT_ERR_TRASHHOLD = params.OPT_ERR_TRASHHOLD || 0.005;
+        }
         this.#outputActivation = outputActivation;
         this.reset(inputNodes, outputNodes, clients);
     }
@@ -129,7 +158,7 @@ export class Neat {
         this.#allNodes.clear();
         this.#clients = [];
 
-        this.CT = (inputNodes + outputNodes) * 3;
+        this.CT = (inputNodes + outputNodes) * 1;
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
@@ -254,7 +283,7 @@ export class Neat {
 
     #removeExtinct() {
         for (let i = this.#species.length - 1; i >= 0; i--) {
-            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0].bestScore) {
+            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0].bestScore && this.#species.length > 1) {
                 this.#species[i].goExtinct();
                 this.#species.splice(i, 1);
             }
@@ -325,7 +354,7 @@ export class Neat {
             });
         }
 
-        const cof = this.#optimization ? 0.1 : 0.0001;
+        const cof = this.#optimization ? 0.01 : 0.0001;
 
         this.#clients.forEach(item => {
             const allCons = item.genome.connections.size();

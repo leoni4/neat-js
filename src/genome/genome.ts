@@ -276,16 +276,13 @@ export class Genome {
     }
 
     #optimization() {
-        let maxWeight = 0;
         for (let i = 0; i < this.#connections.size(); i += 1) {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
                 this.#connections.remove(i);
                 i--;
-                continue;
             }
-            maxWeight = c.weight > maxWeight ? c.weight : maxWeight;
         }
     }
 
@@ -299,15 +296,14 @@ export class Genome {
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
             prob = this.#neat.PROBABILITY_MUTATE_LINK;
-            prob = prob < this.#neat.CT ? this.#neat.CT : prob;
+            prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
             }
 
             prob = this.#neat.PROBABILITY_MUTATE_NODES;
-            prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT / 2 : prob;
-            prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+            prob = this.#nodes.size() < this.#neat.CT * 2 ? this.#neat.CT * 2 : prob;
             while (prob > Math.random()) {
                 prob--;
                 this.mutateNode();

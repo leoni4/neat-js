@@ -1,18 +1,38 @@
 import { Client, Neat } from '../neat';
 import { Frame } from './frame';
 
-export function main() {
-    const neat: Neat = new Neat(2, 1, 25);
+const testXOR = {
+    input: [
+        [0, 0],
+        [1, 1],
+        [1, 0],
+        [0, 1],
+    ],
+    output: [[0], [0], [1], [1]],
+    params: {
+        PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
+        PROBABILITY_MUTATE_LINK: 6,
+    },
+};
 
-    const test = {
-        input: [
-            [0, 0],
-            [1, 1],
-            [1, 0],
-            [0, 1],
-        ],
-        output: [0, 0, 1, 1],
-    };
+const test20 = {
+    input: [] as any,
+    output: [] as any,
+    params: {},
+};
+for (let i = 0; i < 100; i += 1) {
+    const arr = [];
+    for (let k = 0; k < 20; k += 1) {
+        arr.push(Math.random());
+    }
+    test20.input.push(arr);
+    test20.output.push([Math.random()]);
+}
+
+const test = testXOR;
+
+export function main() {
+    const neat: Neat = new Neat(test.input[0].length, test.output[0].length, 100, 'sigmoid', test.params);
 
     neat.evolve();
     let frame: Frame | null = null;
@@ -35,9 +55,9 @@ export function main() {
             const c = neat.clients[i];
             complexity += c.genome.connections.size() + c.genome.nodes.size();
             localError = 0;
-            test.input.forEach((inp, i) => {
+            test.input.forEach((inp: Array<number>, i: number) => {
                 const out = c.calculate(inp)[0];
-                localError += Math.abs(out - test.output[i]);
+                localError += Math.abs(out - test.output[i][0]);
             });
             c.error = localError / 4;
             c.score = 1 - c.error;
@@ -51,7 +71,16 @@ export function main() {
             console.log('###################');
             neat.printSpecies();
             console.log('-------');
-            console.log('EPOCH:', k, '| comp:', complexity, '| err:', error);
+            console.log(
+                'EPOCH:',
+                k,
+                '| compAll:',
+                complexity,
+                '| comp:',
+                topClient.genome.connections.size() + topClient.genome.nodes.size(),
+                '| err:',
+                error
+            );
         }
         if (frame) {
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
