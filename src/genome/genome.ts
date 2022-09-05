@@ -38,14 +38,11 @@ export class Genome {
     save() {
         const nodes = this.#nodes.data.map(item => {
             if (!(item instanceof NodeGene)) return;
-            return {
-                innovationNumber: item.innovationNumber,
-                x: item.x,
-                y: item.y,
-            };
+            return item.innovationNumber;
         });
         const connections = this.#connections.data.map(item => {
             if (!(item instanceof ConnectionGene)) return;
+            if (!item.enabled) return;
             return {
                 weight: item.weight,
                 from: item.from.innovationNumber,
@@ -54,7 +51,7 @@ export class Genome {
         });
         return {
             nodes,
-            connections,
+            connections: connections.filter(n => n),
         };
     }
 

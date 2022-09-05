@@ -76,10 +76,13 @@ export class Neat {
             this.#OPT_ERR_TRASHHOLD = params.OPT_ERR_TRASHHOLD || 0.005;
         }
         this.#outputActivation = outputActivation;
+        this.#inputNodes = inputNodes;
+        this.#outputNodes = outputNodes;
+        this.#maxClients = clients;
         if (loadData) {
             this.load(loadData);
         } else {
-            this.reset(inputNodes, outputNodes, clients);
+            this.reset(inputNodes, outputNodes);
         }
     }
 
@@ -154,11 +157,7 @@ export class Neat {
         return this.#C3;
     }
 
-    reset(inputNodes: number, outputNodes: number, clients: number) {
-        this.#inputNodes = inputNodes;
-        this.#outputNodes = outputNodes;
-        this.#maxClients = clients;
-
+    reset(inputNodes: number, outputNodes: number) {
         this.#allConnections.clear();
         this.#allNodes.clear();
         this.#clients = [];
@@ -183,7 +182,46 @@ export class Neat {
         }
     }
 
-    load(data: object) {}
+    load(data: any) {
+        if (!data.allNodes) {
+            console.log('wrong data to load: "allNodes" missed');
+            return;
+        }
+        if (!data.genome) {
+            console.log('wrong data to load: "genome" missed');
+            return;
+        }
+
+        data.allNodes.forEach((item: any) => {
+            const node = this.getNode();
+            node.x = item.x;
+            node.y = item.y;
+        });
+
+        for (let i = 0; i < this.#maxClients; i += 1) {
+            const c: Client = new Client(this.loadGenome(data.genome), this.#outputActivation);
+            c.generateCalculator();
+            this.#clients.push(c);
+        }
+    }
+
+    loadGenome(data: any) {
+        const genome: Genome = new Genome(this);
+        data.nodes.forEach((innovationNumber: number) => {
+            const node = this.getNode(innovationNumber);
+            genome.nodes.add(node);
+        });
+
+        data.connections.forEach((con: any) => {
+            const geneA = this.getNode(con.from);
+            const geneB = this.getNode(con.to);
+            const node = this.getConnection(geneA, geneB);
+            node.weight = con.weight;
+            genome.connections.addSorted(node);
+        });
+
+        return genome;
+    }
 
     save() {
         const bestClient = this.#clients.find(item => item.bestScore);

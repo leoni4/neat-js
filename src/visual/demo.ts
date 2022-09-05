@@ -32,7 +32,12 @@ for (let i = 0; i < 100; i += 1) {
 const test = testXOR;
 
 export function main() {
-    const neat: Neat = new Neat(test.input[0].length, test.output[0].length, 100, 'sigmoid', test.params);
+    const net = localStorage.getItem('network');
+    let network;
+    if (net) {
+        network = JSON.parse(net);
+    }
+    const neat: Neat = new Neat(test.input[0].length, test.output[0].length, 100, 'sigmoid', test.params, network);
 
     neat.evolve();
     let frame: Frame | null = null;
@@ -45,6 +50,7 @@ export function main() {
     let k = 0;
     let error = 1;
     const epochs = Infinity;
+
     setTimeout(function run() {
         //  console.time('run()');
         let topScore = 0;
@@ -92,7 +98,7 @@ export function main() {
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
 
-            console.log(neat.save());
+            localStorage.setItem('network', JSON.stringify(neat.save()));
             return;
         }
         k++;
