@@ -61,7 +61,8 @@ export class Neat {
         outputNodes: number,
         clients: number,
         outputActivation = 'sigmoid',
-        params?: NeatParams
+        params?: NeatParams,
+        loadData?: object
     ) {
         if (params) {
             this.#SURVIVORS = params.SURVIVORS || 0.8;
@@ -75,7 +76,11 @@ export class Neat {
             this.#OPT_ERR_TRASHHOLD = params.OPT_ERR_TRASHHOLD || 0.005;
         }
         this.#outputActivation = outputActivation;
-        this.reset(inputNodes, outputNodes, clients);
+        if (loadData) {
+            this.load(loadData);
+        } else {
+            this.reset(inputNodes, outputNodes, clients);
+        }
     }
 
     get OPT_ERR_TRASHHOLD(): number {
@@ -176,6 +181,25 @@ export class Neat {
             c.generateCalculator();
             this.#clients.push(c);
         }
+    }
+
+    load(data: object) {}
+
+    save() {
+        const bestClient = this.#clients.find(item => item.bestScore);
+        const genome = bestClient?.genome.save();
+        const allNodes = this.#allNodes.data.map(item => {
+            if (!(item instanceof NodeGene)) return;
+            return {
+                innovationNumber: item.innovationNumber,
+                x: item.x,
+                y: item.y,
+            };
+        });
+        return {
+            genome,
+            allNodes,
+        };
     }
 
     setReplaceIndex(node1: NodeGene, node2: NodeGene, index: number) {
@@ -349,7 +373,8 @@ export class Neat {
         }
 
         if (bestScoreSet.length > 1) {
-            bestScoreSet.forEach(i => {
+            bestScoreSet.forEach((i, index) => {
+                if (index === 0) return;
                 this.#clients[i].bestScore = false;
             });
         }

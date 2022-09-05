@@ -91,6 +91,8 @@ export function main() {
             console.log('###################');
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
+
+            console.log(neat.save());
             return;
         }
         k++;

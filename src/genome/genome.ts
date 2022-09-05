@@ -35,6 +35,29 @@ export class Genome {
         return this.#neat;
     }
 
+    save() {
+        const nodes = this.#nodes.data.map(item => {
+            if (!(item instanceof NodeGene)) return;
+            return {
+                innovationNumber: item.innovationNumber,
+                x: item.x,
+                y: item.y,
+            };
+        });
+        const connections = this.#connections.data.map(item => {
+            if (!(item instanceof ConnectionGene)) return;
+            return {
+                weight: item.weight,
+                from: item.from.innovationNumber,
+                to: item.to.innovationNumber,
+            };
+        });
+        return {
+            nodes,
+            connections,
+        };
+    }
+
     distance(g2: Genome): number {
         let g1: Genome = this;
 
@@ -288,8 +311,8 @@ export class Genome {
 
     mutate(selfOpt = false) {
         this.#selfOpt = selfOpt;
-
-        if (this.#selfOpt || this.#neat.optimization) {
+        const optimize = this.#selfOpt || this.#neat.optimization;
+        if (optimize) {
             this.#optimization();
         }
         let prob: number;
@@ -297,6 +320,9 @@ export class Genome {
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
             prob = this.#neat.PROBABILITY_MUTATE_LINK;
             prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
+            if (optimize) {
+                prob = prob > 1 ? 1 : prob;
+            }
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
@@ -304,6 +330,9 @@ export class Genome {
 
             prob = this.#neat.PROBABILITY_MUTATE_NODES;
             prob = this.#nodes.size() < this.#neat.CT * 2 ? this.#neat.CT * 2 : prob;
+            if (optimize) {
+                prob = prob > 1 ? 1 : prob;
+            }
             while (prob > Math.random()) {
                 prob--;
                 this.mutateNode();
@@ -311,6 +340,9 @@ export class Genome {
         }
 
         prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
+        if (optimize) {
+            prob = prob > 1 ? 1 : prob;
+        }
         while (prob > Math.random()) {
             prob--;
             this.mutateLinkToggle();
@@ -318,6 +350,9 @@ export class Genome {
 
         prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        if (optimize) {
+            prob = prob > 1 ? 1 : prob;
+        }
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightRandom();
@@ -325,6 +360,9 @@ export class Genome {
 
         prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        if (optimize) {
+            prob = prob > 1 ? 1 : prob;
+        }
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightShift();
