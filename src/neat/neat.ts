@@ -224,15 +224,39 @@ export class Neat {
     }
 
     save() {
-        const bestClient = this.#clients.find(item => item.bestScore);
-        const genome = bestClient?.genome.save();
-        const allNodes = this.#allNodes.data.map(item => {
-            if (!(item instanceof NodeGene)) return;
-            return {
-                innovationNumber: item.innovationNumber,
-                x: item.x,
-                y: item.y,
-            };
+        const bestClient = this.#clients.find(item => item.bestScore) || this.#clients[0];
+        const genome = bestClient.genome.save();
+        const allNodes: Array<any> = [];
+        genome.nodes.forEach(id => {
+            const found = this.#allNodes.data.find(item => {
+                return item.innovationNumber === id;
+            });
+            if (found && found instanceof NodeGene) {
+                allNodes.push({
+                    innovationNumber: found.innovationNumber,
+                    x: found.x,
+                    y: found.y,
+                });
+            }
+        });
+        genome.nodes.forEach((id, index) => {
+            const trueIndex = index + 1;
+            if (id !== trueIndex) {
+                allNodes.find(item => {
+                    return item.innovationNumber === id;
+                }).innovationNumber = trueIndex;
+                genome.connections.forEach(con => {
+                    if (!con) {
+                        return;
+                    }
+                    if (con.from === id) {
+                        con.from = trueIndex;
+                    } else if (con.to === id) {
+                        con.to = trueIndex;
+                    }
+                });
+            }
+            genome.nodes[index] = trueIndex;
         });
         return {
             genome,
