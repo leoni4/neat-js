@@ -44,6 +44,7 @@ export class Genome {
             if (!(item instanceof ConnectionGene)) return;
             if (!item.enabled) return;
             return {
+                replaceIndex: item.replaceIndex,
                 weight: item.weight,
                 from: item.from.innovationNumber,
                 to: item.to.innovationNumber,
@@ -51,7 +52,7 @@ export class Genome {
         });
         return {
             nodes,
-            connections: connections.filter(n => n),
+            connections,
         };
     }
 
@@ -263,8 +264,13 @@ export class Genome {
             return null;
         }
         let newWeight = con.weight;
-        while (newWeight === con.weight) {
+        let counter = 0;
+        while (newWeight === con.weight && counter < 10) {
+            counter++;
             newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+        }
+        if (counter >= 10) {
+            newWeight = 0;
         }
         con.weight = newWeight;
         return con;
@@ -326,7 +332,6 @@ export class Genome {
             }
 
             prob = this.#neat.PROBABILITY_MUTATE_NODES;
-            prob = this.#nodes.size() < this.#neat.CT * 2 ? this.#neat.CT * 2 : prob;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
             }
