@@ -40,15 +40,16 @@ export class Genome {
             if (!(item instanceof NodeGene)) return;
             return item.innovationNumber;
         });
-        const connections = this.#connections.data.map(item => {
+        const connections: Array<any> = [];
+        this.#connections.data.forEach(item => {
             if (!(item instanceof ConnectionGene)) return;
             if (!item.enabled) return;
-            return {
+            connections.push({
                 replaceIndex: item.replaceIndex,
                 weight: item.weight,
                 from: item.from.innovationNumber,
                 to: item.to.innovationNumber,
-            };
+            });
         });
         return {
             nodes,

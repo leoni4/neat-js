@@ -243,6 +243,14 @@ export class Neat {
                 });
             }
         });
+        genome.connections.forEach(con => {
+            if (!con || con.replaceIndex === 0) {
+                return;
+            }
+            if (!genome.nodes.find(item => item === con.replaceIndex)) {
+                con.replaceIndex = 0;
+            }
+        });
         genome.nodes.forEach((id, index) => {
             const trueIndex = index + 1;
             if (id !== trueIndex) {
