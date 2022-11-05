@@ -192,53 +192,7 @@ export class Neat {
         }
     }
 
-    loadLegacy(data: any) {
-        if (!data.allNodes) {
-            console.log('wrong data to load: "allNodes" missed');
-            return;
-        }
-        if (!data.genome) {
-            console.log('wrong data to load: "genome" missed');
-            return;
-        }
-
-        data.allNodes.forEach((item: any) => {
-            const node = this.getNode();
-            node.x = item.x;
-            node.y = item.y;
-        });
-
-        for (let i = 0; i < this.#maxClients; i += 1) {
-            const c: Client = new Client(this.loadGenomeLegacy(data.genome), this.#outputActivation);
-            c.generateCalculator();
-            this.#clients.push(c);
-        }
-    }
-
-    loadGenomeLegacy(data: any) {
-        const genome: Genome = new Genome(this);
-        data.nodes.forEach((innovationNumber: number) => {
-            const node = this.getNode(innovationNumber);
-            genome.nodes.add(node);
-        });
-
-        data.connections.forEach((con: any) => {
-            const geneA = this.getNode(con.from);
-            const geneB = this.getNode(con.to);
-            const node = this.getConnection(geneA, geneB);
-            node.weight = con.weight;
-            node.replaceIndex = con.replaceIndex;
-            genome.connections.addSorted(node);
-        });
-
-        return genome;
-    }
-
-    load(data: any, LEGACY = false) {
-        if (LEGACY) {
-            this.loadLegacy(data);
-            return;
-        }
+    load(data: any) {
         if (!data.genome) {
             console.log('ERROR: wrong data to load: "genome" missed');
             return;
