@@ -36,14 +36,19 @@ export class Genome {
     }
 
     save() {
-        const nodes = this.#nodes.data.map(item => {
+        const nodes: Array<any> = [];
+        this.#nodes.data.forEach(item => {
             if (!(item instanceof NodeGene)) return;
-            return item.innovationNumber;
+            nodes.push({
+                innovationNumber: item.innovationNumber,
+                x: item.x,
+                y: item.y,
+            });
         });
         const connections: Array<any> = [];
         this.#connections.data.forEach(item => {
             if (!(item instanceof ConnectionGene)) return;
-            //   if (!item.enabled) return;
+
             connections.push({
                 replaceIndex: item.replaceIndex,
                 enabled: item.enabled,

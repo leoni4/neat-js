@@ -25,9 +25,9 @@ export class Neat {
         return Math.pow(2, 20);
     }
 
-    #C1 = 1;
-    #C2 = 1;
-    #C3 = 0.1;
+    #C1: number;
+    #C2: number;
+    #C3: number;
 
     #CP: number;
     #CT: number;
@@ -193,16 +193,17 @@ export class Neat {
     }
 
     load(data: any) {
-        if (!data.allNodes) {
-            console.log('wrong data to load: "allNodes" missed');
+        if (!data.genome) {
+            console.log('ERROR: wrong data to load: "genome" missed');
             return;
         }
-        if (!data.genome) {
-            console.log('wrong data to load: "genome" missed');
-            return;
+        if (!data.evolveCounts) {
+            console.log('WARN: wrong data to load: "evolveCounts" missed');
+        } else {
+            this.#evolveCounts = data.evolveCounts;
         }
 
-        data.allNodes.forEach((item: any) => {
+        data.genome.nodes.forEach((item: any) => {
             const node = this.getNode();
             node.x = item.x;
             node.y = item.y;
@@ -217,19 +218,20 @@ export class Neat {
 
     loadGenome(data: any) {
         const genome: Genome = new Genome(this);
-        data.nodes.forEach((innovationNumber: number) => {
-            const node = this.getNode(innovationNumber);
+
+        data.nodes.forEach((nodeItem: NodeGene) => {
+            const node = this.getNode(nodeItem.innovationNumber);
             genome.nodes.add(node);
         });
 
         data.connections.forEach((con: any) => {
             const geneA = this.getNode(con.from);
             const geneB = this.getNode(con.to);
-            const node = this.getConnection(geneA, geneB);
-            node.weight = con.weight;
-            node.replaceIndex = con.replaceIndex;
-            node.enabled = con.enabled;
-            genome.connections.addSorted(node);
+            const connectionNode = this.getConnection(geneA, geneB);
+            connectionNode.weight = con.weight;
+            connectionNode.replaceIndex = con.replaceIndex;
+            connectionNode.enabled = con.enabled;
+            genome.connections.addSorted(connectionNode);
         });
 
         return genome;
@@ -238,37 +240,27 @@ export class Neat {
     save() {
         const bestClient = this.#clients.find(item => item.bestScore) || this.#clients[0];
         const genome = bestClient.genome.save();
-        const allNodes: Array<any> = [];
-        genome.nodes.forEach(id => {
-            const found = this.#allNodes.data.find(item => {
-                return item.innovationNumber === id;
-            });
-            if (found && found instanceof NodeGene) {
-                allNodes.push({
-                    innovationNumber: found.innovationNumber,
-                    x: found.x,
-                    y: found.y,
-                });
-            }
+        genome.nodes.sort((a, b) => {
+            return a.innovationNumber > b.innovationNumber ? 1 : -1;
         });
         genome.connections.forEach(con => {
             if (!con || con.replaceIndex === 0) {
                 return;
             }
-            if (!genome.nodes.find(item => item === con.replaceIndex)) {
-                con.replaceIndex = 0;
+            const localReplaceNode = genome.nodes.find(node => node.innovationNumber === con.replaceIndex);
+            if (!localReplaceNode) {
+                const globalReplaceNode = this.#allNodes.data.find(node => node.innovationNumber === con.replaceIndex);
+                if (!globalReplaceNode || !(globalReplaceNode instanceof NodeGene)) {
+                    throw new Error('Not found node with replaceIndex, while saving');
+                }
+                con.replaceIndex = globalReplaceNode.innovationNumber;
             }
         });
-        genome.nodes.forEach((id, index) => {
+        genome.nodes.forEach((node, index) => {
+            const id = node.innovationNumber;
             const trueIndex = index + 1;
             if (id !== trueIndex) {
-                allNodes.find(item => {
-                    return item.innovationNumber === id;
-                }).innovationNumber = trueIndex;
                 genome.connections.forEach(con => {
-                    if (!con) {
-                        return;
-                    }
                     if (con.from === id) {
                         con.from = trueIndex;
                     } else if (con.to === id) {
@@ -278,11 +270,11 @@ export class Neat {
                     }
                 });
             }
-            genome.nodes[index] = trueIndex;
+            genome.nodes[index].innovationNumber = trueIndex;
         });
         return {
             genome,
-            allNodes,
+            evolveCounts: this.#evolveCounts,
         };
     }
 
