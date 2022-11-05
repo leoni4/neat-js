@@ -4,6 +4,9 @@ import { Client } from './client';
 import { Species } from './species';
 
 interface NeatParams {
+    C1?: number;
+    C2?: number;
+    C3?: number;
     CT?: number;
     CP?: number;
     SURVIVORS?: number;
@@ -66,6 +69,13 @@ export class Neat {
         params: NeatParams,
         loadData?: object
     ) {
+        this.#C1 = params.C1 || 1;
+        this.#C2 = params.C2 || 1;
+        this.#C3 = params.C3 || 0.1;
+
+        this.#CT = params.CT || inputNodes * outputNodes;
+        this.#CP = params.CP || (inputNodes * outputNodes) / 10;
+
         this.#SURVIVORS = params.SURVIVORS || 0.8;
         this.#WEIGHT_SHIFT_STRENGTH = params.WEIGHT_SHIFT_STRENGTH || 5;
         this.#WEIGHT_RANDOM_STRENGTH = params.WEIGHT_RANDOM_STRENGTH || 10;
@@ -75,9 +85,6 @@ export class Neat {
         this.#PROBABILITY_MUTATE_LINK = params.PROBABILITY_MUTATE_LINK || 0.05;
         this.#PROBABILITY_MUTATE_NODES = params.PROBABILITY_MUTATE_NODES || 0.05;
         this.#OPT_ERR_TRASHHOLD = params.OPT_ERR_TRASHHOLD || 0.005;
-
-        this.#CT = params.CT || inputNodes * outputNodes;
-        this.#CP = params.CP || 10;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
@@ -221,6 +228,7 @@ export class Neat {
             const node = this.getConnection(geneA, geneB);
             node.weight = con.weight;
             node.replaceIndex = con.replaceIndex;
+            node.enabled = con.enabled;
             genome.connections.addSorted(node);
         });
 

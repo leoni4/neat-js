@@ -43,9 +43,10 @@ export class Genome {
         const connections: Array<any> = [];
         this.#connections.data.forEach(item => {
             if (!(item instanceof ConnectionGene)) return;
-            if (!item.enabled) return;
+            //   if (!item.enabled) return;
             connections.push({
                 replaceIndex: item.replaceIndex,
+                enabled: item.enabled,
                 weight: item.weight,
                 from: item.from.innovationNumber,
                 to: item.to.innovationNumber,
