@@ -74,7 +74,7 @@ export class Neat {
         this.#C3 = params.C3 || 0.1;
 
         this.#CT = params.CT || inputNodes * outputNodes;
-        this.#CP = params.CP || (inputNodes * outputNodes) / 10;
+        this.#CP = params.CP || clients / 10;
 
         this.#SURVIVORS = params.SURVIVORS || 0.8;
         this.#WEIGHT_SHIFT_STRENGTH = params.WEIGHT_SHIFT_STRENGTH || 5;

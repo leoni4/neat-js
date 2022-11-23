@@ -8,6 +8,9 @@ const testXOR = {
         [1, 0],
         [0, 1],
     ],
+    save: false,
+    load: false,
+    clients: 100,
     output: [[0], [0], [1], [1]],
     params: {
         PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
@@ -19,6 +22,8 @@ const test20 = {
     input: [] as any,
     output: [] as any,
     params: {},
+    save: false,
+    load: false,
 };
 for (let i = 0; i < 100; i += 1) {
     const arr = [];
@@ -32,12 +37,22 @@ for (let i = 0; i < 100; i += 1) {
 const test = testXOR;
 
 export function main() {
-    const net = localStorage.getItem('network');
     let network;
-    if (net) {
-        network = JSON.parse(net);
+    if (test.load) {
+        const net = localStorage.getItem('network');
+        if (net) {
+            console.log('loading network');
+            network = JSON.parse(net);
+        }
     }
-    const neat: Neat = new Neat(test.input[0].length, test.output[0].length, 100, 'sigmoid', test.params, network);
+    const neat: Neat = new Neat(
+        test.input[0].length,
+        test.output[0].length,
+        test.clients || 100,
+        'sigmoid',
+        test.params,
+        network
+    );
 
     neat.evolve();
     let frame: Frame | null = null;
@@ -98,7 +113,9 @@ export function main() {
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
 
-            localStorage.setItem('network', JSON.stringify(neat.save()));
+            if (test.save) {
+                localStorage.setItem('network', JSON.stringify(neat.save()));
+            }
             return;
         }
         k++;
