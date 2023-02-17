@@ -328,7 +328,7 @@ export class Genome {
         let prob: number;
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK;
+            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.LEARN_RATE;
             prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
@@ -338,7 +338,7 @@ export class Genome {
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES;
+            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.LEARN_RATE;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
             }
@@ -348,7 +348,7 @@ export class Genome {
             }
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
+        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK * this.#neat.LEARN_RATE;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }
@@ -357,7 +357,7 @@ export class Genome {
             this.mutateLinkToggle();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.LEARN_RATE;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
@@ -367,7 +367,7 @@ export class Genome {
             this.mutateWeightRandom();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.LEARN_RATE;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;

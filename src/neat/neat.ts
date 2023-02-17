@@ -9,6 +9,7 @@ interface NeatParams {
     C3?: number;
     CT?: number;
     CP?: number;
+    LEARN_RATE?: number;
     SURVIVORS?: number;
     WEIGHT_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
@@ -33,6 +34,8 @@ export class Neat {
     #CT: number;
 
     #SURVIVORS: number;
+
+    #LEARN_RATE: number;
 
     #WEIGHT_SHIFT_STRENGTH: number;
     #WEIGHT_RANDOM_STRENGTH: number;
@@ -66,25 +69,27 @@ export class Neat {
         outputNodes: number,
         clients: number,
         outputActivation = 'sigmoid',
-        params: NeatParams,
+        params?: NeatParams,
         loadData?: object
     ) {
-        this.#C1 = params.C1 || 1;
-        this.#C2 = params.C2 || 1;
-        this.#C3 = params.C3 || 0.1;
+        this.#C1 = params?.C1 || 1;
+        this.#C2 = params?.C2 || 1;
+        this.#C3 = params?.C3 || 0.1;
 
-        this.#CT = params.CT || inputNodes * outputNodes;
-        this.#CP = params.CP || clients / 10;
+        this.#CT = params?.CT || inputNodes * outputNodes;
+        this.#CP = params?.CP || clients / 10;
 
-        this.#SURVIVORS = params.SURVIVORS || 0.8;
-        this.#WEIGHT_SHIFT_STRENGTH = params.WEIGHT_SHIFT_STRENGTH || 5;
-        this.#WEIGHT_RANDOM_STRENGTH = params.WEIGHT_RANDOM_STRENGTH || 10;
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
-        this.#PROBABILITY_MUTATE_LINK = params.PROBABILITY_MUTATE_LINK || 0.05;
-        this.#PROBABILITY_MUTATE_NODES = params.PROBABILITY_MUTATE_NODES || 0.05;
-        this.#OPT_ERR_TRASHHOLD = params.OPT_ERR_TRASHHOLD || 0.005;
+        this.#LEARN_RATE = params?.LEARN_RATE || 1;
+
+        this.#SURVIVORS = params?.SURVIVORS || 0.8;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 10;
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.05;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.05;
+        this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
@@ -115,6 +120,10 @@ export class Neat {
     }
     get allNodes(): RandomHashSet {
         return this.#allNodes;
+    }
+
+    get LEARN_RATE(): number {
+        return this.#LEARN_RATE;
     }
 
     get WEIGHT_SHIFT_STRENGTH(): number {
@@ -170,6 +179,8 @@ export class Neat {
     }
 
     reset(inputNodes: number, outputNodes: number) {
+        this.#inputNodes = inputNodes;
+        this.#outputNodes = outputNodes;
         this.#allConnections.clear();
         this.#allNodes.clear();
         this.#clients = [];

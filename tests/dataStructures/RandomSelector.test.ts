@@ -3,7 +3,7 @@ import { Neat, Species, Client } from '../../src/neat';
 import { Genome } from '../../src/genome';
 
 describe('dataStructures/RandomSelector test', () => {
-    const testNeat = new Neat(2, 1, 1);
+    const testNeat = new Neat(2, 1, 1, 'sigmoid', {});
     const testGenome = new Genome(testNeat);
     const testClient = new Client(testGenome, 'none');
     testClient.score = 100;

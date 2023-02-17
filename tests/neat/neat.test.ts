@@ -18,7 +18,7 @@ describe('Neat test', () => {
     });
 
     it('resets well', () => {
-        neat.reset(10, 10, 10);
+        neat.reset(10, 10);
         expect(neat.allNodes.size()).toBe(20);
     });
 
