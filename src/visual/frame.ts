@@ -3,6 +3,11 @@ import Konva from 'konva';
 import { Controls } from './controls';
 import { Client } from '../neat';
 
+interface FrameOptions {
+    width?: number;
+    height?: number;
+}
+
 export class Frame {
     #genome: Genome;
     #stage: Konva.Stage;
@@ -12,10 +17,12 @@ export class Frame {
     #toggle = false;
     #text = '';
 
-    #width = 800;
-    #height = 650;
+    readonly #width: number;
+    readonly #height: number;
 
-    constructor(client: Client, containerId: string) {
+    constructor(client: Client, containerId: string, options?: FrameOptions) {
+        this.#width = options?.width || 800;
+        this.#height = options?.height || 650;
         this.#genome = client.genome;
         this.#client = new Client(client.genome, 'none');
         this.#controls = new Controls(client.genome, this);
