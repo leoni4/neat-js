@@ -21,9 +21,14 @@ const testXOR = {
 const test20 = {
     input: [] as any,
     output: [] as any,
-    params: {},
     save: false,
     load: false,
+    clients: 100,
+    params: {
+        // PERMANENT_MAIN_CONNECTIONS: true,
+        // PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
+        // PROBABILITY_MUTATE_LINK: 6,
+    },
 };
 for (let i = 0; i < 100; i += 1) {
     const arr = [];
@@ -34,7 +39,7 @@ for (let i = 0; i < 100; i += 1) {
     test20.output.push([Math.random()]);
 }
 
-const test = testXOR;
+const test = test20;
 
 export function main() {
     let network;
@@ -54,7 +59,7 @@ export function main() {
         network
     );
 
-    neat.evolve();
+    // neat.evolve();
     let frame: Frame | null = null;
     if (typeof document !== 'undefined') {
         console.log('Create frame');
@@ -64,7 +69,7 @@ export function main() {
     }
     let k = 0;
     let error = 1;
-    const epochs = Infinity;
+    const epochs = 1;
 
     setTimeout(function run() {
         //  console.time('run()');

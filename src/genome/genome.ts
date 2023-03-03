@@ -302,9 +302,6 @@ export class Genome {
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
-        if (this.#neat.PERMANENT_MAIN_CONNECTIONS && con.enabled && con.from.x === 0.1 && con.to.x === 0.9) {
-            return con;
-        }
         if (!this.#selfOpt || con.enabled) {
             con.enabled = !con.enabled;
         }
@@ -316,6 +313,9 @@ export class Genome {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
+                if (this.#neat.PERMANENT_MAIN_CONNECTIONS && c.from.x === 0.1 && c.to.x === 0.9) {
+                    continue;
+                }
                 this.#connections.remove(i);
                 i--;
             }
