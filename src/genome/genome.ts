@@ -302,6 +302,9 @@ export class Genome {
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
+        if (this.#neat.PERMANENT_MAIN_CONNECTIONS && con.enabled && con.from.x === 0.1 && con.to.x === 0.9) {
+            return con;
+        }
         if (!this.#selfOpt || con.enabled) {
             con.enabled = !con.enabled;
         }

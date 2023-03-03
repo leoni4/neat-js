@@ -75,8 +75,7 @@ export class Frame {
         this.#stage.add(this.#layer);
 
         let radius = this.#height / this.#genome.nodes.size() / 20;
-        radius =
-            radius < this.#height / 80 ? this.#height / 80 : radius > this.#height / 20 ? this.#height / 20 : radius;
+        radius = radius < 5 ? 5 : radius > this.#height / 20 ? this.#height / 20 : radius;
         this.#genome.connections.data.forEach(item => {
             if (item instanceof NodeGene) {
                 return;

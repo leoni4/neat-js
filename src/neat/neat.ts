@@ -19,6 +19,7 @@ interface NeatParams {
     PROBABILITY_MUTATE_LINK?: number;
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_TRASHHOLD?: number;
+    PERMANENT_MAIN_CONNECTIONS?: boolean;
 }
 
 export class Neat {
@@ -32,6 +33,7 @@ export class Neat {
 
     #CP: number;
     #CT: number;
+    #PERMANENT_MAIN_CONNECTIONS: boolean;
 
     #SURVIVORS: number;
 
@@ -78,6 +80,7 @@ export class Neat {
 
         this.#CT = params?.CT || inputNodes * outputNodes;
         this.#CP = params?.CP || clients / 10;
+        this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
         this.#LEARN_RATE = params?.LEARN_RATE || 1;
 
@@ -101,6 +104,10 @@ export class Neat {
         } else {
             this.reset(inputNodes, outputNodes);
         }
+    }
+
+    get PERMANENT_MAIN_CONNECTIONS(): boolean {
+        return this.#PERMANENT_MAIN_CONNECTIONS;
     }
 
     get OPT_ERR_TRASHHOLD(): number {
