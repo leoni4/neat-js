@@ -13,6 +13,7 @@ const testXOR = {
     clients: 100,
     output: [[0], [0], [1], [1]],
     params: {
+        PERMANENT_MAIN_CONNECTIONS: true,
         PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
         PROBABILITY_MUTATE_LINK: 6,
     },
@@ -25,9 +26,7 @@ const test20 = {
     load: false,
     clients: 100,
     params: {
-        // PERMANENT_MAIN_CONNECTIONS: true,
-        // PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
-        // PROBABILITY_MUTATE_LINK: 6,
+        PERMANENT_MAIN_CONNECTIONS: true,
     },
 };
 for (let i = 0; i < 100; i += 1) {
@@ -39,7 +38,7 @@ for (let i = 0; i < 100; i += 1) {
     test20.output.push([Math.random()]);
 }
 
-const test = test20;
+const test = testXOR;
 
 export function main() {
     let network;
@@ -69,7 +68,7 @@ export function main() {
     }
     let k = 0;
     let error = 1;
-    const epochs = 1;
+    const epochs = 1 / 0;
 
     setTimeout(function run() {
         //  console.time('run()');

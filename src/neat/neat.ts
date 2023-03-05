@@ -9,7 +9,7 @@ interface NeatParams {
     C3?: number;
     CT?: number;
     CP?: number;
-    LEARN_RATE?: number;
+    MUTATION_RATE?: number;
     SURVIVORS?: number;
     WEIGHT_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
@@ -37,7 +37,7 @@ export class Neat {
 
     #SURVIVORS: number;
 
-    #LEARN_RATE: number;
+    #MUTATION_RATE: number;
 
     #WEIGHT_SHIFT_STRENGTH: number;
     #WEIGHT_RANDOM_STRENGTH: number;
@@ -82,7 +82,7 @@ export class Neat {
         this.#CP = params?.CP || clients / 10;
         this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
-        this.#LEARN_RATE = params?.LEARN_RATE || 1;
+        this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
 
         this.#SURVIVORS = params?.SURVIVORS || 0.8;
         this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
@@ -129,8 +129,8 @@ export class Neat {
         return this.#allNodes;
     }
 
-    get LEARN_RATE(): number {
-        return this.#LEARN_RATE;
+    get MUTATION_RATE(): number {
+        return this.#MUTATION_RATE;
     }
 
     get WEIGHT_SHIFT_STRENGTH(): number {
@@ -365,7 +365,7 @@ export class Neat {
 
     evolve(optimization = false) {
         this.#evolveCounts++;
-        this.#optimization = optimization || this.#evolveCounts % 10 === 0;
+        this.#optimization = optimization || this.#evolveCounts % Math.ceil(10 / this.#MUTATION_RATE) === 0;
         this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
