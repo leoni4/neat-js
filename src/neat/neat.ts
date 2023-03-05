@@ -379,7 +379,7 @@ export class Neat {
 
     #mutate() {
         for (let i = 0; i < this.#clients.length; i += 1) {
-            this.#clients[i].mutate();
+            this.#clients[i].mutate(this.#evolveCounts === 1);
         }
     }
 
