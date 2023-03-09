@@ -90,7 +90,7 @@ export class Frame {
                     this.#width * item.to.x,
                     this.#height * item.to.y,
                 ],
-                stroke: item.enabled ? (item.from.x === 0.1 && item.to.x === 0.9 ? '#000' : '#0f0') : 'red',
+                stroke: item.enabled ? (item.from.x === 0.01 && item.to.x === 0.99 ? '#000' : '#0f0') : 'red',
                 strokeWidth,
             });
             this.#layer.add(line);

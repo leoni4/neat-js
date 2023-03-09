@@ -176,6 +176,23 @@ export class Genome {
         return genome;
     }
 
+    removeConnection(con: ConnectionGene) {
+        if (this.#neat.PERMANENT_MAIN_CONNECTIONS && con.from.x === 0.01 && con.to.x === 0.99) {
+            return;
+        }
+        if (con.from.x !== 0.01) {
+            for (let i = 0; i < this.#connections.size(); i += 1) {
+                const c = this.#connections.get(i);
+                if (!(c instanceof ConnectionGene)) continue;
+                if (c.to === con.from) {
+                    this.removeConnection(c);
+                    i--;
+                }
+            }
+        }
+        this.#connections.remove(con);
+    }
+
     mutateLink(): ConnectionGene | null {
         let geneA = this.#nodes.randomElement();
         let geneB = this.#nodes.randomElement();
@@ -227,7 +244,7 @@ export class Genome {
         let middle: NodeGene;
         if (replaceIndex === 0) {
             middle = this.#neat.getNode();
-            middle.x = (from.x + to.x) / 2;
+            middle.x = ((from.x + to.x) / 10) * Math.floor(Math.random() * 10);
             middle.y = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
             middle.y = middle.y < 0.1 ? 0.1 : middle.y > 0.9 ? 0.9 : middle.y;
             this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
@@ -259,6 +276,8 @@ export class Genome {
         }
         if (!exists1 || !exists2) {
             con.enabled = false;
+            this.removeConnection(con);
+            //  this.#connections.remove(con);
         }
 
         this.#nodes.add(middle);
@@ -313,10 +332,11 @@ export class Genome {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
-                if (this.#neat.PERMANENT_MAIN_CONNECTIONS && c.from.x === 0.1 && c.to.x === 0.9) {
-                    continue;
-                }
-                this.#connections.remove(i);
+                // if (this.#neat.PERMANENT_MAIN_CONNECTIONS && c.from.x === 0.01 && c.to.x === 0.99) {
+                //     continue;
+                // }
+                this.removeConnection(c);
+                // this.#connections.remove(i);
                 i--;
             }
         }

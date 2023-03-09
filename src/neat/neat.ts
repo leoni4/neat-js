@@ -194,13 +194,13 @@ export class Neat {
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
-            nodeGene.x = 0.1;
+            nodeGene.x = 0.01;
             nodeGene.y = (i + 1) / (this.#inputNodes + 1);
         }
 
         for (let i = 0; i < this.#outputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
-            nodeGene.x = 0.9;
+            nodeGene.x = 0.99;
             nodeGene.y = (i + 1) / (this.#outputNodes + 1);
         }
         for (let i = 0; i < this.#maxClients; i += 1) {

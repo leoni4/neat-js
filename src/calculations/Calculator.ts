@@ -22,9 +22,9 @@ export class Calculator {
             const node: Node = new Node(n.x);
             nodeHashmap.set(n.innovationNumber, node);
 
-            if (n.x <= 0.1) {
+            if (n.x <= 0.01) {
                 this.#inputNodes.push(node);
-            } else if (n.x >= 0.9) {
+            } else if (n.x >= 0.99) {
                 this.#outputNodes.push(node);
             } else {
                 this.#hiddenNodes.push(node);
