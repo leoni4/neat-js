@@ -176,21 +176,59 @@ export class Genome {
         return genome;
     }
 
-    removeConnection(con: ConnectionGene) {
+    removeConnection(con: ConnectionGene, replace = false, down = true, up = true) {
         if (this.#neat.PERMANENT_MAIN_CONNECTIONS && con.from.x === 0.01 && con.to.x === 0.99) {
             return;
         }
-        if (con.from.x !== 0.01) {
+        this.#connections.remove(con);
+        let singleFrom = true;
+        let singleTo = true;
+        if (!replace) {
             for (let i = 0; i < this.#connections.size(); i += 1) {
                 const c = this.#connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
-                if (c.to === con.from) {
-                    this.removeConnection(c);
-                    i--;
+
+                if (singleFrom && c.from.innovationNumber === con.from.innovationNumber) {
+                    singleFrom = false;
+                }
+                if (singleTo && c.to.innovationNumber === con.to.innovationNumber) {
+                    singleTo = false;
+                }
+                if (!singleFrom && !singleTo) {
+                    break;
                 }
             }
         }
-        this.#connections.remove(con);
+
+        if (con.from.x !== 0.01 && singleFrom && !replace && down) {
+            const removingFrom = [];
+            for (let i = 0; i < this.#connections.size(); i += 1) {
+                const c = this.#connections.get(i);
+                if (!(c instanceof ConnectionGene)) continue;
+                if (c.to.innovationNumber === con.from.innovationNumber) {
+                    removingFrom.push(c);
+                }
+            }
+            this.#nodes.remove(con.from);
+            removingFrom.forEach(c => {
+                this.removeConnection(c, false, true, false);
+            });
+        }
+        if (con.to.x !== 0.99 && singleTo && !replace && up) {
+            const removingTo = [];
+            for (let i = 0; i < this.#connections.size(); i += 1) {
+                const c = this.#connections.get(i);
+                if (!(c instanceof ConnectionGene)) continue;
+                if (c.from.innovationNumber === con.to.innovationNumber) {
+                    removingTo.push(c);
+                    break;
+                }
+            }
+            this.#nodes.remove(con.to);
+            removingTo.forEach(c => {
+                this.removeConnection(c, false, false, true);
+            });
+        }
     }
 
     mutateLink(): ConnectionGene | null {
@@ -244,7 +282,7 @@ export class Genome {
         let middle: NodeGene;
         if (replaceIndex === 0) {
             middle = this.#neat.getNode();
-            middle.x = ((from.x + to.x) / 10) * Math.floor(Math.random() * 10);
+            middle.x = (from.x + to.x) / 2;
             middle.y = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
             middle.y = middle.y < 0.1 ? 0.1 : middle.y > 0.9 ? 0.9 : middle.y;
             this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
@@ -274,13 +312,13 @@ export class Genome {
             con2.enabled = con.enabled;
             this.#connections.addSorted(con2);
         }
+        this.#nodes.add(middle);
+
         if (!exists1 || !exists2) {
             con.enabled = false;
-            this.removeConnection(con);
-            //  this.#connections.remove(con);
+            this.removeConnection(con, true);
         }
 
-        this.#nodes.add(middle);
         return middle;
     }
 
@@ -327,17 +365,13 @@ export class Genome {
         return con;
     }
 
-    #optimization() {
-        for (let i = 0; i < this.#connections.size(); i += 1) {
+    #optimization(start = 0) {
+        for (let i = start; i < this.#connections.size(); i += 1) {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
-                // if (this.#neat.PERMANENT_MAIN_CONNECTIONS && c.from.x === 0.01 && c.to.x === 0.99) {
-                //     continue;
-                // }
                 this.removeConnection(c);
-                // this.#connections.remove(i);
-                i--;
+                return;
             }
         }
     }

@@ -33,26 +33,32 @@ export class Controls {
     #initControls() {
         document.getElementById('r-w')?.addEventListener('click', () => {
             this.#genome.mutateWeightRandom();
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('w-s')?.addEventListener('click', () => {
             this.#genome.mutateWeightShift();
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('l-m')?.addEventListener('click', () => {
             this.#genome.mutateLink();
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('n-m')?.addEventListener('click', () => {
             this.#genome.mutateNode();
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('l-t')?.addEventListener('click', () => {
             this.#genome.mutateLinkToggle();
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('m')?.addEventListener('click', () => {
-            this.#genome.mutate();
+            this.#genome.mutate(true);
+            console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('toggle')?.addEventListener('click', () => {

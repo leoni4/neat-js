@@ -61,8 +61,8 @@ export class RandomHashSet {
         return this.#data[index];
     }
 
-    remove(arg: number | ConnectionGene) {
-        if (arg instanceof ConnectionGene) {
+    remove(arg: number | ConnectionGene | NodeGene) {
+        if (arg instanceof ConnectionGene || arg instanceof NodeGene) {
             const index = this.#data.indexOf(arg);
             this.#data.splice(index, 1);
             this.#set.delete(arg);
