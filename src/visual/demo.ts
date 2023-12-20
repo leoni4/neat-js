@@ -55,7 +55,7 @@ export function main() {
         test.clients || 100,
         'sigmoid',
         test.params,
-        network
+        network,
     );
 
     // neat.evolve();
@@ -95,7 +95,7 @@ export function main() {
         if (k % 100 === 0 || k > epochs || error === 0) {
             console.log('###################');
             neat.printSpecies();
-            console.log('-------');
+            console.log('--------');
             console.log(
                 'EPOCH:',
                 k,
@@ -104,7 +104,7 @@ export function main() {
                 '| comp:',
                 topClient.genome.connections.size() + topClient.genome.nodes.size(),
                 '| err:',
-                error
+                error,
             );
         }
         if (frame) {
