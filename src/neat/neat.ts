@@ -3,6 +3,16 @@ import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Client } from './client';
 import { Species } from './species';
 
+enum OutputActivation {
+    none = 'none',
+    sigmoid = 'sigmoid',
+    tanh = 'tanh',
+    relu = 'relu',
+    leakyRelu = 'leakyRelu',
+    linear = 'linear',
+    softmax = 'softmax',
+}
+
 interface NeatParams {
     C1?: number;
     C2?: number;
@@ -64,7 +74,7 @@ export class Neat {
 
     #optimization = false;
 
-    #outputActivation: string;
+    #outputActivation: OutputActivation;
 
     constructor(
         inputNodes: number,
@@ -72,7 +82,7 @@ export class Neat {
         clients: number,
         outputActivation = 'sigmoid',
         params?: NeatParams,
-        loadData?: object
+        loadData?: object,
     ) {
         this.#C1 = params?.C1 || 1;
         this.#C2 = params?.C2 || 1;
