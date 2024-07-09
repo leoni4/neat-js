@@ -38,7 +38,7 @@ for (let i = 0; i < 100; i += 1) {
     test20.output.push([Math.random()]);
 }
 
-const test = test20;
+const test = testXOR;
 
 export function main() {
     let network;
@@ -72,6 +72,10 @@ export function main() {
     const epochs = 1 / 0;
 
     setTimeout(function run() {
+        if (!frame?.controls.proceed) {
+            setTimeout(run, 1);
+            return;
+        }
         //  console.time('run()');
         let topScore = 0;
         let topClient: Client = neat.clients[0];

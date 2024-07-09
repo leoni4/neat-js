@@ -6,12 +6,17 @@ export class Controls {
     #genome: Genome;
     #client: Client;
     #frame: Frame;
+    #proceed: boolean = false;
     constructor(genome: Genome, frame: Frame) {
         this.#frame = frame;
         this.#genome = genome;
         this.#client = new Client(genome, 'none');
 
         this.#initControls();
+    }
+
+    get proceed(): boolean {
+        return this.#proceed;
     }
 
     get client(): Client {
@@ -31,6 +36,9 @@ export class Controls {
     }
 
     #initControls() {
+        document.getElementById('START')?.addEventListener('click', () => {
+            this.#proceed = !this.proceed;
+        });
         document.getElementById('r-w')?.addEventListener('click', () => {
             this.#genome.mutateWeightRandom();
             console.log(this.#genome);

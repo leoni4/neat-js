@@ -69,6 +69,10 @@ export class Frame {
         this.#controls.client = value;
     }
 
+    get controls(): Controls {
+        return this.#controls;
+    }
+
     #renderGenome() {
         this.#stage.destroyChildren();
         this.#layer = new Konva.Layer();
