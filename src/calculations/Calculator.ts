@@ -19,7 +19,7 @@ export class Calculator {
         for (let i = 0; i < nodes.data.length; i += 1) {
             const n = nodes.data[i];
             if (n instanceof ConnectionGene) continue;
-            const node: Node = new Node(n.x);
+            const node: Node = new Node(n.x, n);
             nodeHashmap.set(n.innovationNumber, node);
 
             if (n.x <= 0.01) {
@@ -27,6 +27,7 @@ export class Calculator {
             } else if (n.x >= 0.99) {
                 this.#outputNodes.push(node);
             } else {
+                node.hidden = true;
                 this.#hiddenNodes.push(node);
             }
         }

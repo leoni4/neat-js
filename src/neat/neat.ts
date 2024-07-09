@@ -80,7 +80,7 @@ export class Neat {
         inputNodes: number,
         outputNodes: number,
         clients: number,
-        outputActivation = 'sigmoid',
+        outputActivation: OutputActivation = OutputActivation.sigmoid,
         params?: NeatParams,
         loadData?: object,
     ) {

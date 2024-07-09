@@ -1,12 +1,24 @@
 import { Connection } from './Connection';
+import { NodeGene } from '../genome/nodeGene';
 
 export class Node {
     #x: number;
     #output = 0;
+    #node: NodeGene;
+    #hidden: boolean = false;
     #connections: Array<Connection> = [];
 
-    constructor(x: number) {
+    constructor(x: number, node: NodeGene) {
         this.#x = x;
+        this.#node = node;
+    }
+
+    get hidden(): boolean {
+        return this.#hidden;
+    }
+
+    set hidden(hidden: boolean) {
+        this.#hidden = hidden;
     }
 
     get x(): number {
@@ -44,6 +56,9 @@ export class Node {
             if (c.enabled) {
                 sum += c.weight * c.from.output;
             }
+        }
+        if (this.#hidden) {
+            sum += this.#node.bias;
         }
         this.#output = outputActivation === 'none' ? sum : this.#activation(sum);
     }

@@ -322,7 +322,25 @@ export class Genome {
         return middle;
     }
 
-    mutateWeightShift(): ConnectionGene | null {
+    #mutateWeightShiftBias(): NodeGene | null {
+        const node = this.#nodes.randomElement();
+        if (!(node instanceof NodeGene)) {
+            return null;
+        }
+        let newWeight = node.bias;
+        let counter = 0;
+        while (newWeight === node.bias && counter < 10) {
+            counter++;
+            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+        }
+        if (counter >= 10) {
+            newWeight = 0;
+        }
+        node.bias = newWeight;
+        return node;
+    }
+
+    #mutateWeightShiftConnection(): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -340,7 +358,29 @@ export class Genome {
         return con;
     }
 
-    mutateWeightRandom(): ConnectionGene | null {
+    mutateWeightShift(): ConnectionGene | NodeGene | null {
+        if (Math.random() < 0.5) {
+            return this.#mutateWeightShiftConnection();
+        } else {
+            return this.#mutateWeightShiftBias();
+        }
+    }
+
+    #mutateWeightRandomNode(): NodeGene | null {
+        const node = this.#nodes.randomElement();
+        if (!(node instanceof NodeGene)) {
+            return null;
+        }
+
+        let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
+        while (newWeight === node.bias) {
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+        }
+        node.bias = newWeight;
+        return node;
+    }
+
+    #mutateWeightRandomConnection(): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -352,6 +392,14 @@ export class Genome {
         }
         con.weight = newWeight;
         return con;
+    }
+
+    mutateWeightRandom(): ConnectionGene | NodeGene | null {
+        if (Math.random() < 0.5) {
+            return this.#mutateWeightRandomConnection();
+        } else {
+            return this.#mutateWeightRandomNode();
+        }
     }
 
     mutateLinkToggle(): ConnectionGene | null {

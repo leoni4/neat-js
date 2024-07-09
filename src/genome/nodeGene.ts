@@ -3,9 +3,18 @@ import { Gene } from './gene';
 export class NodeGene extends Gene {
     #x = 0;
     #y = 0;
+    #bias = 0;
 
     constructor(innovationNumber: number) {
         super(innovationNumber);
+    }
+
+    get bias(): number {
+        return this.#bias;
+    }
+
+    set bias(value: number) {
+        this.#bias = value;
     }
 
     get x(): number {
