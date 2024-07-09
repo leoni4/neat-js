@@ -1,6 +1,18 @@
 import { Client, Neat } from '../neat';
 import { Frame } from './frame';
 
+/*
+        this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
+        this.#SURVIVORS = params?.SURVIVORS || 0.8;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 10;
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.1;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.1;
+        this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
+*/
 const testXOR = {
     input: [
         [0, 0],
@@ -13,9 +25,8 @@ const testXOR = {
     clients: 100,
     output: [[0], [0], [1], [1]],
     params: {
-        //  PERMANENT_MAIN_CONNECTIONS: true,
-        PROBABILITY_MUTATE_WEIGHT_SHIFT: 6,
-        PROBABILITY_MUTATE_LINK: 6,
+        PROBABILITY_MUTATE_LINK: 0.1,
+        PROBABILITY_MUTATE_NODES: 0.1,
     },
 };
 
