@@ -53,6 +53,7 @@ export function main() {
         test.input[0].length,
         test.output[0].length,
         test.clients || 100,
+        // @ts-ignore-next-line
         'sigmoid',
         test.params,
         network,

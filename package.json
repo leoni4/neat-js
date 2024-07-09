@@ -2,7 +2,7 @@
     "name": "neat",
     "version": "0.0.1",
     "description": "neat implementation on typescript",
-    "main": "./dist/main.js",
+    "main": "./dist/neat.min.js",
     "scripts": {
         "start": "node ./index.js",
         "build": "webpack",
