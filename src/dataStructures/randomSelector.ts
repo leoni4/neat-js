@@ -34,7 +34,7 @@ export class RandomSelector {
                 return this.#objects[i];
             }
         }
-        throw new Error('random Species not found');
+        return this.#objects[0];
     }
 
     reset() {

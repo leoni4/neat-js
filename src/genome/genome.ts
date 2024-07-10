@@ -238,8 +238,12 @@ export class Genome {
         if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
             return null;
         }
-
+        let triesCount = 0;
         while (geneB instanceof NodeGene && geneA.x === geneB.x) {
+            triesCount += 1;
+            if (triesCount > 10) {
+                return null;
+            }
             geneB = this.#nodes.randomElement();
         }
 
@@ -322,7 +326,7 @@ export class Genome {
         return middle;
     }
 
-    #mutateWeightShiftBias(): NodeGene | null {
+    #mutateWeightShiftBias(sameErrCoof: number): NodeGene | null {
         const node = this.#nodes.randomElement();
         if (!(node instanceof NodeGene)) {
             return null;
@@ -331,7 +335,7 @@ export class Genome {
         let counter = 0;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * sameErrCoof;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -340,7 +344,7 @@ export class Genome {
         return node;
     }
 
-    #mutateWeightShiftConnection(): ConnectionGene | null {
+    #mutateWeightShiftConnection(sameErrCoof: number): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -349,7 +353,7 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * sameErrCoof;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -358,15 +362,15 @@ export class Genome {
         return con;
     }
 
-    mutateWeightShift(): ConnectionGene | NodeGene | null {
+    mutateWeightShift(sameErrCoof: number): ConnectionGene | NodeGene | null {
         if (Math.random() < 0.5) {
-            return this.#mutateWeightShiftConnection();
+            return this.#mutateWeightShiftConnection(sameErrCoof);
         } else {
-            return this.#mutateWeightShiftBias();
+            return this.#mutateWeightShiftBias(sameErrCoof);
         }
     }
 
-    #mutateWeightRandomNode(): NodeGene | null {
+    #mutateWeightRandomNode(sameErrCoof: number): NodeGene | null {
         const node = this.#nodes.randomElement();
         if (!(node instanceof NodeGene)) {
             return null;
@@ -374,13 +378,13 @@ export class Genome {
 
         let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH * sameErrCoof;
         }
         node.bias = newWeight;
         return node;
     }
 
-    #mutateWeightRandomConnection(): ConnectionGene | null {
+    #mutateWeightRandomConnection(sameErrCoof: number): ConnectionGene | null {
         const con = this.#connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -388,17 +392,17 @@ export class Genome {
 
         let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH * sameErrCoof;
         }
         con.weight = newWeight;
         return con;
     }
 
-    mutateWeightRandom(): ConnectionGene | NodeGene | null {
+    mutateWeightRandom(sameErrCoof: number): ConnectionGene | NodeGene | null {
         if (Math.random() < 0.5) {
-            return this.#mutateWeightRandomConnection();
+            return this.#mutateWeightRandomConnection(sameErrCoof);
         } else {
-            return this.#mutateWeightRandomNode();
+            return this.#mutateWeightRandomNode(sameErrCoof);
         }
     }
 
@@ -424,16 +428,17 @@ export class Genome {
         }
     }
 
-    mutate(selfOpt = false) {
+    mutate(selfOpt = false, sameErrorCount: number) {
         this.#selfOpt = selfOpt;
         const optimize = this.#selfOpt || this.#neat.optimization;
         if (optimize) {
             this.#optimization();
         }
         let prob: number;
+        const sameErrCoof = 1 + sameErrorCount / 100;
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE;
+            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * sameErrCoof;
             prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
@@ -443,7 +448,7 @@ export class Genome {
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE;
+            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * sameErrCoof;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
             }
@@ -453,7 +458,7 @@ export class Genome {
             }
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK * this.#neat.MUTATION_RATE * sameErrCoof;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }
@@ -462,24 +467,24 @@ export class Genome {
             this.mutateLinkToggle();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE * sameErrCoof;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }
         while (prob > Math.random()) {
             prob--;
-            this.mutateWeightRandom();
+            this.mutateWeightRandom(sameErrCoof * 10);
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * sameErrCoof;
         prob = prob > this.#connections.size() ? this.#connections.size() : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }
         while (prob > Math.random()) {
             prob--;
-            this.mutateWeightShift();
+            this.mutateWeightShift(sameErrCoof * 10);
         }
     }
 }

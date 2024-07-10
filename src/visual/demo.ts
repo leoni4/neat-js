@@ -3,14 +3,15 @@ import { Frame } from './frame';
 
 /*
         this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
+
         this.#SURVIVORS = params?.SURVIVORS || 0.8;
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
-        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 10;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 0.5;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 2;
         this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
         this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
         this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
-        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.1;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.1;
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.05;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.05;
         this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
 */
 const testXOR = {
@@ -24,10 +25,7 @@ const testXOR = {
     load: false,
     clients: 100,
     output: [[0], [0], [1], [1]],
-    params: {
-        PROBABILITY_MUTATE_LINK: 0.1,
-        PROBABILITY_MUTATE_NODES: 0.1,
-    },
+    params: {},
 };
 
 const test20 = {
@@ -139,7 +137,7 @@ export function main() {
             return;
         }
         k++;
-        neat.evolve();
+        neat.evolve(false, error);
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);
