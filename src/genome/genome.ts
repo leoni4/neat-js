@@ -343,7 +343,8 @@ export class Genome {
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight =
+                node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * this.#neat.MUTATION_RATE;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -361,7 +362,8 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight =
+                con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * this.#neat.MUTATION_RATE;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -392,7 +394,10 @@ export class Genome {
 
         let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight =
+                (Math.random() * newWeight * 2 - newWeight) *
+                this.#neat.WEIGHT_RANDOM_STRENGTH *
+                this.#neat.MUTATION_RATE;
         }
         node.bias = newWeight;
         return node;
@@ -406,7 +411,10 @@ export class Genome {
 
         let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight =
+                (Math.random() * newWeight * 2 - newWeight) *
+                this.#neat.WEIGHT_RANDOM_STRENGTH *
+                this.#neat.MUTATION_RATE;
         }
         con.weight = newWeight;
         return con;
@@ -459,6 +467,7 @@ export class Genome {
             }
 
             prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE;
+            prob = this.#nodes.size() < this.#neat.CT * 3 ? this.#neat.CT * 3 : prob;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
             }
@@ -477,8 +486,9 @@ export class Genome {
             this.mutateLinkToggle();
         }
 
+        const minWeight = Math.min(this.#connections.size(), this.#nodes.size() - this.#neat.CT);
         prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
-        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        prob = prob > minWeight ? minWeight : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }
@@ -488,7 +498,7 @@ export class Genome {
         }
 
         prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
-        prob = prob > this.#connections.size() ? this.#connections.size() : prob;
+        prob = prob > minWeight ? minWeight : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;
         }

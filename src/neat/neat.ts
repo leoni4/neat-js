@@ -94,16 +94,16 @@ export class Neat {
         this.#CP = params?.CP || clients / 10;
         this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
-        this.#MUTATION_RATE = params?.MUTATION_RATE || 0.1;
+        this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
 
         this.#SURVIVORS = params?.SURVIVORS || 0.8;
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 0.1;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
         this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 1;
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || inputNodes * outputNodes;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || (inputNodes * outputNodes) / 2;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || outputNodes / inputNodes;
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 1;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || (inputNodes * outputNodes) / 4;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.01;
         this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || inputNodes * outputNodes;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.1;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.01;
         this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
 
         this.#outputActivation = outputActivation;
