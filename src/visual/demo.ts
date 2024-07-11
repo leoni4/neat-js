@@ -126,18 +126,18 @@ export function main() {
             frame.client = topClient;
             frame.genome = topClient.genome;
         }
-        if (k > epochs || error === 0) {
-            console.log('###################');
-            console.log('Finished');
-            if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
+        // if (k > epochs || error === 0) {
+        //     console.log('###################');
+        //     console.log('Finished');
+        //     if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
 
-            if (test.save) {
-                localStorage.setItem('network', JSON.stringify(neat.save()));
-            }
-            return;
-        }
+        //     if (test.save) {
+        //         localStorage.setItem('network', JSON.stringify(neat.save()));
+        //     }
+        //     return;
+        // }
         k++;
-        neat.evolve(false, error);
+        neat.evolve(error === 0, error);
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);

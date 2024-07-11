@@ -93,7 +93,7 @@ export class Neat {
         this.#C3 = params?.C3 || 0.1;
 
         this.#CT = params?.CT || inputNodes * outputNodes;
-        this.#CP = params?.CP || clients / 10;
+        this.#CP = params?.CP || (clients / 10 > 0 ? 1 : clients / 10);
         this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
         this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
@@ -497,11 +497,12 @@ export class Neat {
             });
         }
 
-        const cof = this.#optimization ? 0.01 : 0.0001;
+        const cof = this.#optimization ? 0.1 : 0.0001;
 
         this.#clients.forEach(item => {
             const allCons = item.genome.connections.size();
-            item.score -= Math.sqrt(Math.sqrt(allCons)) * cof;
+            const allBodex = item.genome.nodes.size();
+            item.score -= Math.sqrt(Math.sqrt(allCons + allBodex)) * cof;
         });
     }
 }

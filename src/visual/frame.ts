@@ -119,8 +119,8 @@ export class Frame {
             const circle = new Konva.Circle({
                 x: this.#width * item.x,
                 y: this.#height * item.y,
-                radius,
-                fill: '#0f0',
+                radius: radius + Math.abs(radius * item.bias),
+                fill: item.bias >= 0 ? '#0f0' : '#f00',
                 stroke: 'black',
                 strokeWidth: 1,
             });
