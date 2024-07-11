@@ -145,7 +145,7 @@ export class Neat {
     }
 
     get MUTATION_RATE(): number {
-        return this.#MUTATION_RATE + this.#sameErrorEpoch / 100;
+        return this.#MUTATION_RATE + this.#sameErrorEpoch / 10;
     }
 
     get WEIGHT_SHIFT_STRENGTH(): number {
@@ -389,7 +389,7 @@ export class Neat {
         }
         this.#lastError = error;
         this.#evolveCounts++;
-        this.#optimization = optimization || this.#evolveCounts % 5 === 0;
+        this.#optimization = optimization || this.#evolveCounts % 10 === 0;
         this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
@@ -461,7 +461,7 @@ export class Neat {
             }
         }
         for (let i = 0; i < this.#species.length; i += 1) {
-            this.#species[i].evaluateScore(this.optimization);
+            this.#species[i].evaluateScore();
         }
     }
 

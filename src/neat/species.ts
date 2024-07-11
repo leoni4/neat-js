@@ -5,7 +5,6 @@ export class Species {
     #clients: Array<Client> = [];
     #representative: Client;
     #score = 0;
-    #optimization = false;
 
     constructor(client: Client) {
         this.#representative = client;
@@ -38,8 +37,7 @@ export class Species {
         this.#clients = [];
     }
 
-    evaluateScore(optimization = false) {
-        this.#optimization = optimization;
+    evaluateScore() {
         let value = 0;
         for (let i = 0; i < this.#clients.length; i += 1) {
             const c = this.#clients[i];

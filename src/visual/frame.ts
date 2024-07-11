@@ -127,12 +127,12 @@ export class Frame {
 
             this.#layer.add(circle);
 
-            if (item.x !== 0.01 && item.x !== 0.99) {
+            if (item.x !== 0.01 && item.x !== 0.99 && !this.#toggle) {
                 const text = new Konva.Text({
                     x: this.#width * item.x,
                     y: this.#height * item.y,
                     text: item.bias.toFixed(2) + '',
-                    fontSize: 20,
+                    fontSize: 15,
                     fontFamily: 'Calibri',
                     fill: item.bias > 0 ? 'green' : 'red',
                 });

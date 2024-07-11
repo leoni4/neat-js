@@ -106,9 +106,34 @@ export class Genome {
             }
         }
 
+        let indexNode1 = 0;
+        let indexNode2 = 0;
+        while (indexNode1 < g1.nodes.size() && indexNode2 < g2.nodes.size()) {
+            const node1: ConnectionGene | NodeGene = g1.nodes.get(indexNode1);
+            const node2: ConnectionGene | NodeGene = g2.nodes.get(indexNode2);
+            if (!(node1 instanceof NodeGene) || !(node2 instanceof NodeGene)) {
+                throw new Error('node is not a NodeGene');
+            }
+            const inn1: number = node1.innovationNumber;
+            const inn2: number = node2.innovationNumber;
+
+            if (inn1 > inn2) {
+                indexNode2++;
+                disjoint++;
+            } else if (inn1 < inn2) {
+                indexNode1++;
+                disjoint++;
+            } else {
+                indexNode1++;
+                indexNode2++;
+                similar++;
+                weightDiff += Math.abs(node1.bias - node2.bias);
+            }
+        }
+
         weightDiff /= similar || 1;
 
-        const excess = g1.connections.size() - indexG1;
+        const excess = g1.connections.size() - indexG1 + g1.nodes.size() - indexNode1;
         let N = Math.max(g1.connections.size(), g2.connections.size());
         N = N < this.#neat.CT ? 1 : N;
 
