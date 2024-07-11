@@ -96,14 +96,14 @@ export class Neat {
 
         this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
 
-        this.#SURVIVORS = params?.SURVIVORS || 1;
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 0;
-        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 0;
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 0;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0;
-        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0;
+        this.#SURVIVORS = params?.SURVIVORS || 0.5;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 0.5;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 2;
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || inputNodes * outputNodes;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.5;
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 1.5;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.05;
         this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
 
         this.#outputActivation = outputActivation;
@@ -142,7 +142,7 @@ export class Neat {
     }
 
     get MUTATION_RATE(): number {
-        return this.#MUTATION_RATE;
+        return this.#MUTATION_RATE + this.#sameErrorEpoch / 100;
     }
 
     get WEIGHT_SHIFT_STRENGTH(): number {
@@ -217,7 +217,7 @@ export class Neat {
         }
         for (let i = 0; i < this.#maxClients; i += 1) {
             const c: Client = new Client(this.emptyGenome(), this.#outputActivation);
-            c.generateCalculator();
+            //  c.generateCalculator();
             this.#clients.push(c);
         }
     }
@@ -241,7 +241,6 @@ export class Neat {
 
         for (let i = 0; i < this.#maxClients; i += 1) {
             const c: Client = new Client(this.loadGenome(data.genome), this.#outputActivation);
-            c.generateCalculator();
             this.#clients.push(c);
         }
     }
@@ -383,7 +382,7 @@ export class Neat {
         }
         this.#lastError = error;
         this.#evolveCounts++;
-        this.#optimization = optimization || this.#evolveCounts % 5 === 0; // this.#evolveCounts % Math.ceil(10 / this.#MUTATION_RATE) === 0;
+        this.#optimization = optimization || this.#evolveCounts % Math.ceil(10 / this.#MUTATION_RATE) === 0;
         this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
@@ -397,7 +396,7 @@ export class Neat {
 
     #mutate() {
         for (let i = 0; i < this.#clients.length; i += 1) {
-            this.#clients[i].mutate(this.#evolveCounts === 1, this.#sameErrorEpoch);
+            this.#clients[i].mutate(this.#evolveCounts === 1);
         }
     }
 

@@ -66,11 +66,11 @@ export class Client {
         return this.genome.distance(client.genome);
     }
 
-    mutate(force = false, sameErrorCount: number) {
+    mutate(force = false) {
         if (this.bestScore && !force) {
             return;
         }
-        this.genome.mutate(this.error < this.genome.optErrTrashhold && !force, sameErrorCount);
+        this.genome.mutate(this.error < this.genome.optErrTrashhold && !force);
     }
 
     calculate(input: Array<number>): Array<number> {

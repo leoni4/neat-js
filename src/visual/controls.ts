@@ -40,12 +40,12 @@ export class Controls {
             this.#proceed = !this.proceed;
         });
         document.getElementById('r-w')?.addEventListener('click', () => {
-            this.#genome.mutateWeightRandom(1);
+            this.#genome.mutateWeightRandom();
             console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
         document.getElementById('w-s')?.addEventListener('click', () => {
-            this.#genome.mutateWeightShift(1);
+            this.#genome.mutateWeightShift();
             console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
@@ -65,7 +65,7 @@ export class Controls {
             this.#frame.genome = this.#genome;
         });
         document.getElementById('m')?.addEventListener('click', () => {
-            this.#genome.mutate(true, 0);
+            this.#genome.mutate(true);
             console.log(this.#genome);
             this.#frame.genome = this.#genome;
         });
