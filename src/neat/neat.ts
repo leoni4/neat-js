@@ -22,6 +22,7 @@ interface NeatParams {
     MUTATION_RATE?: number;
     SURVIVORS?: number;
     WEIGHT_SHIFT_STRENGTH?: number;
+    BIAS_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
     PROBABILITY_MUTATE_WEIGHT_SHIFT?: number;
     PROBABILITY_MUTATE_TOGGLE_LINK?: number;
@@ -50,6 +51,7 @@ export class Neat {
     #MUTATION_RATE: number;
 
     #WEIGHT_SHIFT_STRENGTH: number;
+    #BIAS_SHIFT_STRENGTH: number;
     #WEIGHT_RANDOM_STRENGTH: number;
 
     #PROBABILITY_MUTATE_WEIGHT_SHIFT: number;
@@ -98,6 +100,7 @@ export class Neat {
 
         this.#SURVIVORS = params?.SURVIVORS || 0.8;
         this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
+        this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH || 0.01;
         this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 1;
         this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 1;
         this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || (inputNodes * outputNodes) / 4;
@@ -147,6 +150,10 @@ export class Neat {
 
     get WEIGHT_SHIFT_STRENGTH(): number {
         return this.#WEIGHT_SHIFT_STRENGTH;
+    }
+
+    get BIAS_SHIFT_STRENGTH(): number {
+        return this.#BIAS_SHIFT_STRENGTH;
     }
 
     get WEIGHT_RANDOM_STRENGTH(): number {

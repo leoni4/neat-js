@@ -3,7 +3,7 @@ import { Gene } from './gene';
 export class NodeGene extends Gene {
     #x = 0;
     #y = 0;
-    #bias = 0.5;
+    #bias = 0;
 
     constructor(innovationNumber: number) {
         super(innovationNumber);
