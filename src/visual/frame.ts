@@ -32,6 +32,7 @@ export class Frame {
             height: this.#height,
         });
         this.#layer = new Konva.Layer();
+        this.#stage.add(this.#layer);
     }
 
     get text(): string {
@@ -74,9 +75,7 @@ export class Frame {
     }
 
     #renderGenome() {
-        this.#stage.destroyChildren();
-        this.#layer = new Konva.Layer();
-        this.#stage.add(this.#layer);
+        this.#layer.destroyChildren();
 
         let radius = this.#height / this.#genome.nodes.size() / 20;
         radius = radius < 5 ? 5 : radius > this.#height / 20 ? this.#height / 20 : radius;
