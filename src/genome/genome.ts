@@ -326,13 +326,21 @@ export class Genome {
         return middle;
     }
 
-    #mutateWeightShiftBias(): NodeGene | null {
-        const node = this.#nodes.randomElement();
+    #mutateWeightShiftNode(): NodeGene | null {
+        let counter = 0;
+        let node;
+        while ((!(node instanceof NodeGene) || node.x === 0.01 || node.x === 0.99) && counter < 10) {
+            counter++;
+            node = this.#nodes.randomElement();
+        }
+        if (counter >= 10) {
+            return null;
+        }
+        counter = 0;
         if (!(node instanceof NodeGene)) {
             return null;
         }
         let newWeight = node.bias;
-        let counter = 0;
         while (newWeight === node.bias && counter < 10) {
             counter++;
             newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
@@ -362,16 +370,22 @@ export class Genome {
         return con;
     }
 
-    mutateWeightShift(): ConnectionGene | NodeGene | null {
-        if (Math.random() < 0.5) {
-            return this.#mutateWeightShiftConnection();
-        } else {
-            return this.#mutateWeightShiftBias();
-        }
+    mutateWeightShift(): void {
+        this.#mutateWeightShiftConnection();
+        this.#mutateWeightShiftNode();
     }
 
     #mutateWeightRandomNode(): NodeGene | null {
-        const node = this.#nodes.randomElement();
+        let counter = 0;
+        let node;
+        while ((!(node instanceof NodeGene) || node.x === 0.01 || node.x === 0.99) && counter < 10) {
+            counter++;
+            node = this.#nodes.randomElement();
+        }
+        if (counter >= 10) {
+            return null;
+        }
+        counter = 0;
         if (!(node instanceof NodeGene)) {
             return null;
         }
@@ -398,12 +412,9 @@ export class Genome {
         return con;
     }
 
-    mutateWeightRandom(): ConnectionGene | NodeGene | null {
-        if (Math.random() < 0.5) {
-            return this.#mutateWeightRandomConnection();
-        } else {
-            return this.#mutateWeightRandomNode();
-        }
+    mutateWeightRandom(): void {
+        this.#mutateWeightRandomConnection();
+        this.#mutateWeightRandomNode();
     }
 
     mutateLinkToggle(): ConnectionGene | null {
