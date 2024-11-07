@@ -35,11 +35,10 @@ export default [
     {
         entry: './src/index.ts', // Adjust to your entry file
         output: {
-            filename: 'neatjs.esm.mjs',
+            filename: 'neatjs.esm.js',
             path: path.resolve(__dirname, 'dist'),
             library: {
                 type: 'module',
-                export: 'default', // Sets the library to output as an ES module
             },
             module: true, // Enables the output to be treated as an ES module
         },
