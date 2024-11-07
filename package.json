@@ -1,4 +1,5 @@
 {
+    "type": "module",
     "name": "neat",
     "version": "0.0.1",
     "description": "neat implementation on typescript",

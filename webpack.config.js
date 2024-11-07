@@ -1,41 +1,12 @@
 /* eslint-disable no-undef,@typescript-eslint/no-var-requires */
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// module.exports = {
-//     mode: 'production',
+// Convert `import.meta.url` to a path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-//     devtool: 'source-map',
-
-//     entry: './src/index.ts',
-
-//     output: {
-//         path: path.resolve(__dirname, 'dist'),
-//         filename: 'neat.min.js',
-//         globalObject: 'this',
-//         library: {
-//             name: 'NeatJS',
-//             type: 'umd',
-//         },
-//     },
-
-//     resolve: {
-//         extensions: ['.ts', '.js'],
-//     },
-
-//     module: {
-//         rules: [
-//             {
-//                 test: /\.tsx?/,
-//                 use: 'ts-loader',
-//                 exclude: /node_modules/,
-//             },
-//         ],
-//     },
-
-//     watch: true,
-// };
-
-module.exports = [
+export default [
     // Configuration for UMD (for CDN usage)
     {
         entry: './src/index.ts', // Adjust to your entry file
@@ -67,7 +38,8 @@ module.exports = [
             filename: 'neatjs.esm.js',
             path: path.resolve(__dirname, 'dist'),
             library: {
-                type: 'module', // Sets the library to output as an ES module
+                type: 'module',
+                export: 'default', // Sets the library to output as an ES module
             },
             module: true, // Enables the output to be treated as an ES module
         },
