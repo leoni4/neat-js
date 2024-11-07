@@ -67,24 +67,28 @@ module.exports = [
             filename: 'neatjs.esm.js',
             path: path.resolve(__dirname, 'dist'),
             library: {
-                type: 'module',
+                type: 'module', // Sets the library to output as an ES module
             },
+            module: true, // Enables the output to be treated as an ES module
         },
         resolve: {
-            extensions: ['.ts', '.tsx', '.js'],
+            extensions: ['.ts', '.tsx', '.js'], // Allows importing these file extensions without specifying them
         },
-        mode: 'production',
+        mode: 'production', // Use 'production' mode for optimizations in output
         experiments: {
-            outputModule: true, // Enables ESM output
+            outputModule: true, // Required to allow module type output
         },
         module: {
             rules: [
                 {
-                    test: /\.tsx?$/,
-                    exclude: /node_modules/,
-                    use: 'ts-loader',
+                    test: /\.tsx?$/, // Matches TypeScript files
+                    exclude: /node_modules/, // Excludes dependencies from processing
+                    use: 'ts-loader', // Use ts-loader to compile TypeScript
                 },
             ],
+        },
+        externals: {
+            // Specify any dependencies here if you want them to be excluded from the bundle
         },
     },
 ];
