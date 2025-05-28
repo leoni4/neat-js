@@ -425,7 +425,7 @@ export class Neat {
 
     #removeExtinct() {
         for (let i = this.#species.length - 1; i >= 0; i--) {
-            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0].bestScore && this.#species.length > 1) {
+            if (this.#species[i].size() <= 1 && !this.#species[i].clients[0]?.bestScore && this.#species.length > 1) {
                 this.#species[i].goExtinct();
                 this.#species.splice(i, 1);
             }
