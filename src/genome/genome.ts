@@ -309,9 +309,13 @@ export class Genome {
         const to: NodeGene = con.to;
         const replaceIndex = this.#neat.getReplaceIndex(from, to);
         let middle: NodeGene;
+        const middleX = (from.x + to.x) / 2;
+        if (middleX <= 0.1) {
+            return null;
+        }
         if (replaceIndex === 0) {
             middle = this.#neat.getNode();
-            middle.x = (from.x + to.x) / 2;
+            middle.x = middleX;
             middle.y = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
             middle.y = middle.y < 0.1 ? 0.1 : middle.y > 0.9 ? 0.9 : middle.y;
             this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
