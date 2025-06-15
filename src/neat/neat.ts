@@ -231,7 +231,7 @@ export class Neat {
         }
         for (let i = 0; i < this.#maxClients; i += 1) {
             const c: Client = new Client(this.emptyGenome(), this.#outputActivation);
-            //  c.generateCalculator();
+            c.generateCalculator();
             this.#clients.push(c);
         }
     }
