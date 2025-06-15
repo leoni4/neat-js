@@ -121,6 +121,13 @@ export class Neat {
         }
     }
 
+    get inputNodes(): number {
+        return this.#inputNodes;
+    }
+    get outputNodes(): number {
+        return this.#outputNodes;
+    }
+
     get PERMANENT_MAIN_CONNECTIONS(): boolean {
         return this.#PERMANENT_MAIN_CONNECTIONS;
     }
