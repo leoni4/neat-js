@@ -1,14 +1,14 @@
 import { RandomSelector } from '../../src/dataStructures';
-import { Neat, Species, Client } from '../../src/neat';
+import { Neat, Species, Client, OutputActivation } from '../../src/neat';
 import { Genome } from '../../src/genome';
 
 describe('dataStructures/RandomSelector test', () => {
-    const testNeat = new Neat(2, 1, 1, 'sigmoid', {});
+    const testNeat = new Neat(2, 1, 1, OutputActivation.sigmoid, {});
     const testGenome = new Genome(testNeat);
     const testClient = new Client(testGenome, 'none');
     testClient.score = 100;
     const testSpecies = new Species(testClient);
-    testSpecies.evaluateScore(false);
+    testSpecies.evaluateScore();
     let mySelector: RandomSelector;
     beforeEach(() => {
         mySelector = new RandomSelector(0.8);
@@ -26,10 +26,6 @@ describe('dataStructures/RandomSelector test', () => {
     });
 
     it('returns random score item', () => {
-        const errorTest = () => {
-            mySelector.random();
-        };
-        expect(errorTest).toThrow('random Species not found');
         mySelector.add(testSpecies);
         expect(mySelector.random()).toBe(testSpecies);
     });

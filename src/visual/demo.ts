@@ -1,4 +1,4 @@
-import { Client, Neat } from '../neat';
+import { Client, Neat, OutputActivation } from '../neat';
 import { Frame } from './frame';
 
 /*
@@ -29,8 +29,8 @@ const testXOR = {
 };
 
 const test20 = {
-    input: [] as any,
-    output: [] as any,
+    input: [] as number[][],
+    output: [] as number[][],
     save: false,
     load: false,
     clients: 100,
@@ -62,8 +62,7 @@ export function main() {
         test.input[0].length,
         test.output[0].length,
         test.clients || 100,
-        // @ts-ignore-next-line
-        'sigmoid',
+        OutputActivation.sigmoid,
         test.params,
         network,
     );

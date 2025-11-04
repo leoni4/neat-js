@@ -1,12 +1,12 @@
 import { ConnectionGene, Genome, NodeGene } from '../../src/genome';
-import { Neat } from '../../src/neat';
+import { Neat, OutputActivation } from '../../src/neat';
 
 describe('Genome test', () => {
     let genome: Genome;
     let neat: Neat;
 
     beforeEach(() => {
-        neat = new Neat(2, 1, 10, 'sigmoid', {});
+        neat = new Neat(2, 1, 10, OutputActivation.sigmoid, {});
         genome = neat.emptyGenome();
     });
 

@@ -10,7 +10,7 @@ import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Client } from './client';
 import { Species } from './species';
 
-enum OutputActivation {
+export enum OutputActivation {
     none = 'none',
     sigmoid = 'sigmoid',
     tanh = 'tanh',
