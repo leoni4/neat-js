@@ -1,4 +1,11 @@
-import { ConnectionGene, Genome, NodeGene } from '../genome';
+import {
+    ConnectionGene,
+    Genome,
+    NodeGene,
+    type GenomeSaveData,
+    type NodeSaveData,
+    type ConnectionSaveData,
+} from '../genome';
 import { RandomHashSet, RandomSelector } from '../dataStructures';
 import { Client } from './client';
 import { Species } from './species';
@@ -31,6 +38,11 @@ interface NeatParams {
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_TRASHHOLD?: number;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
+}
+
+interface LoadData {
+    genome: GenomeSaveData;
+    evolveCounts: number;
 }
 
 export class Neat {
@@ -86,7 +98,7 @@ export class Neat {
         clients: number,
         outputActivation: OutputActivation = OutputActivation.sigmoid,
         params?: NeatParams,
-        loadData?: object,
+        loadData?: LoadData,
     ) {
         this.#C1 = params?.C1 || 1;
         this.#C2 = params?.C2 || 1;
@@ -236,7 +248,7 @@ export class Neat {
         }
     }
 
-    load(data: any) {
+    load(data: LoadData) {
         if (!data.genome) {
             console.log('ERROR: wrong data to load: "genome" missed');
             return;
@@ -247,7 +259,7 @@ export class Neat {
             this.#evolveCounts = data.evolveCounts;
         }
 
-        data.genome.nodes.forEach((item: any) => {
+        data.genome.nodes.forEach((item: NodeSaveData) => {
             const node = this.getNode();
             node.x = item.x;
             node.y = item.y;
@@ -259,15 +271,15 @@ export class Neat {
         }
     }
 
-    loadGenome(data: any) {
+    loadGenome(data: GenomeSaveData) {
         const genome: Genome = new Genome(this);
 
-        data.nodes.forEach((nodeItem: NodeGene) => {
+        data.nodes.forEach((nodeItem: NodeSaveData) => {
             const node = this.getNode(nodeItem.innovationNumber);
             genome.nodes.add(node);
         });
 
-        data.connections.forEach((con: any) => {
+        data.connections.forEach((con: ConnectionSaveData) => {
             const geneA = this.getNode(con.from);
             const geneB = this.getNode(con.to);
             const connectionNode = this.getConnection(geneA, geneB);

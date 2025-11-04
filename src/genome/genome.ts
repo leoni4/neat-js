@@ -3,6 +3,25 @@ import { Neat } from '../neat';
 import { ConnectionGene } from './connectionGene';
 import { NodeGene } from './nodeGene';
 
+export type NodeSaveData = {
+    innovationNumber: number;
+    x: number;
+    y: number;
+};
+
+export type ConnectionSaveData = {
+    replaceIndex: number;
+    enabled: boolean;
+    weight: number;
+    from: number;
+    to: number;
+};
+
+export interface GenomeSaveData {
+    nodes: NodeSaveData[];
+    connections: ConnectionSaveData[];
+}
+
 export class Genome {
     #connections: RandomHashSet = new RandomHashSet();
     #nodes: RandomHashSet = new RandomHashSet();
@@ -35,8 +54,8 @@ export class Genome {
         return this.#neat;
     }
 
-    save() {
-        const nodes: Array<any> = [];
+    save(): GenomeSaveData {
+        const nodes: NodeSaveData[] = [];
         this.#nodes.data.forEach(item => {
             if (!(item instanceof NodeGene)) return;
             nodes.push({
@@ -45,7 +64,7 @@ export class Genome {
                 y: item.y,
             });
         });
-        const connections: Array<any> = [];
+        const connections: ConnectionSaveData[] = [];
         this.#connections.data.forEach(item => {
             if (!(item instanceof ConnectionGene)) return;
 
