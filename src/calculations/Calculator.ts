@@ -56,7 +56,9 @@ export class Calculator {
 
     calculate(input: Array<number>): Array<number> {
         if (input.length !== this.#inputNodes.length) {
-            throw new Error('Data dosent fit');
+            throw new Error(
+                `Input length (${input.length}) does not match number of input nodes (${this.#inputNodes.length})`,
+            );
         }
         for (let i = 0; i < this.#inputNodes.length; i++) {
             this.#inputNodes[i].output = input[i];

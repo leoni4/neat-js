@@ -5,7 +5,7 @@
     "description": "neat implementation on typescript",
     "main": "./dist/neat.min.js",
     "scripts": {
-        "start": "nodemon index.js",
+        "start": "nodemon index.cjs",
         "build": "webpack",
         "build:tsc": "tsc",
         "dev": "tsc -w",

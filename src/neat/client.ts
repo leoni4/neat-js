@@ -5,11 +5,14 @@ import { Calculator } from '../calculations';
 export class Client {
     #genome: Genome;
     #score = 0;
+    #scoreRaw = 0;
     #error = 0;
     #bestScore = false;
     #species: Species | null;
     #calculator: Calculator | null;
     #outputActivation: string;
+    #complexity = 0;
+    #adjustedScore = 0;
 
     constructor(genome: Genome, outputActivation: string) {
         this.#outputActivation = outputActivation;
@@ -50,12 +53,36 @@ export class Client {
         this.#score = value;
     }
 
+    get scoreRaw(): number {
+        return this.#scoreRaw;
+    }
+
+    set scoreRaw(value: number) {
+        this.#scoreRaw = value;
+    }
+
     get species(): Species | null {
         return this.#species;
     }
 
     set species(value: Species | null) {
         this.#species = value;
+    }
+
+    get complexity(): number {
+        return this.#complexity;
+    }
+
+    set complexity(value: number) {
+        this.#complexity = value;
+    }
+
+    get adjustedScore(): number {
+        return this.#adjustedScore;
+    }
+
+    set adjustedScore(value: number) {
+        this.#adjustedScore = value;
     }
 
     generateCalculator() {

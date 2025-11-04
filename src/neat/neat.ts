@@ -74,6 +74,12 @@ export class Neat {
 
     #OPT_ERR_TRASHHOLD: number;
 
+    #EPS = 1e-9;
+    #LAMBDA_HIGH = 0.6;
+    #LAMBDA_LOW = 0.3;
+
+    #OPTIMIZATION_PERIOD = 10;
+
     #inputNodes = 0;
     #outputNodes = 0;
     #maxClients = 0;
@@ -81,6 +87,11 @@ export class Neat {
     #evolveCounts = 0;
 
     #clients: Array<Client> = [];
+    #champion: {
+        client: Client;
+        score: number;
+        epoch: number;
+    } | null = null;
     #species: Array<Species> = [];
 
     #allConnections: Map<string, ConnectionGene> = new Map<string, ConnectionGene>();
@@ -408,7 +419,8 @@ export class Neat {
         }
         this.#lastError = error;
         this.#evolveCounts++;
-        this.#optimization = optimization || this.#evolveCounts % 10 === 0;
+        this.#optimization = optimization || this.#evolveCounts % this.#OPTIMIZATION_PERIOD === 0;
+        this.#updateChampion();
         this.#normalizeScore();
         this.#genSpecies();
         this.#kill();
@@ -485,43 +497,80 @@ export class Neat {
     }
 
     #normalizeScore() {
-        let maxScore = 0;
-        const bestScoreSet = [];
-        let minScore = Infinity;
+        let rawMax = -Infinity,
+            rawMin = Infinity;
 
-        for (let i = 0; i < this.#clients.length; i += 1) {
-            const item = this.#clients[i];
-            item.bestScore = false;
-            maxScore = item.score > maxScore ? item.score : maxScore;
-            minScore = item.score < minScore ? item.score : minScore;
+        let cMax = -Infinity,
+            cMin = Infinity;
+
+        for (const cl of this.#clients) {
+            cl.bestScore = false;
+            cl.scoreRaw = cl.score;
+            rawMax = Math.max(rawMax, cl.scoreRaw);
+            rawMin = Math.min(rawMin, cl.scoreRaw);
+
+            const c = cl.genome.connections.size() + cl.genome.nodes.size();
+            cl.complexity = c;
+            cMax = Math.max(cMax, c);
+            cMin = Math.min(cMin, c);
+        }
+        const span = rawMax - rawMin || 1;
+        const cSpan = cMax - cMin || 1;
+
+        const lambda = this.#optimization ? this.#LAMBDA_HIGH : this.#LAMBDA_LOW;
+        for (const cl of this.#clients) {
+            const cNorm = (cl.complexity - cMin) / cSpan;
+            const penalty = lambda * cNorm * span;
+            cl.adjustedScore = cl.scoreRaw - penalty;
         }
 
-        for (let i = 0; i < this.#clients.length; i += 1) {
-            const item = this.#clients[i];
-            if (item.score === maxScore) {
-                bestScoreSet.push(i);
-                item.bestScore = true;
-                item.score = 1;
-            } else if (item.score === minScore) {
-                item.score = 0;
-            } else {
-                item.score = (item.score - minScore) / (maxScore - minScore);
-            }
+        let adjMax = -Infinity,
+            adjMin = Infinity;
+        for (const cl of this.#clients) {
+            adjMax = Math.max(adjMax, cl.adjustedScore);
+            adjMin = Math.min(adjMin, cl.adjustedScore);
+        }
+        const adjSpan = adjMax - adjMin || 1;
+
+        for (const cl of this.#clients) {
+            cl.score = (cl.adjustedScore - adjMin) / adjSpan;
         }
 
-        if (bestScoreSet.length > 1) {
-            bestScoreSet.forEach((i, index) => {
-                if (index === 0) return;
-                this.#clients[i].bestScore = false;
-            });
+        this.#clients.sort((a, b) => b.score - a.score);
+
+        const maxScore = Math.max(...this.#clients.map(c => c.score));
+        const ties = this.#clients.map((c, i) => ({ c, i })).filter(({ c }) => maxScore - c.score <= this.#EPS);
+
+        if (ties.length === 0) {
+            this.#clients[0].bestScore = true;
+        } else if (ties.length === 1) {
+            ties[0].c.bestScore = true;
+        } else {
+            ties.sort((a, b) => a.c.complexity - b.c.complexity);
+            ties[0].c.bestScore = true;
+        }
+    }
+
+    #updateChampion() {
+        if (this.#champion) {
+            this.#champion.epoch += 1;
+            if (this.#champion.epoch < this.#OPTIMIZATION_PERIOD) return;
         }
 
-        const cof = this.#optimization ? 0.1 : 0.0001;
-
-        this.#clients.forEach(item => {
-            const allCons = item.genome.connections.size();
-            const allBodex = item.genome.nodes.size();
-            item.score -= Math.sqrt(Math.sqrt(allCons + allBodex)) * cof;
-        });
+        this.#clients.sort((a, b) => b.score - a.score);
+        const bestClient = this.#clients[0];
+        if (!this.#champion || bestClient.score > this.#champion?.score) {
+            this.#champion = {
+                client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),
+                score: bestClient.score,
+                epoch: 0,
+            };
+        } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
+            this.#champion.epoch = 0;
+            this.#clients[this.#clients.length - 1] = new Client(
+                this.loadGenome(this.#champion.client.genome.save()),
+                this.#outputActivation,
+            );
+        }
     }
 }
