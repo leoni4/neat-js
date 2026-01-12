@@ -1,3 +1,3 @@
-export * from './neat';
-export * from './species';
-export * from './client';
+export * from './neat.js';
+export * from './species.js';
+export * from './client.js';

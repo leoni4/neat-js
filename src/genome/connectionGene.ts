@@ -1,6 +1,6 @@
-import { Gene } from './gene';
-import { NodeGene } from './nodeGene';
-import { Neat } from '../neat';
+import { Gene } from './gene.js';
+import { NodeGene } from './nodeGene.js';
+import { Neat } from '../neat/index.js';
 
 export class ConnectionGene extends Gene {
     #from: NodeGene;

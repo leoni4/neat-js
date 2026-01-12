@@ -1,7 +1,7 @@
-import { RandomHashSet } from '../dataStructures';
-import { Neat } from '../neat';
-import { ConnectionGene } from './connectionGene';
-import { NodeGene } from './nodeGene';
+import { RandomHashSet } from '../dataStructures/index.js';
+import { Neat } from '../neat/index.js';
+import { ConnectionGene } from './connectionGene.js';
+import { NodeGene } from './nodeGene.js';
 
 export type NodeSaveData = {
     innovationNumber: number;

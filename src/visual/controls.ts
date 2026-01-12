@@ -1,6 +1,6 @@
-import { Genome } from '../genome';
-import { Client } from '../neat';
-import { Frame } from './frame';
+import { Genome } from '../genome/index.js';
+import { Client } from '../neat/index.js';
+import { Frame } from './frame.js';
 
 export class Controls {
     #genome: Genome;

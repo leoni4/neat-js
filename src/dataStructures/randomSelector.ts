@@ -1,4 +1,4 @@
-import { Species } from '../neat';
+import { Species } from '../neat/index.js';
 
 export class RandomSelector {
     #objects: Array<Species> = [];

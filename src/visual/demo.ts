@@ -1,5 +1,5 @@
-import { Client, Neat, OutputActivation } from '../neat';
-import { Frame } from './frame';
+import { Client, Neat, OutputActivation } from '../neat/index.js';
+import { Frame } from './frame.js';
 
 /*
         this.#MUTATION_RATE = params?.MUTATION_RATE || 1;

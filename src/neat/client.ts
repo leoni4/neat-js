@@ -1,6 +1,6 @@
-import { Genome } from '../genome';
-import { Species } from './species';
-import { Calculator } from '../calculations';
+import { Genome } from '../genome/index.js';
+import { Species } from './species.js';
+import { Calculator } from '../calculations/index.js';
 
 export class Client {
     #genome: Genome;

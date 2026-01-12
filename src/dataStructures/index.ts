@@ -1,2 +1,2 @@
-export * from './randomHashSet';
-export * from './randomSelector';
+export * from './randomHashSet.js';
+export * from './randomSelector.js';

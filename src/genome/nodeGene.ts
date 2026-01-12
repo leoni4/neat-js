@@ -1,4 +1,4 @@
-import { Gene } from './gene';
+import { Gene } from './gene.js';
 
 export class NodeGene extends Gene {
     #x = 0;

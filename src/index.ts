@@ -1,2 +1,2 @@
-export { Neat } from './neat';
-export { main } from './visual';
+export { Neat } from './neat/index.js';
+export { main } from './visual/index.js';

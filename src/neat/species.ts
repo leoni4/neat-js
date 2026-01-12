@@ -1,5 +1,5 @@
-import { Client } from './client';
-import { Genome } from '../genome';
+import { Client } from './client.js';
+import { Genome } from '../genome/index.js';
 
 export class Species {
     #clients: Array<Client> = [];

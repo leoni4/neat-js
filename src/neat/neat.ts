@@ -5,10 +5,10 @@ import {
     type GenomeSaveData,
     type NodeSaveData,
     type ConnectionSaveData,
-} from '../genome';
-import { RandomHashSet, RandomSelector } from '../dataStructures';
-import { Client } from './client';
-import { Species } from './species';
+} from '../genome/index.js';
+import { RandomHashSet, RandomSelector } from '../dataStructures/index.js';
+import { Client } from './client.js';
+import { Species } from './species.js';
 
 export enum OutputActivation {
     none = 'none',

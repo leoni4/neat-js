@@ -1,3 +1,3 @@
-export * from './Node';
-export * from './Connection';
-export * from './Calculator';
+export * from './Node.js';
+export * from './Connection.js';
+export * from './Calculator.js';

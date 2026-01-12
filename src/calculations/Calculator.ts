@@ -1,6 +1,6 @@
-import { ConnectionGene, Genome, NodeGene } from '../genome';
-import { Node } from './Node';
-import { Connection } from './Connection';
+import { ConnectionGene, Genome, NodeGene } from '../genome/index.js';
+import { Node } from './Node.js';
+import { Connection } from './Connection.js';
 
 export class Calculator {
     #inputNodes: Array<Node> = [];

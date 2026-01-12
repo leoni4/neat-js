@@ -1,4 +1,4 @@
-import { ConnectionGene, NodeGene } from '../genome';
+import { ConnectionGene, NodeGene } from '../genome/index.js';
 
 export class RandomHashSet {
     #set: Set<NodeGene | ConnectionGene>;

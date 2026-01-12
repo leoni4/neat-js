@@ -1,5 +1,5 @@
-import { Connection } from './Connection';
-import { NodeGene } from '../genome/nodeGene';
+import { Connection } from './Connection.js';
+import { NodeGene } from '../genome/nodeGene.js';
 
 export class Node {
     #x: number;

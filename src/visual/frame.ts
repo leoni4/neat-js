@@ -1,7 +1,7 @@
-import { ConnectionGene, Genome, NodeGene } from '../genome';
+import { ConnectionGene, Genome, NodeGene } from '../genome/index.js';
 import Konva from 'konva';
-import { Controls } from './controls';
-import { Client } from '../neat';
+import { Controls } from './controls.js';
+import { Client } from '../neat/index.js';
 
 interface FrameOptions {
     width?: number;
