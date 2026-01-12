@@ -20,14 +20,11 @@
     "scripts": {
         "start": "nodemon index.cjs",
         "build": "tsc",
-        "dev": "tsc -w",
-        "typecheck": "tsc --noEmit",
-        "lint": "eslint --ext .js,.ts . --ignore-path .eslintignore .",
-        "lint:fix": "eslint --fix --ext .js,.ts . --ignore-path .eslintignore .",
-        "test": "npm run typecheck && npm run lint && npm run test:unit",
-        "test:unit": "jest --no-cache --coverage=false",
-        "test:unit:watch": "jest --no-cache --watch --coverage=false",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "test:esm": "node tests/esm-smoke-test.mjs",
+        "lint": "eslint src tests --ext .ts",
+        "typecheck": "tsc --noEmit",
         "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
         "prepare": "npm run build"
     },
@@ -48,7 +45,6 @@
         "access": "public"
     },
     "devDependencies": {
-        "@types/jest": "^30.0.0",
         "@typescript-eslint/eslint-plugin": "^8.46.3",
         "@typescript-eslint/parser": "^8.46.3",
         "canvas": "^3.2.0",
@@ -56,12 +52,9 @@
         "eslint-config-prettier": "^10.1.8",
         "express": "^5.1.0",
         "husky": "^9.1.7",
-        "jest": "^30.2.0",
         "konva": "^10.0.8",
         "nodemon": "^3.1.10",
         "prettier": "^3.6.2",
-        "ts-jest": "^29.4.5",
-        "ts-loader": "^9.5.4",
         "typescript": "^5.9.3"
     }
 }
