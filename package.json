@@ -1,29 +1,52 @@
 {
+    "name": "@leoni4/neat-js",
+    "version": "0.1.0",
+    "description": "NEAT Neural Network Implementation in TypeScript",
     "type": "module",
-    "name": "neat",
-    "version": "0.0.1",
-    "description": "neat implementation on typescript",
-    "main": "./dist/neat.min.js",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
         "start": "nodemon index.cjs",
-        "build": "webpack",
-        "build:tsc": "tsc",
+        "build": "tsc",
         "dev": "tsc -w",
-        "type-check": "tsc --noEmit",
+        "typecheck": "tsc --noEmit",
         "lint": "eslint --ext .js,.ts . --ignore-path .eslintignore .",
         "lint:fix": "eslint --fix --ext .js,.ts . --ignore-path .eslintignore .",
-        "test": "npm run type-check && npm run lint && npm run test:unit",
+        "test": "npm run typecheck && npm run lint && npm run test:unit",
         "test:unit": "jest --no-cache --coverage=false",
         "test:unit:watch": "jest --no-cache --watch --coverage=false",
-        "prepare": "husky"
+        "test:esm": "node tests/esm-smoke-test.mjs",
+        "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
+        "prepare": "npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/leoni4/neat-js.git"
     },
     "keywords": [
         "neat",
-        "typescript",
-        "js"
+        "neural-network"
     ],
-    "author": "leonid lilo",
-    "license": "ISC",
+    "author": "leoni4",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
     "devDependencies": {
         "@types/jest": "^30.0.0",
         "@typescript-eslint/eslint-plugin": "^8.46.3",
@@ -39,8 +62,6 @@
         "prettier": "^3.6.2",
         "ts-jest": "^29.4.5",
         "ts-loader": "^9.5.4",
-        "typescript": "^5.9.3",
-        "webpack": "^5.102.1",
-        "webpack-cli": "^6.0.1"
+        "typescript": "^5.9.3"
     }
 }
