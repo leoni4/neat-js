@@ -116,7 +116,7 @@ export class Neat {
         this.#C3 = params?.C3 || 0.1;
 
         this.#CT = params?.CT || inputNodes * outputNodes;
-        this.#CP = params?.CP || (clients / 10 > 0 ? 1 : clients / 10);
+        this.#CP = params?.CP || (clients / 10 > 1 ? clients / 10 : 1);
         this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
         this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
