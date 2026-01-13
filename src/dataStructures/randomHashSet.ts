@@ -10,13 +10,12 @@ export class RandomHashSet {
     }
 
     contains(gene: NodeGene | ConnectionGene): boolean {
-        let contains = false;
-        for (let i = 0; i < this.data.length; i += 1) {
-            if (this.data[i].innovationNumber === gene.innovationNumber) {
-                contains = true;
+        for (let i = 0; i < this.#data.length; i += 1) {
+            if (this.#data[i].innovationNumber === gene.innovationNumber) {
+                return true;
             }
         }
-        return contains;
+        return false;
     }
 
     randomElement(): NodeGene | ConnectionGene | null {

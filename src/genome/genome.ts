@@ -26,20 +26,20 @@ export class Genome {
     #connections: RandomHashSet = new RandomHashSet();
     #nodes: RandomHashSet = new RandomHashSet();
     #neat: Neat;
-    #optErrTrashhold: number;
+    #optErrThreshold: number;
     #selfOpt = false;
 
     constructor(neat: Neat) {
         this.#neat = neat;
-        this.#optErrTrashhold = neat.OPT_ERR_TRASHHOLD;
+        this.#optErrThreshold = neat.OPT_ERR_THRESHOLD;
     }
 
     get selfOpt(): boolean {
         return this.#selfOpt;
     }
 
-    get optErrTrashhold(): number {
-        return this.#optErrTrashhold;
+    get optErrThreshold(): number {
+        return this.#optErrThreshold;
     }
 
     get connections(): RandomHashSet {

@@ -36,7 +36,7 @@ interface NeatParams {
     PROBABILITY_MUTATE_WEIGHT_RANDOM?: number;
     PROBABILITY_MUTATE_LINK?: number;
     PROBABILITY_MUTATE_NODES?: number;
-    OPT_ERR_TRASHHOLD?: number;
+    OPT_ERR_THRESHOLD?: number;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
 }
 
@@ -72,7 +72,7 @@ export class Neat {
     #PROBABILITY_MUTATE_LINK: number;
     #PROBABILITY_MUTATE_NODES: number;
 
-    #OPT_ERR_TRASHHOLD: number;
+    #OPT_ERR_THRESHOLD: number;
 
     #EPS = 1e-9;
     #LAMBDA_HIGH = 0.6;
@@ -130,7 +130,7 @@ export class Neat {
         this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.01;
         this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || inputNodes * outputNodes;
         this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.01;
-        this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
+        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD || 0.005;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
@@ -155,8 +155,8 @@ export class Neat {
         return this.#PERMANENT_MAIN_CONNECTIONS;
     }
 
-    get OPT_ERR_TRASHHOLD(): number {
-        return this.#OPT_ERR_TRASHHOLD;
+    get OPT_ERR_THRESHOLD(): number {
+        return this.#OPT_ERR_THRESHOLD;
     }
 
     get optimization(): boolean {
@@ -261,11 +261,11 @@ export class Neat {
 
     load(data: LoadData) {
         if (!data.genome) {
-            console.log('ERROR: wrong data to load: "genome" missed');
-            return;
+            throw new Error('Invalid load data: "genome" property is required');
         }
         if (!data.evolveCounts) {
-            console.log('WARN: wrong data to load: "evolveCounts" missed');
+            console.warn('Load data missing "evolveCounts", defaulting to 0');
+            this.#evolveCounts = 0;
         } else {
             this.#evolveCounts = data.evolveCounts;
         }
