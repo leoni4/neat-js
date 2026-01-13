@@ -137,10 +137,65 @@ export class Neat {
         this.#outputNodes = outputNodes;
         this.#maxClients = clients;
 
+        // Validate configuration
+        this.#validateConfiguration();
+
         if (loadData) {
             this.load(loadData);
         } else {
             this.reset(inputNodes, outputNodes);
+        }
+    }
+
+    /**
+     * Validates NEAT configuration parameters.
+     * Throws errors for invalid values and warns about unusual configurations.
+     */
+    #validateConfiguration(): void {
+        // Validate distance coefficients
+        if (this.#C1 < 0 || this.#C2 < 0 || this.#C3 < 0) {
+            throw new Error('Distance coefficients (C1, C2, C3) must be non-negative');
+        }
+
+        // Validate SURVIVORS ratio
+        if (this.#SURVIVORS < 0 || this.#SURVIVORS > 1) {
+            throw new Error('SURVIVORS must be between 0 and 1 (inclusive)');
+        }
+
+        // Validate mutation rate
+        if (this.#MUTATION_RATE < 0) {
+            throw new Error('MUTATION_RATE must be non-negative');
+        }
+
+        // Validate network structure
+        if (this.#inputNodes <= 0) {
+            throw new Error('Number of input nodes must be positive');
+        }
+
+        if (this.#outputNodes <= 0) {
+            throw new Error('Number of output nodes must be positive');
+        }
+
+        if (this.#maxClients <= 0) {
+            throw new Error('Population size (clients) must be positive');
+        }
+
+        // Validate probabilities
+        if (this.#PROBABILITY_MUTATE_WEIGHT_RANDOM < 0 || this.#PROBABILITY_MUTATE_WEIGHT_RANDOM > 1) {
+            console.warn('PROBABILITY_MUTATE_WEIGHT_RANDOM typically should be between 0 and 1');
+        }
+
+        // Warn about unusual values
+        if (this.#CT > 1000) {
+            console.warn(`CT threshold is unusually high: ${this.#CT}`);
+        }
+
+        if (this.#CP > 10) {
+            console.warn(`CP threshold is unusually high: ${this.#CP}`);
+        }
+
+        if (this.#MUTATION_RATE > 10) {
+            console.warn(`MUTATION_RATE is unusually high: ${this.#MUTATION_RATE}`);
         }
     }
 
