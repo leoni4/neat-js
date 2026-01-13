@@ -97,7 +97,7 @@ export class Client {
         if (this.bestScore && !force) {
             return;
         }
-        this.genome.mutate(this.error < this.genome.optErrTrashhold && !force);
+        this.genome.mutate(this.error < this.genome.optErrThreshold && !force);
     }
 
     calculate(input: Array<number>): Array<number> {

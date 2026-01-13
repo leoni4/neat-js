@@ -71,6 +71,17 @@ export class Calculator {
             this.#outputNodes[i].calculate(this.#outputActivation);
             output[i] = this.#outputNodes[i].output;
         }
+
+        // Apply softmax if needed
+        if (this.#outputActivation === 'softmax') {
+            const max = Math.max(...output);
+            const exps = output.map(x => Math.exp(x - max));
+            const sum = exps.reduce((a, b) => a + b, 0);
+            for (let i = 0; i < output.length; i++) {
+                output[i] = exps[i] / sum;
+            }
+        }
+
         return output;
     }
 }

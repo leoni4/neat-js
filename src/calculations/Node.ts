@@ -45,8 +45,25 @@ export class Node {
         this.#connections = value;
     }
 
-    #activation(sum: number): number {
-        return 1 / (1 + Math.exp(-sum));
+    #activationFunction(sum: number, type: string): number {
+        switch (type) {
+        case 'none':
+        case 'linear':
+            return sum;
+        case 'sigmoid':
+            return 1 / (1 + Math.exp(-sum));
+        case 'tanh':
+            return Math.tanh(sum);
+        case 'relu':
+            return Math.max(0, sum);
+        case 'leakyRelu':
+            return sum > 0 ? sum : 0.01 * sum;
+        case 'softmax':
+            // Note: Softmax requires access to all outputs, handle at Calculator level
+            return sum;
+        default:
+            return 1 / (1 + Math.exp(-sum)); // fallback to sigmoid
+        }
     }
 
     calculate(outputActivation: string) {
@@ -60,7 +77,7 @@ export class Node {
         if (this.#hidden) {
             sum += this.#node.bias;
         }
-        this.#output = outputActivation === 'none' ? sum : this.#activation(sum);
+        this.#output = this.#activationFunction(sum, outputActivation);
     }
 
     compereTo(node: Node): number {
