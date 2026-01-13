@@ -1,6 +1,7 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome/index.js';
 import { Node } from './Node.js';
 import { Connection } from './Connection.js';
+import { NETWORK_CONSTANTS } from '../neat/constants.js';
 
 export class Calculator {
     #inputNodes: Array<Node> = [];
@@ -22,9 +23,9 @@ export class Calculator {
             const node: Node = new Node(n.x, n);
             nodeHashmap.set(n.innovationNumber, node);
 
-            if (n.x <= 0.01) {
+            if (n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X) {
                 this.#inputNodes.push(node);
-            } else if (n.x >= 0.99) {
+            } else if (n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X) {
                 this.#outputNodes.push(node);
             } else {
                 node.hidden = true;
