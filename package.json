@@ -39,7 +39,19 @@
     },
     "keywords": [
         "neat",
-        "neural-network"
+        "neural-network",
+        "genetic-algorithm",
+        "evolutionary-algorithm",
+        "reinforcement-learning",
+        "neuroevolution",
+        "artificial-intelligence",
+        "machine-learning",
+        "typescript",
+        "deep-learning",
+        "evolutionary-computation",
+        "cognitive-modeling",
+        "adaptive-systems",
+        "genetic-programming"
     ],
     "author": "leoni4",
     "license": "MIT",
