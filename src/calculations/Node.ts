@@ -80,7 +80,7 @@ export class Node {
         this.#output = this.#activationFunction(sum, outputActivation);
     }
 
-    compereTo(node: Node): number {
+    compareTo(node: Node): number {
         if (this.x > node.x) {
             return 1;
         } else if (this.x < node.x) {

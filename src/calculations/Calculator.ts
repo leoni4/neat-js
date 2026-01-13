@@ -32,7 +32,7 @@ export class Calculator {
             }
         }
         this.#hiddenNodes.sort((a, b) => {
-            return a.compereTo(b);
+            return a.compareTo(b);
         });
 
         for (let i = 0; i < connections.data.length; i += 1) {

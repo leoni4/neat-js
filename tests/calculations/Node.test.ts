@@ -158,23 +158,23 @@ describe('Node', () => {
         });
     });
 
-    describe('compereTo', () => {
+    describe('compareTo', () => {
         it('should return 1 when this.x > node.x', () => {
             const otherNode = new Node(0.3, new NodeGene(2));
             node.x = 0.5;
-            expect(node.compereTo(otherNode)).toBe(1);
+            expect(node.compareTo(otherNode)).toBe(1);
         });
 
         it('should return -1 when this.x < node.x', () => {
             const otherNode = new Node(0.7, new NodeGene(2));
             node.x = 0.5;
-            expect(node.compereTo(otherNode)).toBe(-1);
+            expect(node.compareTo(otherNode)).toBe(-1);
         });
 
         it('should return 0 when this.x === node.x', () => {
             const otherNode = new Node(0.5, new NodeGene(2));
             node.x = 0.5;
-            expect(node.compereTo(otherNode)).toBe(0);
+            expect(node.compareTo(otherNode)).toBe(0);
         });
     });
 });
