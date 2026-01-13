@@ -2,6 +2,7 @@ import { RandomHashSet } from '../dataStructures/index.js';
 import { Neat } from '../neat/index.js';
 import { ConnectionGene } from './connectionGene.js';
 import { NodeGene } from './nodeGene.js';
+import { MUTATION_CONSTANTS, NETWORK_CONSTANTS } from '../neat/constants.js';
 
 export type NodeSaveData = {
     innovationNumber: number;
@@ -183,7 +184,7 @@ export class Genome {
                 indexG1++;
             } else {
                 if ((!g1.selfOpt && !g2.selfOpt) || !genome.neat.optimization || (gene1.enabled && gene2.enabled)) {
-                    if (Math.random() > 0.4) {
+                    if (Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD) {
                         addedCon = Neat.getConnection(gene1);
                     } else {
                         addedCon = Neat.getConnection(gene2);
@@ -221,7 +222,11 @@ export class Genome {
     }
 
     removeConnection(con: ConnectionGene, replace = false, down = true, up = true) {
-        if (this.#neat.PERMANENT_MAIN_CONNECTIONS && con.from.x === 0.01 && con.to.x === 0.99) {
+        if (
+            this.#neat.PERMANENT_MAIN_CONNECTIONS &&
+            con.from.x === NETWORK_CONSTANTS.INPUT_NODE_X &&
+            con.to.x === NETWORK_CONSTANTS.OUTPUT_NODE_X
+        ) {
             return;
         }
         this.#connections.remove(con);
@@ -244,7 +249,7 @@ export class Genome {
             }
         }
 
-        if (con.from.x !== 0.01 && singleFrom && !replace && down) {
+        if (con.from.x !== NETWORK_CONSTANTS.INPUT_NODE_X && singleFrom && !replace && down) {
             const removingFrom = [];
             for (let i = 0; i < this.#connections.size(); i += 1) {
                 const c = this.#connections.get(i);
@@ -258,7 +263,7 @@ export class Genome {
                 this.removeConnection(c, false, true, false);
             });
         }
-        if (con.to.x !== 0.99 && singleTo && !replace && up) {
+        if (con.to.x !== NETWORK_CONSTANTS.OUTPUT_NODE_X && singleTo && !replace && up) {
             const removingTo = [];
             for (let i = 0; i < this.#connections.size(); i += 1) {
                 const c = this.#connections.get(i);
@@ -329,9 +334,17 @@ export class Genome {
         const replaceIndex = this.#neat.getReplaceIndex(from, to);
         let middle: NodeGene;
         const middleX = (from.x + to.x) / 2;
-        let middleY = (from.y + to.y) / 2 + Math.random() * 0.6 - 0.3;
-        middleY = middleY < 0.1 ? 0.1 : middleY > 0.9 ? 0.9 : middleY;
-        if (middleX <= 0.1) {
+        let middleY =
+            (from.y + to.y) / 2 +
+            Math.random() * NETWORK_CONSTANTS.NODE_Y_VARIATION -
+            NETWORK_CONSTANTS.NODE_Y_VARIATION / 2;
+        middleY =
+            middleY < NETWORK_CONSTANTS.NODE_Y_MIN
+                ? NETWORK_CONSTANTS.NODE_Y_MIN
+                : middleY > NETWORK_CONSTANTS.NODE_Y_MAX
+                    ? NETWORK_CONSTANTS.NODE_Y_MAX
+                    : middleY;
+        if (middleX <= NETWORK_CONSTANTS.MIN_MIDDLE_X) {
             return null;
         }
         if (replaceIndex === 0) {
@@ -380,7 +393,12 @@ export class Genome {
     #mutateWeightShiftNode(): NodeGene | null {
         let counter = 0;
         let node;
-        while ((!(node instanceof NodeGene) || node.x === 0.01 || node.x === 0.99) && counter < 10) {
+        while (
+            (!(node instanceof NodeGene) ||
+                node.x === NETWORK_CONSTANTS.INPUT_NODE_X ||
+                node.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) &&
+            counter < 10
+        ) {
             counter++;
             node = this.#nodes.randomElement();
         }
@@ -429,7 +447,12 @@ export class Genome {
     #mutateWeightRandomNode(): NodeGene | null {
         let counter = 0;
         let node;
-        while ((!(node instanceof NodeGene) || node.x === 0.01 || node.x === 0.99) && counter < 10) {
+        while (
+            (!(node instanceof NodeGene) ||
+                node.x === NETWORK_CONSTANTS.INPUT_NODE_X ||
+                node.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) &&
+            counter < 10
+        ) {
             counter++;
             node = this.#nodes.randomElement();
         }
