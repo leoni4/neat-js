@@ -218,14 +218,14 @@ export class Neat {
         return this.#optimization;
     }
 
-    get clients(): Array<Client> {
+    get clients(): ReadonlyArray<Client> {
         return this.#clients;
     }
 
-    get allConnections(): Map<string, ConnectionGene> {
+    get allConnections(): ReadonlyMap<string, ConnectionGene> {
         return this.#allConnections;
     }
-    get allNodes(): RandomHashSet {
+    get allNodes(): Readonly<RandomHashSet> {
         return this.#allNodes;
     }
 
