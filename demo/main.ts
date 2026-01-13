@@ -12,7 +12,7 @@ import { Frame } from '../src/visual/frame.js';
         this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
         this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.05;
         this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.05;
-        this.#OPT_ERR_TRASHHOLD = params?.OPT_ERR_TRASHHOLD || 0.005;
+        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD || 0.005;
 */
 const testXOR = {
     input: [
