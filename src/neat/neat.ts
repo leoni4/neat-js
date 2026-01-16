@@ -38,6 +38,9 @@ export interface INeatParams {
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_THRESHOLD?: number;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
+    LAMBDA_HIGH?: number;
+    LAMBDA_LOW?: number;
+    EPS?: number;
 }
 
 interface LoadData {
@@ -74,9 +77,9 @@ export class Neat {
 
     #OPT_ERR_THRESHOLD: number;
 
-    #EPS = 1e-9;
-    #LAMBDA_HIGH = 0.6;
-    #LAMBDA_LOW = 0.3;
+    #EPS: number;
+    #LAMBDA_HIGH: number;
+    #LAMBDA_LOW: number;
 
     #OPTIMIZATION_PERIOD = 10;
 
@@ -140,6 +143,14 @@ export class Neat {
         this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? 0.8;
         this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? 0.03;
         this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? 0.01;
+
+        // Complexity penalty parameters
+        // LAMBDA_HIGH was 0.6 (too aggressive, preventing necessary growth)
+        this.#LAMBDA_HIGH = params?.LAMBDA_HIGH ?? 0.3;
+        // LAMBDA_LOW was 0.3 (too aggressive for exploration phase)
+        this.#LAMBDA_LOW = params?.LAMBDA_LOW ?? 0.1;
+        // EPS was 1e-9 (too small to detect ties in normalized scores)
+        this.#EPS = params?.EPS ?? 1e-4;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
@@ -239,6 +250,31 @@ export class Neat {
                 `WEIGHT_SHIFT_STRENGTH (${this.#WEIGHT_SHIFT_STRENGTH}) and ` +
                     `BIAS_SHIFT_STRENGTH (${this.#BIAS_SHIFT_STRENGTH}) are highly imbalanced. ` +
                     'Consider using similar values for both.',
+            );
+        }
+
+        // Warn about complexity penalty parameters
+        if (this.#LAMBDA_HIGH < 0 || this.#LAMBDA_LOW < 0) {
+            throw new Error('LAMBDA_HIGH and LAMBDA_LOW must be non-negative');
+        }
+
+        if (this.#LAMBDA_HIGH > 0.8) {
+            console.warn(
+                `LAMBDA_HIGH is very high (${this.#LAMBDA_HIGH}). ` +
+                    'Excessive complexity penalty may prevent networks from growing. Recommended: 0.2-0.4',
+            );
+        }
+
+        if (this.#LAMBDA_LOW > 0.5) {
+            console.warn(
+                `LAMBDA_LOW is high (${this.#LAMBDA_LOW}). ` + 'This may restrict exploration. Recommended: 0.05-0.2',
+            );
+        }
+
+        if (this.#EPS < 1e-6 || this.#EPS > 1e-2) {
+            console.warn(
+                `EPS is outside typical range (${this.#EPS}). ` +
+                    'Recommended: 1e-6 to 1e-3 for meaningful tie-breaking',
             );
         }
     }

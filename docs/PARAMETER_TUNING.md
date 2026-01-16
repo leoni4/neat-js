@@ -88,6 +88,46 @@ Several default parameters were adjusted to fix convergence issues that prevente
 
 ---
 
+#### 7. LAMBDA_HIGH: 0.6 → 0.3 (2x reduction)
+
+**Problem:** Excessive complexity penalty of 60% prevented networks from growing when needed.
+
+**Impact:** Networks couldn't add necessary nodes/connections even when the problem required it.
+
+**New Value:** 0.3 (recommended range: 0.2 - 0.4)
+
+**Reasoning:** Moderate penalty encourages simplicity without forcing it.
+
+---
+
+#### 8. LAMBDA_LOW: 0.3 → 0.1 (3x reduction)
+
+**Problem:** Even during exploration phase, complexity penalty was too restrictive.
+
+**Impact:** Networks struggled to find good topologies before being penalized.
+
+**New Value:** 0.1 (recommended range: 0.05 - 0.2)
+
+**Reasoning:** Gentle penalty during exploration allows network discovery while still discouraging bloat.
+
+---
+
+#### 9. EPS: 1e-9 → 1e-4 (100,000x increase!)
+
+**Problem:** Value was 5 orders of magnitude too small to detect ties in normalized scores.
+
+**Impact:**
+
+- Tie-breaking logic essentially never ran
+- Lost the benefit of preferring simpler networks among equal performers
+- No safety mechanism against bloat
+
+**New Value:** 1e-4 (recommended range: 1e-6 to 1e-3)
+
+**Reasoning:** This is the **actual** defense against bloat - when networks perform equally, choose the simpler one!
+
+---
+
 ## Complete Default Parameters
 
 ```typescript
@@ -120,6 +160,11 @@ Several default parameters were adjusted to fix convergence issues that prevente
     // Optimization
     OPT_ERR_THRESHOLD: 0.01,                  // Error threshold for optimization mode
     PERMANENT_MAIN_CONNECTIONS: false,        // Allow removal of input-output connections
+
+    // Complexity penalty (controls network growth)
+    LAMBDA_HIGH: 0.3,                         // Penalty during optimization (was 0.6)
+    LAMBDA_LOW: 0.1,                          // Penalty during exploration (was 0.3)
+    EPS: 1e-4,                                // Tie-breaking threshold (was 1e-9)
 }
 ```
 
@@ -145,6 +190,18 @@ Several default parameters were adjusted to fix convergence issues that prevente
 - **PROBABILITY_MUTATE_LINK:** 1.0 - 2.0
 - **PROBABILITY_MUTATE_NODES:** 0.05 - 0.15 (allow more complexity)
 - **CP:** Lower value (e.g., clients / 30) for more species
+- **LAMBDA_HIGH:** 0.15 - 0.25 (lower penalty for complex problems)
+- **LAMBDA_LOW:** 0.05 - 0.1 (very gentle during exploration)
+
+### Controlling Network Complexity
+
+The complexity penalty parameters control how aggressively NEAT penalizes larger networks:
+
+- **LAMBDA_HIGH/LOW = 0:** No penalty (networks can bloat)
+- **LAMBDA_HIGH/LOW too high:** Networks can't grow (underfitting)
+- **LAMBDA_HIGH/LOW balanced:** Networks grow only when beneficial
+
+**Rule of thumb:** Start with defaults, reduce if networks aren't reaching necessary complexity.
 
 ## Validation Warnings
 
@@ -178,6 +235,27 @@ Highly imbalanced mutation strengths detected.
 Consider using similar values for both.
 ```
 
+### LAMBDA_HIGH > 0.8
+
+```
+Excessive complexity penalty may prevent networks from growing.
+Recommended: 0.2-0.4
+```
+
+### LAMBDA_LOW > 0.5
+
+```
+This may restrict exploration.
+Recommended: 0.05-0.2
+```
+
+### EPS outside 1e-6 to 1e-2
+
+```
+EPS is outside typical range.
+Recommended: 1e-6 to 1e-3 for meaningful tie-breaking
+```
+
 ## Expected Performance
 
 With the corrected defaults:
@@ -205,6 +283,15 @@ If your network isn't converging:
 4. **Monitor species count**
     - Too many species: Increase CP
     - Too few species: Decrease CP
+
+5. **Check complexity penalty (LAMBDA values)**
+    - Networks too simple: Reduce LAMBDA_HIGH/LOW
+    - Unbounded growth: Increase LAMBDA_HIGH/LOW
+    - Networks aren't being compared properly: Increase EPS
+
+6. **Verify tie-breaking works**
+    - If you see many networks with identical scores but different complexities
+    - Increase EPS to 1e-4 or 1e-3
 
 ## References
 
