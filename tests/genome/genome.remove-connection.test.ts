@@ -11,6 +11,10 @@ describe('Genome - removeConnection', () => {
     beforeEach(() => {
         neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
         genome = neat.clients[0].genome;
+        // Ensure genome has at least one connection for removal tests
+        if (genome.connections.size() === 0) {
+            genome.mutateLink();
+        }
     });
 
     describe('basic connection removal', () => {
