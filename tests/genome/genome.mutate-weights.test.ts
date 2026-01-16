@@ -85,28 +85,31 @@ describe('Genome - Weight Mutations', () => {
             }
         });
 
-        it('should not shift input or output node biases', () => {
-            const inputOutputBiases: number[] = [];
+        it('should not shift input node biases but allow output node bias mutations', () => {
+            const inputBiases: number[] = [];
 
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    if (node.x === 0.01 || node.x === 0.99) {
-                        inputOutputBiases.push(node.bias);
+                    // Only save input node biases (x === 0.01)
+                    if (node.x === 0.01) {
+                        inputBiases.push(node.bias);
                     }
                 }
             }
 
             genome.mutateWeightShift();
 
+            // Verify input nodes didn't change
             let index = 0;
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    if (node.x === 0.01 || node.x === 0.99) {
-                        expect(node.bias).toBe(inputOutputBiases[index]);
+                    if (node.x === 0.01) {
+                        expect(node.bias).toBe(inputBiases[index]);
                         index++;
                     }
+                    // Output nodes (x === 0.99) CAN have their bias mutated now
                 }
             }
         });
@@ -163,28 +166,31 @@ describe('Genome - Weight Mutations', () => {
             expect(genome.nodes.size()).toBeGreaterThanOrEqual(5);
         });
 
-        it('should not randomize input or output node biases', () => {
-            const inputOutputBiases: number[] = [];
+        it('should not randomize input node biases but allow output node bias mutations', () => {
+            const inputBiases: number[] = [];
 
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    if (node.x === 0.01 || node.x === 0.99) {
-                        inputOutputBiases.push(node.bias);
+                    // Only save input node biases (x === 0.01)
+                    if (node.x === 0.01) {
+                        inputBiases.push(node.bias);
                     }
                 }
             }
 
             genome.mutateWeightRandom();
 
+            // Verify input nodes didn't change
             let index = 0;
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    if (node.x === 0.01 || node.x === 0.99) {
-                        expect(node.bias).toBe(inputOutputBiases[index]);
+                    if (node.x === 0.01) {
+                        expect(node.bias).toBe(inputBiases[index]);
                         index++;
                     }
+                    // Output nodes (x === 0.99) CAN have their bias mutated now
                 }
             }
         });

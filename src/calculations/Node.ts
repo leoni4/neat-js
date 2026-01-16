@@ -74,7 +74,10 @@ export class Node {
                 sum += c.weight * c.from.output;
             }
         }
-        if (this.#hidden) {
+        // Apply bias to both hidden and output nodes (input nodes don't need bias as they have fixed values)
+        // Bias allows the network to shift the activation function, improving learning capability
+        if (this.#x !== 0) {
+            // Not an input node (input nodes have x = 0)
             sum += this.#node.bias;
         }
         this.#output = this.#activationFunction(sum, outputActivation);

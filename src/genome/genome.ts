@@ -393,12 +393,9 @@ export class Genome {
     #mutateWeightShiftNode(): NodeGene | null {
         let counter = 0;
         let node;
-        while (
-            (!(node instanceof NodeGene) ||
-                node.x === NETWORK_CONSTANTS.INPUT_NODE_X ||
-                node.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) &&
-            counter < 10
-        ) {
+        // Skip only input nodes (they receive direct input values, bias is not meaningful)
+        // Output and hidden nodes can have bias mutations
+        while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
             node = this.#nodes.randomElement();
         }
@@ -447,12 +444,9 @@ export class Genome {
     #mutateWeightRandomNode(): NodeGene | null {
         let counter = 0;
         let node;
-        while (
-            (!(node instanceof NodeGene) ||
-                node.x === NETWORK_CONSTANTS.INPUT_NODE_X ||
-                node.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) &&
-            counter < 10
-        ) {
+        // Skip only input nodes (they receive direct input values, bias is not meaningful)
+        // Output and hidden nodes can have bias mutations
+        while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
             node = this.#nodes.randomElement();
         }

@@ -112,8 +112,9 @@ describe('Node', () => {
             node.hidden = false;
             node.calculate('none');
 
-            // Only connection1 should be counted: 2.0 * 1.0 = 2.0
-            expect(node.output).toBe(2.0);
+            // Only connection1 should be counted: 2.0 * 1.0 + 0.5 (bias) = 2.5
+            // Bias is applied because x !== 0 (not an input node)
+            expect(node.output).toBe(2.5);
         });
 
         it('should include bias for hidden nodes', () => {
@@ -130,8 +131,22 @@ describe('Node', () => {
             node.connections = [];
             node.calculate('none');
 
-            // For non-hidden node, bias is not added
-            expect(node.output).toBe(0);
+            // For non-hidden nodes (unless x = 0, i.e., input nodes), bias IS added
+            // This node has x = 0.5, so bias is applied
+            expect(node.output).toBe(0.5);
+        });
+
+        it('should not include bias for input nodes', () => {
+            // Create a node at x = 0 (input node position)
+            const inputNodeGene = new NodeGene(1);
+            inputNodeGene.bias = 0.5;
+            const inputNode = new Node(0, inputNodeGene);
+            inputNode.hidden = false;
+            inputNode.connections = [];
+            inputNode.calculate('none');
+
+            // For input nodes (x = 0), bias is NOT added
+            expect(inputNode.output).toBe(0);
         });
 
         it('should handle multiple connections', () => {
@@ -153,8 +168,9 @@ describe('Node', () => {
             node.hidden = false;
             node.calculate('none');
 
-            // 1.5 * 1.0 + 0.5 * 2.0 = 2.5
-            expect(node.output).toBe(2.5);
+            // 1.5 * 1.0 + 0.5 * 2.0 + 0.5 (bias) = 3.0
+            // Bias is applied because x !== 0 (not an input node)
+            expect(node.output).toBe(3.0);
         });
     });
 
