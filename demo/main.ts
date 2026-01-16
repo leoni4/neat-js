@@ -1,19 +1,26 @@
-import { Client, Neat, OutputActivation } from '../src/neat/index.js';
+import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from '../src/visual/frame.js';
 
-/*
-        this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
+const params = {
+    // BIAS_SHIFT_STRENGTH: 0,
+    // C1: 0,
+    // C2: 0,
+    // C3: 0,
+    // CP: 0,
+    // CT: 0,
+    // MUTATION_RATE: 0,
+    // OPT_ERR_THRESHOLD: 0,
+    // PERMANENT_MAIN_CONNECTIONS: false,
+    // PROBABILITY_MUTATE_LINK: 0,
+    // PROBABILITY_MUTATE_NODES: 0,
+    // PROBABILITY_MUTATE_TOGGLE_LINK: 0,
+    // PROBABILITY_MUTATE_WEIGHT_RANDOM: 0,
+    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 0,
+    // SURVIVORS: 0,
+    // WEIGHT_RANDOM_STRENGTH: 0,
+    // WEIGHT_SHIFT_STRENGTH: 0,
+} as INeatParams;
 
-        this.#SURVIVORS = params?.SURVIVORS || 0.8;
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 0.5;
-        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 2;
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 4;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || 0.5;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.2;
-        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || 0.05;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.05;
-        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD || 0.005;
-*/
 const testXOR = {
     input: [
         [0, 0],
@@ -25,7 +32,7 @@ const testXOR = {
     load: false,
     clients: 100,
     output: [[0], [0], [1], [1]],
-    params: {},
+    params: params,
 };
 
 const test20 = {
@@ -34,9 +41,7 @@ const test20 = {
     save: false,
     load: false,
     clients: 100,
-    params: {
-        // PERMANENT_MAIN_CONNECTIONS: true,
-    },
+    params: params,
 };
 for (let i = 0; i < 100; i += 1) {
     const arr: number[] = [];

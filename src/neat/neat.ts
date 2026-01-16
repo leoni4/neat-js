@@ -20,7 +20,7 @@ export enum OutputActivation {
     softmax = 'softmax',
 }
 
-interface NeatParams {
+export interface INeatParams {
     C1?: number;
     C2?: number;
     C3?: number;
@@ -108,7 +108,7 @@ export class Neat {
         outputNodes: number,
         clients: number,
         outputActivation: OutputActivation = OutputActivation.sigmoid,
-        params?: NeatParams,
+        params?: INeatParams,
         loadData?: LoadData,
     ) {
         this.#C1 = params?.C1 || 1;
