@@ -111,26 +111,35 @@ export class Neat {
         params?: INeatParams,
         loadData?: LoadData,
     ) {
-        this.#C1 = params?.C1 || 1;
-        this.#C2 = params?.C2 || 1;
-        this.#C3 = params?.C3 || 0.1;
+        // Distance coefficients for speciation
+        this.#C1 = params?.C1 ?? 1;
+        this.#C2 = params?.C2 ?? 1;
+        this.#C3 = params?.C3 ?? 0.1;
 
-        this.#CT = params?.CT || inputNodes * outputNodes;
-        this.#CP = params?.CP || (clients / 10 > 1 ? clients / 10 : 1);
+        // Compatibility thresholds - use fixed values instead of scaling with network size
+        this.#CT = params?.CT ?? 20;
+        this.#CP = params?.CP ?? Math.max(clients / 20, 1);
         this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
 
-        this.#MUTATION_RATE = params?.MUTATION_RATE || 1;
+        this.#MUTATION_RATE = params?.MUTATION_RATE ?? 1;
 
-        this.#SURVIVORS = params?.SURVIVORS || 0.8;
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH || 5;
-        this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH || 0.01;
-        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH || 1;
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT || 1;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK || (inputNodes * outputNodes) / 4;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM || 0.01;
-        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK || inputNodes * outputNodes;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES || 0.01;
-        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD || 0.005;
+        // Selection pressure - keep top 40% by default (was 80%, too weak)
+        this.#SURVIVORS = params?.SURVIVORS ?? 0.4;
+
+        // Weight/bias mutation strengths - critical for convergence
+        // WEIGHT_SHIFT_STRENGTH was 5 (way too high, causing extreme oscillations)
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH ?? 0.2;
+        // BIAS_SHIFT_STRENGTH was 0.01 (500x smaller than weights, now balanced)
+        this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? 0.15;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH ?? 1;
+        // Mutation probabilities - control how often each type of mutation occurs
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT ?? 3;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK ?? 0.3;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM ?? 0.05;
+        // PROBABILITY_MUTATE_LINK was inputNodes * outputNodes (causing rapid bloat)
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? 0.8;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? 0.03;
+        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? 0.01;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
@@ -196,6 +205,41 @@ export class Neat {
 
         if (this.#MUTATION_RATE > 10) {
             console.warn(`MUTATION_RATE is unusually high: ${this.#MUTATION_RATE}`);
+        }
+
+        // Warn about problematic parameter values that prevent convergence
+        if (this.#WEIGHT_SHIFT_STRENGTH > 1) {
+            console.warn(
+                `WEIGHT_SHIFT_STRENGTH is very high (${this.#WEIGHT_SHIFT_STRENGTH}). ` +
+                    'Values > 1 can cause oscillations and prevent convergence. Recommended: 0.1-0.3',
+            );
+        }
+
+        if (this.#SURVIVORS > 0.6) {
+            console.warn(
+                `SURVIVORS is high (${this.#SURVIVORS}). ` +
+                    'Weak selection pressure may slow evolution. Recommended: 0.3-0.5',
+            );
+        }
+
+        if (this.#PROBABILITY_MUTATE_LINK > 2) {
+            console.warn(
+                `PROBABILITY_MUTATE_LINK is high (${this.#PROBABILITY_MUTATE_LINK}). ` +
+                    'This can cause rapid network bloat. Recommended: 0.5-1.5 for most problems',
+            );
+        }
+
+        // Warn about imbalanced weight/bias mutation strengths
+        if (
+            this.#WEIGHT_SHIFT_STRENGTH > 0 &&
+            this.#BIAS_SHIFT_STRENGTH > 0 &&
+            Math.abs(this.#WEIGHT_SHIFT_STRENGTH - this.#BIAS_SHIFT_STRENGTH) / this.#WEIGHT_SHIFT_STRENGTH > 0.8
+        ) {
+            console.warn(
+                `WEIGHT_SHIFT_STRENGTH (${this.#WEIGHT_SHIFT_STRENGTH}) and ` +
+                    `BIAS_SHIFT_STRENGTH (${this.#BIAS_SHIFT_STRENGTH}) are highly imbalanced. ` +
+                    'Consider using similar values for both.',
+            );
         }
     }
 
