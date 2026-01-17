@@ -458,9 +458,9 @@ export class Genome {
             return null;
         }
 
-        let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
+        let newWeight = node.bias || this.#neat.BIAS_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.BIAS_RANDOM_STRENGTH;
         }
         node.bias = newWeight;
         return node;

@@ -31,6 +31,7 @@ export interface INeatParams {
     WEIGHT_SHIFT_STRENGTH?: number;
     BIAS_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
+    BIAS_RANDOM_STRENGTH?: number;
     PROBABILITY_MUTATE_WEIGHT_SHIFT?: number;
     PROBABILITY_MUTATE_TOGGLE_LINK?: number;
     PROBABILITY_MUTATE_WEIGHT_RANDOM?: number;
@@ -68,6 +69,7 @@ export class Neat {
     #WEIGHT_SHIFT_STRENGTH: number;
     #BIAS_SHIFT_STRENGTH: number;
     #WEIGHT_RANDOM_STRENGTH: number;
+    #BIAS_RANDOM_STRENGTH: number;
 
     #PROBABILITY_MUTATE_WEIGHT_SHIFT: number;
     #PROBABILITY_MUTATE_TOGGLE_LINK: number;
@@ -135,6 +137,7 @@ export class Neat {
         // BIAS_SHIFT_STRENGTH was 0.01 (500x smaller than weights, now balanced)
         this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? 0.15;
         this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH ?? 1;
+        this.#BIAS_RANDOM_STRENGTH = params?.BIAS_RANDOM_STRENGTH ?? 1;
         // Mutation probabilities - control how often each type of mutation occurs
         this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT ?? 3;
         this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK ?? 0.3;
@@ -323,6 +326,10 @@ export class Neat {
 
     get WEIGHT_RANDOM_STRENGTH(): number {
         return this.#WEIGHT_RANDOM_STRENGTH;
+    }
+
+    get BIAS_RANDOM_STRENGTH(): number {
+        return this.#BIAS_RANDOM_STRENGTH;
     }
 
     get PROBABILITY_MUTATE_LINK(): number {

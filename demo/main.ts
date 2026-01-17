@@ -2,23 +2,12 @@ import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/in
 import { Frame } from '../src/visual/frame.js';
 
 const params = {
-    // BIAS_SHIFT_STRENGTH: 0,
-    // C1: 0,
-    // C2: 0,
-    // C3: 0,
-    // CP: 0,
-    // CT: 0,
-    // MUTATION_RATE: 0,
-    // OPT_ERR_THRESHOLD: 0,
-    // PERMANENT_MAIN_CONNECTIONS: false,
-    // PROBABILITY_MUTATE_LINK: 0,
-    // PROBABILITY_MUTATE_NODES: 0,
-    // PROBABILITY_MUTATE_TOGGLE_LINK: 0,
-    // PROBABILITY_MUTATE_WEIGHT_RANDOM: 0,
-    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 0,
-    // SURVIVORS: 0,
-    // WEIGHT_RANDOM_STRENGTH: 0,
-    // WEIGHT_SHIFT_STRENGTH: 0,
+    CP: 0.5,
+    CT: 2 * 1 * 3,
+    MUTATION_RATE: 2,
+    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 2 * 1 * 3,
+    // WEIGHT_SHIFT_STRENGTH: 1,
+    // BIAS_SHIFT_STRENGTH: 1,
 } as INeatParams;
 
 const testXOR = {
@@ -30,7 +19,7 @@ const testXOR = {
     ],
     save: false,
     load: false,
-    clients: 100,
+    clients: 1000,
     output: [[0], [0], [1], [1]],
     params: params,
 };
