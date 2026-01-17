@@ -1,307 +1,263 @@
 # NEAT Parameter Tuning Guide
 
-This document explains the default parameters used in the NEAT implementation and provides guidance on when and how to adjust them.
+Complete documentation for all NEAT algorithm parameters with detailed explanations, code references, and tuning recommendations.
 
-## Critical Parameter Fixes (v0.1.1)
+## 📚 Full Documentation
 
-Several default parameters were adjusted to fix convergence issues that prevented the algorithm from solving even simple problems like XOR in reasonable time.
+All parameters are thoroughly documented in the `docs/params/` directory:
 
-### 🔴 Critical Changes
+- **[00_INDEX.md](./params/00_INDEX.md)** - Complete overview with quick reference table, tuning scenarios, and parameter interactions
+- **[01_distance_coefficients.md](./params/01_distance_coefficients.md)** - C1, C2, C3 (genetic distance calculation)
+- **[02_compatibility_thresholds.md](./params/02_compatibility_thresholds.md)** - CT, CP (speciation control)
+- **[03_mutation_strength.md](./params/03_mutation_strength.md)** - MUTATION_RATE, SURVIVORS, strength parameters
+- **[04_mutation_probabilities.md](./params/04_mutation_probabilities.md)** - PROBABILITY\_\* parameters (mutation frequency)
+- **[05_optimization_and_scoring.md](./params/05_optimization_and_scoring.md)** - OPT*ERR_THRESHOLD, LAMBDA*\*, EPS, PERMANENT_MAIN_CONNECTIONS
 
-#### 1. WEIGHT_SHIFT_STRENGTH: 5 → 0.2 (25x reduction)
+## 🎯 Quick Start
 
-**Problem:** The original value of 5 caused extreme weight oscillations, preventing network convergence.
+### All Parameters at a Glance
 
-**Impact:** Each weight mutation could shift by up to ±5, which is massive compared to typical neural network weight ranges. This caused:
+| Parameter                          | Default         | What It Does                                     |
+| ---------------------------------- | --------------- | ------------------------------------------------ |
+| `C1`                               | `1`             | Weight of excess genes in distance calculation   |
+| `C2`                               | `1`             | Weight of disjoint genes in distance calculation |
+| `C3`                               | `0.1`           | Weight of weight differences in distance         |
+| `CT`                               | `20`            | Threshold for distance normalization             |
+| `CP`                               | `clients/20`    | Species compatibility threshold                  |
+| `MUTATION_RATE`                    | `1`             | Global mutation intensity multiplier             |
+| `SURVIVORS`                        | `0.4`           | Fraction surviving selection (40%)               |
+| `WEIGHT_SHIFT_STRENGTH`            | `0.2`           | Magnitude of weight adjustments                  |
+| `BIAS_SHIFT_STRENGTH`              | `0.15`          | Magnitude of bias adjustments                    |
+| `WEIGHT_RANDOM_STRENGTH`           | `1`             | Range for complete weight randomization          |
+| `PROBABILITY_MUTATE_WEIGHT_SHIFT`  | `3`             | How often to adjust weights                      |
+| `PROBABILITY_MUTATE_TOGGLE_LINK`   | `0.3`           | How often to enable/disable connections          |
+| `PROBABILITY_MUTATE_WEIGHT_RANDOM` | `0.05`          | How often to completely randomize weights        |
+| `PROBABILITY_MUTATE_LINK`          | `0.8`           | How often to add new connections                 |
+| `PROBABILITY_MUTATE_NODES`         | `0.03`          | How often to add new nodes                       |
+| `OPT_ERR_THRESHOLD`                | `0.01`          | Error threshold to trigger optimization mode     |
+| `PERMANENT_MAIN_CONNECTIONS`       | `false`         | Whether to protect input→output connections      |
+| `LAMBDA_HIGH`                      | `0.3`           | Complexity penalty during optimization           |
+| `LAMBDA_LOW`                       | `0.1`           | Complexity penalty during exploration            |
+| `EPS`                              | `1e-4` (0.0001) | Tie-breaking threshold for score comparison      |
 
-- Networks to constantly overshoot optimal weight values
-- Random walk behavior instead of gradual refinement
-- Near-impossible convergence for simple problems
+## 🚀 Common Use Cases
 
-**New Value:** 0.2 (recommended range: 0.1 - 0.3)
+### Scenario 1: Fast Convergence
 
-**Reasoning:** Smaller shifts allow gradual refinement while still exploring the weight space effectively.
-
----
-
-#### 2. BIAS_SHIFT_STRENGTH: 0.01 → 0.15 (15x increase)
-
-**Problem:** The original value was 500x smaller than WEIGHT_SHIFT_STRENGTH, creating severe imbalance.
-
-**Impact:** While weights were thrashing wildly, biases barely changed, preventing proper network optimization.
-
-**New Value:** 0.15 (recommended range: 0.1 - 0.2)
-
-**Reasoning:** Biases should be mutated with similar strength as weights for balanced learning.
-
----
-
-#### 3. PROBABILITY_MUTATE_LINK: inputNodes × outputNodes → 0.8
-
-**Problem:** For XOR (2 inputs, 1 output), this was 2, causing rapid network bloat.
-
-**Impact:**
-
-- Average of 2 new connections added per mutation
-- Networks growing too complex before learning anything useful
-- Slower evolution and harder optimization
-
-**New Value:** 0.8 (recommended range: 0.5 - 1.5)
-
-**Reasoning:** Controlled structural growth allows networks to start simple and complexify only when needed.
-
----
-
-#### 4. SURVIVORS: 0.8 → 0.4 (stronger selection)
-
-**Problem:** Keeping 80% of each species provided too little selection pressure.
-
-**Impact:** Weak solutions survived too long, slowing evolution.
-
-**New Value:** 0.4 (recommended range: 0.3 - 0.5)
-
-**Reasoning:** Stronger selection pressure (keeping only top 40%) drives faster evolution.
-
----
-
-#### 5. CP (Species Compatibility): clients / 10 → clients / 20
-
-**Problem:** High threshold led to fewer species and reduced diversity.
-
-**Impact:** Less exploration of different network topologies.
-
-**New Value:** clients / 20, minimum 1 (e.g., 5 for 100 clients)
-
-**Reasoning:** Lower threshold allows more species, increasing diversity in the population.
-
----
-
-#### 6. CT (Compatibility Threshold): inputNodes × outputNodes → 20
-
-**Problem:** Scaling with network size isn't always appropriate.
-
-**Impact:** For small networks like XOR (CT=2), the distance metric behaved incorrectly.
-
-**New Value:** 20 (fixed value)
-
-**Reasoning:** A fixed, reasonable threshold works better across different problem sizes.
-
----
-
-#### 7. LAMBDA_HIGH: 0.6 → 0.3 (2x reduction)
-
-**Problem:** Excessive complexity penalty of 60% prevented networks from growing when needed.
-
-**Impact:** Networks couldn't add necessary nodes/connections even when the problem required it.
-
-**New Value:** 0.3 (recommended range: 0.2 - 0.4)
-
-**Reasoning:** Moderate penalty encourages simplicity without forcing it.
-
----
-
-#### 8. LAMBDA_LOW: 0.3 → 0.1 (3x reduction)
-
-**Problem:** Even during exploration phase, complexity penalty was too restrictive.
-
-**Impact:** Networks struggled to find good topologies before being penalized.
-
-**New Value:** 0.1 (recommended range: 0.05 - 0.2)
-
-**Reasoning:** Gentle penalty during exploration allows network discovery while still discouraging bloat.
-
----
-
-#### 9. EPS: 1e-9 → 1e-4 (100,000x increase!)
-
-**Problem:** Value was 5 orders of magnitude too small to detect ties in normalized scores.
-
-**Impact:**
-
-- Tie-breaking logic essentially never ran
-- Lost the benefit of preferring simpler networks among equal performers
-- No safety mechanism against bloat
-
-**New Value:** 1e-4 (recommended range: 1e-6 to 1e-3)
-
-**Reasoning:** This is the **actual** defense against bloat - when networks perform equally, choose the simpler one!
-
----
-
-## Complete Default Parameters
+**Goal:** Quick results, willing to sacrifice some diversity
 
 ```typescript
-{
-    // Distance coefficients for speciation
-    C1: 1,                                    // Excess genes coefficient
-    C2: 1,                                    // Disjoint genes coefficient
-    C3: 0.1,                                  // Weight difference coefficient
+const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
+  MUTATION_RATE: 1.5, // More aggressive
+  SURVIVORS: 0.3, // Strong selection (top 30%)
+  WEIGHT_SHIFT_STRENGTH: 0.3, // Larger changes
+  PROBABILITY_MUTATE_WEIGHT_SHIFT: 5, // Frequent weight tuning
+  PROBABILITY_MUTATE_LINK: 0.5, // Slower growth
+  LAMBDA_HIGH: 0.4, // Favor simplicity
+  CP: 3, // Fewer species
+});
+```
 
-    // Compatibility thresholds
-    CT: 20,                                   // Normalizing factor for distance
-    CP: Math.max(clients / 20, 1),            // Species compatibility threshold
+### Scenario 2: Deep Exploration
 
-    // Selection
-    SURVIVORS: 0.4,                           // Keep top 40% (strong selection)
-    MUTATION_RATE: 1,                         // Base mutation rate
+**Goal:** Find novel solutions, prioritize diversity
 
-    // Weight/Bias mutation strengths
-    WEIGHT_SHIFT_STRENGTH: 0.2,               // ±0.2 max shift per mutation
-    BIAS_SHIFT_STRENGTH: 0.15,                // ±0.15 max shift per mutation
-    WEIGHT_RANDOM_STRENGTH: 1,                // Randomization strength
+```typescript
+const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
+  MUTATION_RATE: 0.8, // More conservative
+  SURVIVORS: 0.5, // Weak selection (top 50%)
+  PROBABILITY_MUTATE_LINK: 1.2, // Faster structural growth
+  PROBABILITY_MUTATE_NODES: 0.05, // More depth
+  LAMBDA_LOW: 0.05, // Minimal complexity penalty
+  CP: 2, // More species
+  C3: 0.05, // Less weight-based speciation
+});
+```
 
-    // Mutation probabilities (per genome per generation)
-    PROBABILITY_MUTATE_WEIGHT_SHIFT: 3,       // ~3 weight shifts per mutation
-    PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05,   // 5% chance of full randomization
-    PROBABILITY_MUTATE_TOGGLE_LINK: 0.3,      // 30% chance to toggle connection
-    PROBABILITY_MUTATE_LINK: 0.8,             // ~0.8 new connections per mutation
-    PROBABILITY_MUTATE_NODES: 0.03,           // 3% chance to add node
+### Scenario 3: Fine-Tuning
 
-    // Optimization
-    OPT_ERR_THRESHOLD: 0.01,                  // Error threshold for optimization mode
-    PERMANENT_MAIN_CONNECTIONS: false,        // Allow removal of input-output connections
+**Goal:** Refine existing solution without major changes
 
-    // Complexity penalty (controls network growth)
-    LAMBDA_HIGH: 0.3,                         // Penalty during optimization (was 0.6)
-    LAMBDA_LOW: 0.1,                          // Penalty during exploration (was 0.3)
-    EPS: 1e-4,                                // Tie-breaking threshold (was 1e-9)
+```typescript
+const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
+  MUTATION_RATE: 0.5, // Conservative
+  WEIGHT_SHIFT_STRENGTH: 0.1, // Small adjustments only
+  BIAS_SHIFT_STRENGTH: 0.08, // Small adjustments only
+  PROBABILITY_MUTATE_LINK: 0.1, // Minimal structural changes
+  PROBABILITY_MUTATE_NODES: 0.01, // Very rare depth changes
+  OPT_ERR_THRESHOLD: 0.02, // Optimize earlier
+  LAMBDA_HIGH: 0.5, // Strong simplicity push
+});
+```
+
+### Scenario 4: Prevent Network Bloat
+
+**Goal:** Keep networks small and efficient
+
+```typescript
+const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
+  LAMBDA_LOW: 0.15, // Penalize complexity earlier
+  LAMBDA_HIGH: 0.4, // Strong optimization penalty
+  PROBABILITY_MUTATE_LINK: 0.6, // Slower growth
+  PROBABILITY_MUTATE_NODES: 0.02, // Fewer nodes
+  OPT_ERR_THRESHOLD: 0.015, // Optimize slightly earlier
+  EPS: 1e-3, // Stronger simplicity tie-breaking
+});
+```
+
+### Scenario 5: Escape Local Optima
+
+**Goal:** Break out of stagnation
+
+```typescript
+const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
+  MUTATION_RATE: 2, // High mutation
+  WEIGHT_RANDOM_STRENGTH: 1.5, // Wider exploration
+  PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.1, // More complete randomization
+  SURVIVORS: 0.35, // Stronger selection
+  CP: 4, // More species for diversity
+});
+```
+
+## 📖 Understanding Key Concepts
+
+### Speciation
+
+Genomes are grouped into species based on genetic distance. The distance formula is:
+
+```
+distance = (C1 × excess)/N + (C2 × disjoint)/N + C3 × weightDiff
+```
+
+- If `distance < CP` → same species
+- If `N < CT` → no normalization (N=1)
+
+### Mutation Process
+
+Each generation:
+
+1. **Weight mutations** (most frequent) - Fine-tune existing connections
+2. **Toggle mutations** (moderate) - Enable/disable connections
+3. **Structural mutations** (rare) - Add connections/nodes
+4. All probabilities are multiplied by `MUTATION_RATE`
+
+### Optimization Phases
+
+Every 10 generations OR when error < `OPT_ERR_THRESHOLD`:
+
+- Apply `LAMBDA_HIGH` instead of `LAMBDA_LOW`
+- Remove disabled connections
+- Freeze topology (no new structure unless network is very small)
+- Continue weight mutations for fine-tuning
+
+### Selection & Scoring
+
+1. Calculate raw fitness scores
+2. Apply complexity penalty: `adjusted = raw - lambda × complexity_normalized × score_span`
+3. Normalize to [0, 1]
+4. If scores within `EPS` → choose simplest
+5. Keep top `SURVIVORS` fraction
+6. Breed to fill population
+
+## ⚠️ Important Notes
+
+### Automatic Adaptations
+
+- `MUTATION_RATE` automatically increases when population is stuck (error not improving)
+- Optimization mode activates every 10 generations regardless of error
+- Small networks (< CT connections) are encouraged to grow even during optimization
+
+### Validation Warnings
+
+The code will warn you about potentially problematic values:
+
+- Distance coefficients must be non-negative
+- SURVIVORS must be between 0 and 1
+- Very high values for CT, CP, MUTATION_RATE trigger warnings
+- WEIGHT_SHIFT_STRENGTH > 1 may cause oscillations
+- Weight/bias imbalance > 80% triggers rebalancing suggestion
+
+### Parameter Dependencies
+
+Some parameters work together:
+
+- **C1, C2, C3** affect the distance compared to **CP**
+- **MUTATION_RATE** multiplies all **PROBABILITY\_\*** values
+- **CT** affects both distance normalization and mutation behavior
+- **LAMBDA_LOW/HIGH** switch based on optimization phase
+- **EPS** uses normalized scores (after LAMBDA penalty)
+
+## 📚 Detailed Documentation
+
+For comprehensive explanations including:
+
+- Code references with line numbers
+- Detailed formulas and algorithms
+- Historical notes about default changes
+- Complete tuning recommendations
+- Test file references
+
+Please see the [full documentation index](./params/00_INDEX.md).
+
+## 🔧 Example: Creating a Custom Configuration
+
+```typescript
+import { Neat, OutputActivation } from "neat-js";
+
+const customNeat = new Neat(
+  3, // 3 inputs
+  2, // 2 outputs
+  100, // population of 100
+  OutputActivation.sigmoid, // sigmoid activation
+  {
+    // Speciation - favor topology over weights
+    C1: 1.2,
+    C2: 1.2,
+    C3: 0.05,
+    CP: 4,
+
+    // Evolution - balanced approach
+    MUTATION_RATE: 1,
+    SURVIVORS: 0.4,
+
+    // Mutations - conservative growth
+    WEIGHT_SHIFT_STRENGTH: 0.2,
+    BIAS_SHIFT_STRENGTH: 0.18,
+    PROBABILITY_MUTATE_LINK: 0.6,
+    PROBABILITY_MUTATE_NODES: 0.02,
+
+    // Optimization - moderate complexity control
+    OPT_ERR_THRESHOLD: 0.01,
+    LAMBDA_LOW: 0.08,
+    LAMBDA_HIGH: 0.35,
+    EPS: 1e-4,
+
+    // Protection
+    PERMANENT_MAIN_CONNECTIONS: false,
+  }
+);
+
+// Use the NEAT instance
+for (let generation = 0; generation < 1000; generation++) {
+  // Evaluate each client
+  for (const client of neat.clients) {
+    const output = client.calculate([input1, input2, input3]);
+    client.score = evaluateFitness(output);
+    client.error = calculateError(output);
+  }
+
+  // Evolve to next generation
+  neat.evolve(false, averageError);
 }
 ```
 
-## Parameter Tuning Guidelines
+## 🎓 Further Reading
 
-### For Simple Problems (XOR, basic classification)
-
-- **WEIGHT_SHIFT_STRENGTH:** 0.15 - 0.25
-- **SURVIVORS:** 0.3 - 0.4 (strong selection)
-- **PROBABILITY_MUTATE_LINK:** 0.5 - 1.0
-
-### For Medium Complexity Problems
-
-- **WEIGHT_SHIFT_STRENGTH:** 0.2 - 0.3
-- **SURVIVORS:** 0.4 - 0.5
-- **PROBABILITY_MUTATE_LINK:** 0.8 - 1.5
-- **PROBABILITY_MUTATE_NODES:** 0.05 - 0.1
-
-### For Complex Problems (control, game playing)
-
-- **WEIGHT_SHIFT_STRENGTH:** 0.1 - 0.2 (finer tuning)
-- **SURVIVORS:** 0.4 - 0.5
-- **PROBABILITY_MUTATE_LINK:** 1.0 - 2.0
-- **PROBABILITY_MUTATE_NODES:** 0.05 - 0.15 (allow more complexity)
-- **CP:** Lower value (e.g., clients / 30) for more species
-- **LAMBDA_HIGH:** 0.15 - 0.25 (lower penalty for complex problems)
-- **LAMBDA_LOW:** 0.05 - 0.1 (very gentle during exploration)
-
-### Controlling Network Complexity
-
-The complexity penalty parameters control how aggressively NEAT penalizes larger networks:
-
-- **LAMBDA_HIGH/LOW = 0:** No penalty (networks can bloat)
-- **LAMBDA_HIGH/LOW too high:** Networks can't grow (underfitting)
-- **LAMBDA_HIGH/LOW balanced:** Networks grow only when beneficial
-
-**Rule of thumb:** Start with defaults, reduce if networks aren't reaching necessary complexity.
-
-## Validation Warnings
-
-The implementation now warns about problematic parameter combinations:
-
-### WEIGHT_SHIFT_STRENGTH > 1
-
-```
-Values > 1 can cause oscillations and prevent convergence.
-Recommended: 0.1-0.3
-```
-
-### SURVIVORS > 0.6
-
-```
-Weak selection pressure may slow evolution.
-Recommended: 0.3-0.5
-```
-
-### PROBABILITY_MUTATE_LINK > 2
-
-```
-This can cause rapid network bloat.
-Recommended: 0.5-1.5 for most problems
-```
-
-### Imbalanced WEIGHT_SHIFT_STRENGTH vs BIAS_SHIFT_STRENGTH
-
-```
-Highly imbalanced mutation strengths detected.
-Consider using similar values for both.
-```
-
-### LAMBDA_HIGH > 0.8
-
-```
-Excessive complexity penalty may prevent networks from growing.
-Recommended: 0.2-0.4
-```
-
-### LAMBDA_LOW > 0.5
-
-```
-This may restrict exploration.
-Recommended: 0.05-0.2
-```
-
-### EPS outside 1e-6 to 1e-2
-
-```
-EPS is outside typical range.
-Recommended: 1e-6 to 1e-3 for meaningful tie-breaking
-```
-
-## Expected Performance
-
-With the corrected defaults:
-
-- **XOR Problem:** Should solve in 100-500 generations (was: never)
-- **Network Complexity:** Starts minimal, grows only as needed
-- **Convergence:** Smooth reduction in error rather than oscillation
-
-## Debugging Tips
-
-If your network isn't converging:
-
-1. **Check WEIGHT_SHIFT_STRENGTH** - Most common issue
-    - Too high (>1): Oscillations, no convergence
-    - Too low (<0.05): Very slow learning
-
-2. **Check PROBABILITY_MUTATE_LINK** - Second most common
-    - Too high: Network bloat, slow evolution
-    - Too low: Network can't find good topology
-
-3. **Check SURVIVORS**
-    - Too high (>0.7): Weak selection, slow evolution
-    - Too low (<0.2): May lose diversity
-
-4. **Monitor species count**
-    - Too many species: Increase CP
-    - Too few species: Decrease CP
-
-5. **Check complexity penalty (LAMBDA values)**
-    - Networks too simple: Reduce LAMBDA_HIGH/LOW
-    - Unbounded growth: Increase LAMBDA_HIGH/LOW
-    - Networks aren't being compared properly: Increase EPS
-
-6. **Verify tie-breaking works**
-    - If you see many networks with identical scores but different complexities
-    - Increase EPS to 1e-4 or 1e-3
-
-## References
-
-These defaults are based on:
-
-- Original NEAT paper (Stanley & Miikkulainen, 2002)
-- Empirical testing with XOR and other benchmark problems
-- Common practices in neuroevolution research
+- [Original NEAT Paper](http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf) by Kenneth O. Stanley
+- [Code Implementation](../src/neat/neat.ts) - See the actual parameter usage
+- [Test Suite](../tests/neat/) - Examples of parameter behavior
+- [Demo](../demo/main.ts) - Working example with parameter customization
 
 ---
 
-**Last Updated:** January 2026  
-**Version:** 0.1.1
+**Need more details?** Check out the [comprehensive parameter documentation](./params/00_INDEX.md) with code references, formulas, and detailed tuning guides for each parameter.
