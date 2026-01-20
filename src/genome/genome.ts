@@ -342,8 +342,8 @@ export class Genome {
             middleY < NETWORK_CONSTANTS.NODE_Y_MIN
                 ? NETWORK_CONSTANTS.NODE_Y_MIN
                 : middleY > NETWORK_CONSTANTS.NODE_Y_MAX
-                    ? NETWORK_CONSTANTS.NODE_Y_MAX
-                    : middleY;
+                  ? NETWORK_CONSTANTS.NODE_Y_MAX
+                  : middleY;
         if (middleX <= NETWORK_CONSTANTS.MIN_MIDDLE_X) {
             return null;
         }

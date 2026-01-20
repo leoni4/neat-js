@@ -6,6 +6,7 @@ import {
     type NodeSaveData,
     type ConnectionSaveData,
 } from '../genome/index.js';
+import { NETWORK_CONSTANTS } from './constants.js';
 import { RandomHashSet, RandomSelector } from '../dataStructures/index.js';
 import { Client } from './client.js';
 import { Species } from './species.js';
@@ -385,13 +386,13 @@ export class Neat {
 
         for (let i = 0; i < this.#inputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
-            nodeGene.x = 0.01;
+            nodeGene.x = NETWORK_CONSTANTS.INPUT_NODE_X;
             nodeGene.y = (i + 1) / (this.#inputNodes + 1);
         }
 
         for (let i = 0; i < this.#outputNodes; i += 1) {
             const nodeGene: NodeGene = this.getNode();
-            nodeGene.x = 0.99;
+            nodeGene.x = NETWORK_CONSTANTS.OUTPUT_NODE_X;
             nodeGene.y = (i + 1) / (this.#outputNodes + 1);
         }
         for (let i = 0; i < this.#maxClients; i += 1) {
@@ -708,11 +709,14 @@ export class Neat {
                 epoch: 0,
             };
         } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
+            console.log('CHAMPION INSERTED');
             this.#champion.epoch = 0;
-            this.#clients[this.#clients.length - 1] = new Client(
+            const incertedChampion = new Client(
                 this.loadGenome(this.#champion.client.genome.save()),
                 this.#outputActivation,
             );
+            incertedChampion.score = this.#champion.score;
+            this.#clients[this.#clients.length - 1] = incertedChampion;
         }
     }
 }
