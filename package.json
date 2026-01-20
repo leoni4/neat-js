@@ -33,6 +33,10 @@
         "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
         "prepare": "npm run build"
     },
+    "lint-staged": {
+        "*.{ts,js,json,md}": "prettier --write",
+        "*.ts": "eslint --fix"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/leoni4/neat-js.git"
@@ -80,6 +84,7 @@
         "express": "^5.1.0",
         "husky": "^9.1.7",
         "konva": "^10.0.8",
+        "lint-staged": "^16.2.7",
         "nodemon": "^3.1.10",
         "prettier": "^3.6.2",
         "typescript": "^5.9.3",
