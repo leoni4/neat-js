@@ -45,6 +45,37 @@ export interface INeatParams {
     EPS?: number;
 }
 
+const DEFAULT_PARAMS = {
+    C1: 1, // Distance coefficient for speciation
+    C2: 1, // Distance coefficient for speciation
+    C3: 0.1, // Distance coefficient for speciation
+    CP: 1, // Distance difference for species
+
+    CT: 1, // Minimum connections threshold
+    PERMANENT_MAIN_CONNECTIONS: false, // Permanent main connections
+
+    MUTATION_RATE: 1, // Mutation rate
+
+    SURVIVORS: 0.4, // Selection pressure, keep top 40%
+
+    WEIGHT_SHIFT_STRENGTH: 0.2, // Weight mutation strength
+    BIAS_SHIFT_STRENGTH: 0.15, // Bias mutation strength
+    WEIGHT_RANDOM_STRENGTH: 1, // Random weight mutation strength
+    BIAS_RANDOM_STRENGTH: 1, // Random bias mutation strength
+
+    PROBABILITY_MUTATE_WEIGHT_SHIFT: 3, // Probability of weight shift mutation
+    PROBABILITY_MUTATE_TOGGLE_LINK: 0.3, // Probability of toggling a link
+    PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05, // Probability of random weight mutation
+    PROBABILITY_MUTATE_LINK: 0.8, // Probability of link mutation
+    PROBABILITY_MUTATE_NODES: 0.03, // Probability of node mutation
+
+    OPT_ERR_THRESHOLD: 0.01, // Error threshold for optimization
+
+    LAMBDA_HIGH: 0.3, // Penalty for high complexity
+    LAMBDA_LOW: 0.1, // Penalty for low complexity
+    EPS: 1e-4, // Precision for detecting ties in scores
+};
+
 interface LoadData {
     genome: GenomeSaveData;
     evolveCounts: number;
@@ -117,51 +148,42 @@ export class Neat {
         params?: INeatParams,
         loadData?: LoadData,
     ) {
-        // Distance coefficients for speciation
-        this.#C1 = params?.C1 ?? 1;
-        this.#C2 = params?.C2 ?? 1;
-        this.#C3 = params?.C3 ?? 0.1;
+        this.#C1 = params?.C1 ?? DEFAULT_PARAMS.C1;
+        this.#C2 = params?.C2 ?? DEFAULT_PARAMS.C2;
+        this.#C3 = params?.C3 ?? DEFAULT_PARAMS.C3;
 
-        // Compatibility thresholds - use fixed values instead of scaling with network size
-        this.#CT = params?.CT ?? 20;
-        this.#CP = params?.CP ?? Math.max(clients / 20, 1);
-        this.#PERMANENT_MAIN_CONNECTIONS = params?.PERMANENT_MAIN_CONNECTIONS || false;
+        this.#CT = params?.CT ?? DEFAULT_PARAMS.CT;
+        this.#CP = params?.CP ?? DEFAULT_PARAMS.CP;
+        this.#PERMANENT_MAIN_CONNECTIONS =
+            params?.PERMANENT_MAIN_CONNECTIONS || DEFAULT_PARAMS.PERMANENT_MAIN_CONNECTIONS;
 
-        this.#MUTATION_RATE = params?.MUTATION_RATE ?? 1;
+        this.#MUTATION_RATE = params?.MUTATION_RATE ?? DEFAULT_PARAMS.MUTATION_RATE;
 
-        // Selection pressure - keep top 40% by default (was 80%, too weak)
-        this.#SURVIVORS = params?.SURVIVORS ?? 0.4;
+        this.#SURVIVORS = params?.SURVIVORS ?? DEFAULT_PARAMS.SURVIVORS;
 
-        // Weight/bias mutation strengths - critical for convergence
-        // WEIGHT_SHIFT_STRENGTH was 5 (way too high, causing extreme oscillations)
-        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH ?? 0.2;
-        // BIAS_SHIFT_STRENGTH was 0.01 (500x smaller than weights, now balanced)
-        this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? 0.15;
-        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH ?? 1;
-        this.#BIAS_RANDOM_STRENGTH = params?.BIAS_RANDOM_STRENGTH ?? 1;
-        // Mutation probabilities - control how often each type of mutation occurs
-        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT = params?.PROBABILITY_MUTATE_WEIGHT_SHIFT ?? 3;
-        this.#PROBABILITY_MUTATE_TOGGLE_LINK = params?.PROBABILITY_MUTATE_TOGGLE_LINK ?? 0.3;
-        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM = params?.PROBABILITY_MUTATE_WEIGHT_RANDOM ?? 0.05;
-        // PROBABILITY_MUTATE_LINK was inputNodes * outputNodes (causing rapid bloat)
-        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? 0.8;
-        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? 0.03;
-        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? 0.01;
+        this.#WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH ?? DEFAULT_PARAMS.WEIGHT_SHIFT_STRENGTH;
+        this.#BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? DEFAULT_PARAMS.BIAS_SHIFT_STRENGTH;
+        this.#WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH ?? DEFAULT_PARAMS.WEIGHT_RANDOM_STRENGTH;
+        this.#BIAS_RANDOM_STRENGTH = params?.BIAS_RANDOM_STRENGTH ?? DEFAULT_PARAMS.BIAS_RANDOM_STRENGTH;
+        this.#PROBABILITY_MUTATE_WEIGHT_SHIFT =
+            params?.PROBABILITY_MUTATE_WEIGHT_SHIFT ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_WEIGHT_SHIFT;
+        this.#PROBABILITY_MUTATE_TOGGLE_LINK =
+            params?.PROBABILITY_MUTATE_TOGGLE_LINK ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_TOGGLE_LINK;
+        this.#PROBABILITY_MUTATE_WEIGHT_RANDOM =
+            params?.PROBABILITY_MUTATE_WEIGHT_RANDOM ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_WEIGHT_RANDOM;
+        this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_LINK;
+        this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_NODES;
+        this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? DEFAULT_PARAMS.OPT_ERR_THRESHOLD;
 
-        // Complexity penalty parameters
-        // LAMBDA_HIGH was 0.6 (too aggressive, preventing necessary growth)
-        this.#LAMBDA_HIGH = params?.LAMBDA_HIGH ?? 0.3;
-        // LAMBDA_LOW was 0.3 (too aggressive for exploration phase)
-        this.#LAMBDA_LOW = params?.LAMBDA_LOW ?? 0.1;
-        // EPS was 1e-9 (too small to detect ties in normalized scores)
-        this.#EPS = params?.EPS ?? 1e-4;
+        this.#LAMBDA_HIGH = params?.LAMBDA_HIGH ?? DEFAULT_PARAMS.LAMBDA_HIGH;
+        this.#LAMBDA_LOW = params?.LAMBDA_LOW ?? DEFAULT_PARAMS.LAMBDA_LOW;
+        this.#EPS = params?.EPS ?? DEFAULT_PARAMS.EPS;
 
         this.#outputActivation = outputActivation;
         this.#inputNodes = inputNodes;
         this.#outputNodes = outputNodes;
         this.#maxClients = clients;
 
-        // Validate configuration
         this.#validateConfiguration();
 
         if (loadData) {
@@ -709,7 +731,6 @@ export class Neat {
                 epoch: 0,
             };
         } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
-            console.log('CHAMPION INSERTED');
             this.#champion.epoch = 0;
             const incertedChampion = new Client(
                 this.loadGenome(this.#champion.client.genome.save()),

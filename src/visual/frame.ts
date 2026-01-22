@@ -115,11 +115,12 @@ export class Frame {
             if (item instanceof ConnectionGene) {
                 return;
             }
-
+            let biasRadius = radius + Math.abs(radius * item.bias);
+            biasRadius = biasRadius < 5 ? 5 : biasRadius > this.#height / 20 ? this.#height / 20 : biasRadius;
             const circle = new Konva.Circle({
                 x: this.#width * item.x,
                 y: this.#height * item.y,
-                radius: radius + Math.abs(radius * item.bias),
+                radius: biasRadius,
                 fill: item.bias >= 0 ? '#0f0' : '#f00',
                 stroke: 'black',
                 strokeWidth: 1,
@@ -127,10 +128,10 @@ export class Frame {
 
             this.#layer.add(circle);
 
-            if (item.x !== 0.01 && item.x !== 0.99 && !this.#toggle) {
+            if (item.x !== 0.01 && !this.#toggle) {
                 const text = new Konva.Text({
-                    x: this.#width * item.x,
-                    y: this.#height * item.y,
+                    x: this.#width * item.x - 20,
+                    y: this.#height * item.y + 10,
                     text: item.bias.toFixed(2) + '',
                     fontSize: 15,
                     fontFamily: 'Calibri',

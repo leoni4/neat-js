@@ -2,12 +2,12 @@ import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/in
 import { Frame } from '../src/visual/frame.js';
 
 const params = {
-    CP: 0.8,
-    CT: 2 * 1 * 3,
-    MUTATION_RATE: 2,
-    PROBABILITY_MUTATE_WEIGHT_SHIFT: 2 * 1 * 3,
-    WEIGHT_SHIFT_STRENGTH: 20,
-    BIAS_SHIFT_STRENGTH: 0.1,
+    // CP: 0.5,
+    // // CT: 6 * 2,
+    // MUTATION_RATE: 1,
+    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 6 * 2,
+    // WEIGHT_SHIFT_STRENGTH: 5,
+    // BIAS_SHIFT_STRENGTH: 1,
 } as INeatParams;
 
 const testXOR = {
