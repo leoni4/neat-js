@@ -63,10 +63,10 @@ const DEFAULT_PARAMS = {
     WEIGHT_RANDOM_STRENGTH: 1, // Random weight mutation strength
     BIAS_RANDOM_STRENGTH: 1, // Random bias mutation strength
 
-    PROBABILITY_MUTATE_WEIGHT_SHIFT: 3, // Probability of weight shift mutation
-    PROBABILITY_MUTATE_TOGGLE_LINK: 0.3, // Probability of toggling a link
+    PROBABILITY_MUTATE_WEIGHT_SHIFT: 0.8, // Probability of weight shift mutation
     PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05, // Probability of random weight mutation
-    PROBABILITY_MUTATE_LINK: 0.8, // Probability of link mutation
+    PROBABILITY_MUTATE_LINK: 0.08, // Probability of link mutation
+    PROBABILITY_MUTATE_TOGGLE_LINK: 0.08, // Probability of toggling a link
     PROBABILITY_MUTATE_NODES: 0.03, // Probability of node mutation
 
     OPT_ERR_THRESHOLD: 0.01, // Error threshold for optimization
@@ -576,6 +576,10 @@ export class Neat {
         }
     }
 
+    calculate(input: Array<number>): Array<number> {
+        return (this.#champion?.client ?? this.#clients[0]).calculate(input) || [];
+    }
+
     evolve(optimization = false, error?: number) {
         if (this.#lastError === error) {
             this.#sameErrorEpoch += 1;
@@ -665,8 +669,7 @@ export class Neat {
         let rawMax = -Infinity,
             rawMin = Infinity;
 
-        let cMax = -Infinity,
-            cMin = Infinity;
+        let cMax = -Infinity;
 
         for (const cl of this.#clients) {
             cl.bestScore = false;
@@ -677,15 +680,14 @@ export class Neat {
             const c = cl.genome.connections.size() + cl.genome.nodes.size();
             cl.complexity = c;
             cMax = Math.max(cMax, c);
-            cMin = Math.min(cMin, c);
         }
         const span = rawMax - rawMin || 1;
-        const cSpan = cMax - cMin || 1;
+        const effectiveSpan = Math.max(span, 0.05);
 
         const lambda = this.#optimization ? this.#LAMBDA_HIGH : this.#LAMBDA_LOW;
         for (const cl of this.#clients) {
-            const cNorm = (cl.complexity - cMin) / cSpan;
-            const penalty = lambda * cNorm * span;
+            const cNorm = Math.log(1 + cl.complexity) / Math.log(1 + cMax);
+            const penalty = lambda * cNorm * effectiveSpan;
             cl.adjustedScore = cl.scoreRaw - penalty;
         }
 

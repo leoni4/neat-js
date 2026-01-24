@@ -14,7 +14,7 @@ export class Frame {
     #layer: Konva.Layer;
     #controls: Controls;
     #client: Client;
-    #toggle = false;
+    #toggle = true;
     #text = '';
 
     readonly #width: number;
@@ -79,13 +79,38 @@ export class Frame {
 
         let radius = this.#height / this.#genome.nodes.size() / 20;
         radius = radius < 5 ? 5 : radius > this.#height / 20 ? this.#height / 20 : radius;
+        let minWeightModule = Infinity,
+            maxWeightModule = 0;
+        this.#genome.connections.data.forEach(item => {
+            const weight = Math.abs((item as ConnectionGene).weight);
+            if (minWeightModule > weight) {
+                minWeightModule = weight;
+            }
+            if (maxWeightModule < weight) {
+                maxWeightModule = weight;
+            }
+        });
+        const minStroke = 1;
+        const maxStroke = radius;
         this.#genome.connections.data.forEach(item => {
             if (item instanceof NodeGene) {
                 return;
             }
-            let strokeWidth = this.#toggle ? Math.abs(item.weight / 2) : 1;
-            strokeWidth = strokeWidth < 1 || !item.enabled ? 1 : strokeWidth;
-            strokeWidth = strokeWidth > radius / 2 ? radius / 2 : strokeWidth;
+            let strokeWidth;
+            if (this.#toggle) {
+                const weight = Math.abs(item.weight);
+
+                const t =
+                    maxWeightModule === minWeightModule
+                        ? 1
+                        : (weight - minWeightModule) / (maxWeightModule - minWeightModule);
+
+                strokeWidth = minStroke + t * (maxStroke - minStroke);
+
+                strokeWidth = Math.max(minStroke, Math.min(maxStroke, strokeWidth));
+            } else {
+                strokeWidth = 1;
+            }
             const line = new Konva.Line({
                 points: [
                     this.#width * item.from.x,
@@ -100,7 +125,7 @@ export class Frame {
 
             if (item.enabled && !this.#toggle) {
                 const text = new Konva.Text({
-                    x: (this.#width * item.from.x + this.#width * item.to.x) / 2,
+                    x: (this.#width * item.from.x + this.#width * item.to.x) / 2 - 40,
                     y: (this.#height * item.from.y + this.#height * item.to.y) / 2,
                     text: item.weight.toFixed(2) + '',
                     fontSize: 20,
@@ -115,13 +140,16 @@ export class Frame {
             if (item instanceof ConnectionGene) {
                 return;
             }
-            let biasRadius = radius + Math.abs(radius * item.bias);
-            biasRadius = biasRadius < 5 ? 5 : biasRadius > this.#height / 20 ? this.#height / 20 : biasRadius;
+            let biasRadius;
+            if (this.#toggle) {
+                biasRadius = radius + Math.abs(radius * item.bias);
+                biasRadius = biasRadius < 5 ? 5 : biasRadius > this.#height / 20 ? this.#height / 20 : biasRadius;
+            }
             const circle = new Konva.Circle({
                 x: this.#width * item.x,
                 y: this.#height * item.y,
-                radius: biasRadius,
-                fill: item.bias >= 0 ? '#0f0' : '#f00',
+                radius: biasRadius ?? radius,
+                fill: '#0f0',
                 stroke: 'black',
                 strokeWidth: 1,
             });
@@ -130,7 +158,7 @@ export class Frame {
 
             if (item.x !== 0.01 && !this.#toggle) {
                 const text = new Konva.Text({
-                    x: this.#width * item.x - 20,
+                    x: this.#width * item.x - 30,
                     y: this.#height * item.y + 10,
                     text: item.bias.toFixed(2) + '',
                     fontSize: 15,

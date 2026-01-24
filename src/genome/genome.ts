@@ -270,7 +270,6 @@ export class Genome {
                 if (!(c instanceof ConnectionGene)) continue;
                 if (c.from.innovationNumber === con.to.innovationNumber) {
                     removingTo.push(c);
-                    break;
                 }
             }
             this.#nodes.remove(con.to);
@@ -496,22 +495,111 @@ export class Genome {
         return con;
     }
 
-    #optimization(start = 0) {
-        for (let i = start; i < this.#connections.size(); i += 1) {
-            const c = this.#connections.get(i);
-            if (!(c instanceof ConnectionGene)) continue;
-            if (!c.enabled) {
-                this.removeConnection(c);
-                return;
+    #pruneDeadGraph() {
+        const nodes = this.nodes.data.filter(n => n instanceof NodeGene) as NodeGene[];
+        const cons = this.connections.data.filter(c => c instanceof ConnectionGene) as ConnectionGene[];
+
+        const nodeById = new Map<number, NodeGene>();
+        for (const n of nodes) nodeById.set(n.innovationNumber, n);
+
+        const out = new Map<number, number[]>();
+        const inc = new Map<number, number[]>();
+
+        const enabledCons: ConnectionGene[] = [];
+        for (const c of cons) {
+            if (!c.enabled) continue;
+            const fromId = c.from.innovationNumber;
+            const toId = c.to.innovationNumber;
+
+            if (!nodeById.has(fromId) || !nodeById.has(toId)) continue;
+
+            enabledCons.push(c);
+
+            if (!out.has(fromId)) out.set(fromId, []);
+            out.get(fromId)!.push(toId);
+
+            if (!inc.has(toId)) inc.set(toId, []);
+            inc.get(toId)!.push(fromId);
+        }
+
+        const inputIds = nodes.filter(n => n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X).map(n => n.innovationNumber);
+
+        const outputIds = nodes.filter(n => n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X).map(n => n.innovationNumber);
+
+        const forward = new Set<number>();
+        const q1 = [...inputIds];
+        for (const id of q1) forward.add(id);
+
+        while (q1.length) {
+            const cur = q1.pop()!;
+            const next = out.get(cur);
+            if (!next) continue;
+            for (const to of next) {
+                if (!forward.has(to)) {
+                    forward.add(to);
+                    q1.push(to);
+                }
             }
         }
+
+        const backward = new Set<number>();
+        const q2 = [...outputIds];
+        for (const id of q2) backward.add(id);
+
+        while (q2.length) {
+            const cur = q2.pop()!;
+            const prev = inc.get(cur);
+            if (!prev) continue;
+            for (const from of prev) {
+                if (!backward.has(from)) {
+                    backward.add(from);
+                    q2.push(from);
+                }
+            }
+        }
+
+        const aliveNodes = new Set<number>();
+        for (const id of forward) {
+            if (backward.has(id)) aliveNodes.add(id);
+        }
+        for (const id of inputIds) aliveNodes.add(id);
+        for (const id of outputIds) aliveNodes.add(id);
+
+        for (let i = this.connections.size() - 1; i >= 0; i--) {
+            const c = this.connections.get(i);
+            if (!(c instanceof ConnectionGene)) continue;
+
+            const fromId = c.from.innovationNumber;
+            const toId = c.to.innovationNumber;
+
+            if (!aliveNodes.has(fromId) || !aliveNodes.has(toId)) {
+                this.removeConnection(c);
+            }
+        }
+
+        for (let i = this.nodes.size() - 1; i >= 0; i--) {
+            const n = this.nodes.get(i);
+            if (!(n instanceof NodeGene)) continue;
+
+            const id = n.innovationNumber;
+            const isInput = n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X;
+            const isOutput = n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X;
+
+            if (!isInput && !isOutput && !aliveNodes.has(id)) {
+                this.nodes.remove(n);
+            }
+        }
+    }
+
+    optimization() {
+        this.#pruneDeadGraph();
     }
 
     mutate(selfOpt = false) {
         this.#selfOpt = selfOpt;
         const optimize = this.#selfOpt || this.#neat.optimization;
         if (optimize) {
-            this.#optimization();
+            this.optimization();
         }
         let prob: number;
 
