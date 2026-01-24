@@ -78,8 +78,8 @@ const DEFAULT_PARAMS = {
 
 const MUTATION_PRESSURE = {
     NORMAL: 1,
-    ESCAPE: 1.5,
-    PANIC: 3,
+    ESCAPE: 2,
+    PANIC: 5,
 };
 
 interface LoadData {
@@ -597,6 +597,10 @@ export class Neat {
             pressure = MUTATION_PRESSURE.ESCAPE;
         }
 
+        if (pressure !== MUTATION_PRESSURE.NORMAL) {
+            console.log('MUTATION_PRESSURE', pressure);
+        }
+
         for (let i = 0; i < this.#clients.length; i += 1) {
             this.#clients[i].mutate(this.#evolveCounts === 1, pressure);
         }
@@ -721,7 +725,7 @@ export class Neat {
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        if (bestClient.score === this.#networkScoreRaw) {
+        if (Math.abs(bestClient.score - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
             this.#stagnationCount += 1;
         } else {
             this.#networkScoreRaw = bestClient.score;
