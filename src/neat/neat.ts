@@ -46,34 +46,40 @@ export interface INeatParams {
 }
 
 const DEFAULT_PARAMS = {
-    C1: 1, // Distance coefficient for speciation
-    C2: 1, // Distance coefficient for speciation
-    C3: 0.1, // Distance coefficient for speciation
-    CP: 1, // Distance difference for species
+    C1: 1,
+    C2: 1,
+    C3: 0.1,
+    CP: 1,
 
-    CT: 1, // Minimum connections threshold
-    PERMANENT_MAIN_CONNECTIONS: false, // Permanent main connections
+    CT: 1,
+    PERMANENT_MAIN_CONNECTIONS: false,
 
-    MUTATION_RATE: 1, // Mutation rate
+    MUTATION_RATE: 1,
 
-    SURVIVORS: 0.4, // Selection pressure, keep top 40%
+    SURVIVORS: 0.4,
 
-    WEIGHT_SHIFT_STRENGTH: 0.2, // Weight mutation strength
-    BIAS_SHIFT_STRENGTH: 0.15, // Bias mutation strength
-    WEIGHT_RANDOM_STRENGTH: 1, // Random weight mutation strength
-    BIAS_RANDOM_STRENGTH: 1, // Random bias mutation strength
+    WEIGHT_SHIFT_STRENGTH: 0.2,
+    BIAS_SHIFT_STRENGTH: 0.15,
+    WEIGHT_RANDOM_STRENGTH: 1,
+    BIAS_RANDOM_STRENGTH: 1,
 
-    PROBABILITY_MUTATE_WEIGHT_SHIFT: 0.8, // Probability of weight shift mutation
-    PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05, // Probability of random weight mutation
-    PROBABILITY_MUTATE_LINK: 0.08, // Probability of link mutation
-    PROBABILITY_MUTATE_TOGGLE_LINK: 0.08, // Probability of toggling a link
-    PROBABILITY_MUTATE_NODES: 0.03, // Probability of node mutation
+    PROBABILITY_MUTATE_WEIGHT_SHIFT: 0.8,
+    PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05,
+    PROBABILITY_MUTATE_LINK: 0.08,
+    PROBABILITY_MUTATE_TOGGLE_LINK: 0.08,
+    PROBABILITY_MUTATE_NODES: 0.03,
 
-    OPT_ERR_THRESHOLD: 0.01, // Error threshold for optimization
+    OPT_ERR_THRESHOLD: 0.01,
 
-    LAMBDA_HIGH: 0.3, // Penalty for high complexity
-    LAMBDA_LOW: 0.1, // Penalty for low complexity
-    EPS: 1e-4, // Precision for detecting ties in scores
+    LAMBDA_HIGH: 0.3,
+    LAMBDA_LOW: 0.1,
+    EPS: 1e-4,
+};
+
+const MUTATION_PRESSURE = {
+    NORMAL: 1,
+    ESCAPE: 1.5,
+    PANIC: 3,
 };
 
 interface LoadData {
@@ -123,6 +129,9 @@ export class Neat {
 
     #evolveCounts = 0;
 
+    #networkScoreRaw = 0;
+    #stagnationCount = 0;
+
     #clients: Array<Client> = [];
     #champion: {
         client: Client;
@@ -135,8 +144,6 @@ export class Neat {
     #allNodes: RandomHashSet = new RandomHashSet();
 
     #optimization = false;
-    #lastError: number | undefined;
-    #sameErrorEpoch = 0;
 
     #outputActivation: OutputActivation;
 
@@ -193,27 +200,19 @@ export class Neat {
         }
     }
 
-    /**
-     * Validates NEAT configuration parameters.
-     * Throws errors for invalid values and warns about unusual configurations.
-     */
     #validateConfiguration(): void {
-        // Validate distance coefficients
         if (this.#C1 < 0 || this.#C2 < 0 || this.#C3 < 0) {
             throw new Error('Distance coefficients (C1, C2, C3) must be non-negative');
         }
 
-        // Validate SURVIVORS ratio
         if (this.#SURVIVORS < 0 || this.#SURVIVORS > 1) {
             throw new Error('SURVIVORS must be between 0 and 1 (inclusive)');
         }
 
-        // Validate mutation rate
         if (this.#MUTATION_RATE < 0) {
             throw new Error('MUTATION_RATE must be non-negative');
         }
 
-        // Validate network structure
         if (this.#inputNodes <= 0) {
             throw new Error('Number of input nodes must be positive');
         }
@@ -226,12 +225,10 @@ export class Neat {
             throw new Error('Population size (clients) must be positive');
         }
 
-        // Validate probabilities
         if (this.#PROBABILITY_MUTATE_WEIGHT_RANDOM < 0 || this.#PROBABILITY_MUTATE_WEIGHT_RANDOM > 1) {
             console.warn('PROBABILITY_MUTATE_WEIGHT_RANDOM typically should be between 0 and 1');
         }
 
-        // Warn about unusual values
         if (this.#CT > 1000) {
             console.warn(`CT threshold is unusually high: ${this.#CT}`);
         }
@@ -244,7 +241,6 @@ export class Neat {
             console.warn(`MUTATION_RATE is unusually high: ${this.#MUTATION_RATE}`);
         }
 
-        // Warn about problematic parameter values that prevent convergence
         if (this.#WEIGHT_SHIFT_STRENGTH > 1) {
             console.warn(
                 `WEIGHT_SHIFT_STRENGTH is very high (${this.#WEIGHT_SHIFT_STRENGTH}). ` +
@@ -266,7 +262,6 @@ export class Neat {
             );
         }
 
-        // Warn about imbalanced weight/bias mutation strengths
         if (
             this.#WEIGHT_SHIFT_STRENGTH > 0 &&
             this.#BIAS_SHIFT_STRENGTH > 0 &&
@@ -279,7 +274,6 @@ export class Neat {
             );
         }
 
-        // Warn about complexity penalty parameters
         if (this.#LAMBDA_HIGH < 0 || this.#LAMBDA_LOW < 0) {
             throw new Error('LAMBDA_HIGH and LAMBDA_LOW must be non-negative');
         }
@@ -336,7 +330,7 @@ export class Neat {
     }
 
     get MUTATION_RATE(): number {
-        return this.#MUTATION_RATE + this.#sameErrorEpoch / 10;
+        return this.#MUTATION_RATE;
     }
 
     get WEIGHT_SHIFT_STRENGTH(): number {
@@ -580,13 +574,7 @@ export class Neat {
         return (this.#champion?.client ?? this.#clients[0]).calculate(input) || [];
     }
 
-    evolve(optimization = false, error?: number) {
-        if (this.#lastError === error) {
-            this.#sameErrorEpoch += 1;
-        } else {
-            this.#sameErrorEpoch = 0;
-        }
-        this.#lastError = error;
+    evolve(optimization = false) {
         this.#evolveCounts++;
         this.#optimization = optimization || this.#evolveCounts % this.#OPTIMIZATION_PERIOD === 0;
         this.#updateChampion();
@@ -602,8 +590,15 @@ export class Neat {
     }
 
     #mutate() {
+        let pressure = MUTATION_PRESSURE.NORMAL;
+        if (this.#stagnationCount > 200) {
+            pressure = MUTATION_PRESSURE.PANIC;
+        } else if (this.#stagnationCount > 80) {
+            pressure = MUTATION_PRESSURE.ESCAPE;
+        }
+
         for (let i = 0; i < this.#clients.length; i += 1) {
-            this.#clients[i].mutate(this.#evolveCounts === 1);
+            this.#clients[i].mutate(this.#evolveCounts === 1, pressure);
         }
     }
 
@@ -726,6 +721,12 @@ export class Neat {
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
+        if (bestClient.score === this.#networkScoreRaw) {
+            this.#stagnationCount += 1;
+        } else {
+            this.#networkScoreRaw = bestClient.score;
+            this.#stagnationCount = 0;
+        }
         if (!this.#champion || bestClient.score > this.#champion?.score) {
             this.#champion = {
                 client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),

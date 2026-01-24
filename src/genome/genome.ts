@@ -29,6 +29,7 @@ export class Genome {
     #neat: Neat;
     #optErrThreshold: number;
     #selfOpt = false;
+    #mutationPressure = 1;
 
     constructor(neat: Neat) {
         this.#neat = neat;
@@ -408,7 +409,7 @@ export class Genome {
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH;
+            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH * this.#mutationPressure;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -426,7 +427,8 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight =
+                con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * this.#mutationPressure;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -595,7 +597,8 @@ export class Genome {
         this.#pruneDeadGraph();
     }
 
-    mutate(selfOpt = false) {
+    mutate(selfOpt = false, mutationPressure = 1) {
+        this.#mutationPressure = mutationPressure ?? 1;
         this.#selfOpt = selfOpt;
         const optimize = this.#selfOpt || this.#neat.optimization;
         if (optimize) {
@@ -604,7 +607,7 @@ export class Genome {
         let prob: number;
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE;
+            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * this.#mutationPressure;
             prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
@@ -614,7 +617,7 @@ export class Genome {
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE;
+            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * this.#mutationPressure;
             if (optimize) {
                 prob = prob > 1 ? 1 : prob;
             }
@@ -644,7 +647,7 @@ export class Genome {
             this.mutateWeightRandom();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * this.#mutationPressure;
         prob = prob > minWeight ? minWeight : prob;
         if (optimize) {
             prob = prob > 1 ? 1 : prob;

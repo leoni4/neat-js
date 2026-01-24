@@ -10,22 +10,6 @@
 
 MUTATION_RATE is a global multiplier applied to all mutation probabilities. It controls the overall intensity of evolution and has a dynamic component that increases when the population is stuck at the same error level.
 
-### How It's Used
-
-**Dynamic adjustment based on progress** (`src/neat/neat.ts:335-337`):
-
-```typescript
-get MUTATION_RATE(): number {
-    return this.#MUTATION_RATE + this.#sameErrorEpoch / 10;
-}
-```
-
-The effective mutation rate increases when stuck:
-
-- If error stays the same for 10 epochs: effective rate = base + 1.0
-- If error stays the same for 20 epochs: effective rate = base + 2.0
-- This helps escape local optima
-
 **Used in mutation probability calculations** (`src/genome/genome.ts:537-576`):
 
 ```typescript
@@ -40,20 +24,6 @@ prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
 
 // Weight shift mutations
 prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
-```
-
-**Tracking stuck populations** (`src/neat/neat.ts:621-627`):
-
-```typescript
-evolve(optimization = false, error?: number) {
-    if (this.#lastError === error) {
-        this.#sameErrorEpoch += 1;  // Increment if stuck
-    } else {
-        this.#sameErrorEpoch = 0;    // Reset if improving
-    }
-    this.#lastError = error;
-    // ... rest of evolution
-}
 ```
 
 ### Code References
@@ -143,8 +113,8 @@ kill(survivors = 0.5) {
 
 - **With 0.4 (40%):** Top 40% of each species survive, bottom 60% are replaced by offspring
 - **Example with 10 individuals:**
-  - Top 4 survive
-  - Bottom 6 are replaced by breeding the top 4
+    - Top 4 survive
+    - Bottom 6 are replaced by breeding the top 4
 - **Best genome protection:** The globally best genome is never killed regardless of SURVIVORS value
 
 ---
@@ -187,8 +157,8 @@ The formula: `newWeight = oldWeight + random(-1, 1) * WEIGHT_SHIFT_STRENGTH`
 
 - Random value in range `[-WEIGHT_SHIFT_STRENGTH, +WEIGHT_SHIFT_STRENGTH]` is added
 - Example with WEIGHT_SHIFT_STRENGTH = 0.2:
-  - If current weight = 1.5
-  - New weight could be anywhere from 1.3 to 1.7
+    - If current weight = 1.5
+    - New weight could be anywhere from 1.3 to 1.7
 
 **Applied to both connections and nodes:**
 
@@ -361,6 +331,6 @@ mutateLink(): ConnectionGene | null {
 - **Lower values (<0.5):** Narrow exploration range, conservative, good for fine-tuning
 - **Default (1):** Balanced - allows exploration while maintaining some stability
 - **Use cases:**
-  - Initial evolution: Higher values (1.5-2.0) for broad exploration
-  - Later stages: Lower values (0.5-1.0) for refinement
-  - Stuck populations: Higher values to escape local optima
+    - Initial evolution: Higher values (1.5-2.0) for broad exploration
+    - Later stages: Lower values (0.5-1.0) for refinement
+    - Stuck populations: Higher values to escape local optima
