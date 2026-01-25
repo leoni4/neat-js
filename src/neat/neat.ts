@@ -70,8 +70,8 @@ const DEFAULT_PARAMS = {
     PROBABILITY_MUTATE_TOGGLE_LINK: 0.08,
     PROBABILITY_MUTATE_NODES: 0.03,
 
-    OPT_ERR_THRESHOLD: 0.01,
-    OPTIMIZATION_PERIOD: 10,
+    OPT_ERR_THRESHOLD: 0.005,
+    OPTIMIZATION_PERIOD: 100,
 
     LAMBDA_HIGH: 0.3,
     LAMBDA_LOW: 0.1,
@@ -646,7 +646,6 @@ export class Neat {
                             : emptyGenome;
                     c.genome.mutate();
                     c.genome.mutate();
-                    console.log('PANIC MUTATIONS');
                 } else {
                     c.genome = s.breed();
                 }
@@ -772,7 +771,6 @@ export class Neat {
             } else {
                 this.#PRESSURE = EMutationPressure.NORMAL;
             }
-            console.log(this.#PRESSURE);
 
             this.#champion.epoch += 1;
             if (this.#champion.epoch < this.#OPTIMIZATION_PERIOD) return;

@@ -126,14 +126,14 @@ export function main() {
             console.log('###################');
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
-
+            neat.evolve(true);
             if (test.save) {
                 localStorage.setItem('network', JSON.stringify(neat.save()));
             }
             return;
         }
         k++;
-        neat.evolve(error === 0);
+        neat.evolve(error <= neat.OPT_ERR_THRESHOLD);
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);
