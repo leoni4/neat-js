@@ -8,6 +8,8 @@ const params = {
     // PROBABILITY_MUTATE_WEIGHT_SHIFT: 6 * 2,
     // WEIGHT_SHIFT_STRENGTH: 5,
     // BIAS_SHIFT_STRENGTH: 1,
+    OPT_ERR_THRESHOLD: 0.01,
+    OPTIMIZATION_PERIOD: 10,
 } as INeatParams;
 
 const testXOR = {
@@ -115,22 +117,23 @@ export function main() {
             );
         }
         if (frame) {
+            const champion = neat.champion;
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
-            frame.client = topClient;
-            frame.genome = topClient.genome;
+            frame.client = champion || topClient;
+            frame.genome = champion?.genome || topClient.genome;
         }
-        // if (k > epochs || error === 0) {
-        //     console.log('###################');
-        //     console.log('Finished');
-        //     if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
+        if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
+            console.log('###################');
+            console.log('Finished');
+            if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
 
-        //     if (test.save) {
-        //         localStorage.setItem('network', JSON.stringify(neat.save()));
-        //     }
-        //     return;
-        // }
+            if (test.save) {
+                localStorage.setItem('network', JSON.stringify(neat.save()));
+            }
+            return;
+        }
         k++;
-        neat.evolve(error === 0, error);
+        neat.evolve(error === 0);
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);

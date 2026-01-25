@@ -39,6 +39,7 @@ export interface INeatParams {
     PROBABILITY_MUTATE_LINK?: number;
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_THRESHOLD?: number;
+    OPTIMIZATION_PERIOD?: number;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
     LAMBDA_HIGH?: number;
     LAMBDA_LOW?: number;
@@ -70,17 +71,39 @@ const DEFAULT_PARAMS = {
     PROBABILITY_MUTATE_NODES: 0.03,
 
     OPT_ERR_THRESHOLD: 0.01,
+    OPTIMIZATION_PERIOD: 10,
 
     LAMBDA_HIGH: 0.3,
     LAMBDA_LOW: 0.1,
     EPS: 1e-4,
 };
+type MutationPressureType = 'topology' | 'weights';
 
-const MUTATION_PRESSURE = {
-    NORMAL: 1,
-    ESCAPE: 2,
-    PANIC: 5,
+export const MUTATION_PRESSURE_CONST: Record<EMutationPressure, Record<MutationPressureType, number>> = {
+    NORMAL: {
+        topology: 1,
+        weights: 1,
+    },
+    BOOST: {
+        topology: 1,
+        weights: 2,
+    },
+    ESCAPE: {
+        topology: 2,
+        weights: 2,
+    },
+    PANIC: {
+        topology: 5,
+        weights: 2,
+    },
 };
+
+export enum EMutationPressure {
+    NORMAL = 'NORMAL',
+    BOOST = 'BOOST',
+    ESCAPE = 'ESCAPE',
+    PANIC = 'PANIC',
+}
 
 interface LoadData {
     genome: GenomeSaveData;
@@ -121,7 +144,7 @@ export class Neat {
     #LAMBDA_HIGH: number;
     #LAMBDA_LOW: number;
 
-    #OPTIMIZATION_PERIOD = 10;
+    #OPTIMIZATION_PERIOD: number;
 
     #inputNodes = 0;
     #outputNodes = 0;
@@ -146,6 +169,8 @@ export class Neat {
     #optimization = false;
 
     #outputActivation: OutputActivation;
+
+    #PRESSURE = EMutationPressure.NORMAL;
 
     constructor(
         inputNodes: number,
@@ -181,6 +206,7 @@ export class Neat {
         this.#PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_LINK;
         this.#PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_NODES;
         this.#OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? DEFAULT_PARAMS.OPT_ERR_THRESHOLD;
+        this.#OPTIMIZATION_PERIOD = params?.OPTIMIZATION_PERIOD ?? DEFAULT_PARAMS.OPTIMIZATION_PERIOD;
 
         this.#LAMBDA_HIGH = params?.LAMBDA_HIGH ?? DEFAULT_PARAMS.LAMBDA_HIGH;
         this.#LAMBDA_LOW = params?.LAMBDA_LOW ?? DEFAULT_PARAMS.LAMBDA_LOW;
@@ -313,6 +339,9 @@ export class Neat {
     get OPT_ERR_THRESHOLD(): number {
         return this.#OPT_ERR_THRESHOLD;
     }
+    get PRESSURE(): EMutationPressure {
+        return this.#PRESSURE;
+    }
 
     get optimization(): boolean {
         return this.#optimization;
@@ -391,6 +420,10 @@ export class Neat {
 
     get C3(): number {
         return this.#C3;
+    }
+
+    get champion(): Client | undefined {
+        return this.#champion?.client;
     }
 
     reset(inputNodes: number, outputNodes: number) {
@@ -590,19 +623,8 @@ export class Neat {
     }
 
     #mutate() {
-        let pressure = MUTATION_PRESSURE.NORMAL;
-        if (this.#stagnationCount > 200) {
-            pressure = MUTATION_PRESSURE.PANIC;
-        } else if (this.#stagnationCount > 80) {
-            pressure = MUTATION_PRESSURE.ESCAPE;
-        }
-
-        if (pressure !== MUTATION_PRESSURE.NORMAL) {
-            console.log('MUTATION_PRESSURE', pressure);
-        }
-
         for (let i = 0; i < this.#clients.length; i += 1) {
-            this.#clients[i].mutate(this.#evolveCounts === 1, pressure);
+            this.#clients[i].mutate(this.#evolveCounts === 1);
         }
     }
 
@@ -615,7 +637,19 @@ export class Neat {
             const c = this.#clients[i];
             if (c.species === null) {
                 const s = selector.random();
-                c.genome = s.breed();
+                if (this.#PRESSURE === EMutationPressure.PANIC && this.#champion) {
+                    const emptyGenome = this.emptyGenome();
+                    emptyGenome.mutate();
+                    c.genome =
+                        Math.random() > 0.5
+                            ? Genome.crossOver(this.#champion?.client.genome, emptyGenome)
+                            : emptyGenome;
+                    c.genome.mutate();
+                    c.genome.mutate();
+                    console.log('PANIC MUTATIONS');
+                } else {
+                    c.genome = s.breed();
+                }
                 s.put(c, true);
             }
         }
@@ -719,18 +753,33 @@ export class Neat {
 
     #updateChampion() {
         if (this.#champion) {
+            if (Math.abs(this.#champion.score - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
+                this.#stagnationCount += 1;
+            } else {
+                this.#networkScoreRaw = this.#champion.score;
+                this.#stagnationCount = 0;
+            }
+
+            if (this.#stagnationCount > 430) {
+                this.#PRESSURE = EMutationPressure.NORMAL;
+                this.#stagnationCount = 0;
+            } else if (this.#stagnationCount > 400) {
+                this.#PRESSURE = EMutationPressure.PANIC;
+            } else if (this.#stagnationCount > 200) {
+                this.#PRESSURE = EMutationPressure.ESCAPE;
+            } else if (this.#stagnationCount > 80) {
+                this.#PRESSURE = EMutationPressure.BOOST;
+            } else {
+                this.#PRESSURE = EMutationPressure.NORMAL;
+            }
+            console.log(this.#PRESSURE);
+
             this.#champion.epoch += 1;
             if (this.#champion.epoch < this.#OPTIMIZATION_PERIOD) return;
         }
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        if (Math.abs(bestClient.score - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
-            this.#stagnationCount += 1;
-        } else {
-            this.#networkScoreRaw = bestClient.score;
-            this.#stagnationCount = 0;
-        }
         if (!this.#champion || bestClient.score > this.#champion?.score) {
             this.#champion = {
                 client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),

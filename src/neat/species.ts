@@ -60,7 +60,7 @@ export class Species {
 
     kill(survivors = 0.5) {
         this.#clients.sort((a, b) => {
-            return a.score > b.score ? -1 : 1;
+            return a.scoreRaw > b.scoreRaw ? -1 : 1;
         });
 
         const elems = survivors * this.#clients.length;

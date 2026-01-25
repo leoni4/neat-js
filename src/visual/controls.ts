@@ -82,6 +82,8 @@ export class Controls {
         });
         document.getElementById('toggle')?.addEventListener('click', () => {
             this.#frame.toggle = !this.#frame.toggle;
+            console.log(this.#genome);
+            this.#frame.genome = this.#genome;
         });
         document.getElementById('optimization')?.addEventListener('click', () => {
             this.#genome.optimization();

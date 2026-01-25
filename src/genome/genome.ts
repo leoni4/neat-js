@@ -1,5 +1,5 @@
 import { RandomHashSet } from '../dataStructures/index.js';
-import { Neat } from '../neat/index.js';
+import { Neat, MUTATION_PRESSURE_CONST } from '../neat/index.js';
 import { ConnectionGene } from './connectionGene.js';
 import { NodeGene } from './nodeGene.js';
 import { MUTATION_CONSTANTS, NETWORK_CONSTANTS } from '../neat/constants.js';
@@ -29,7 +29,8 @@ export class Genome {
     #neat: Neat;
     #optErrThreshold: number;
     #selfOpt = false;
-    #mutationPressure = 1;
+    #weightsPressure = 1;
+    #topologyPressure = 1;
 
     constructor(neat: Neat) {
         this.#neat = neat;
@@ -184,13 +185,16 @@ export class Genome {
                 }
                 indexG1++;
             } else {
-                if ((!g1.selfOpt && !g2.selfOpt) || !genome.neat.optimization || (gene1.enabled && gene2.enabled)) {
-                    if (Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD) {
-                        addedCon = Neat.getConnection(gene1);
-                    } else {
-                        addedCon = Neat.getConnection(gene2);
-                    }
+                const pick = Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD ? gene1 : gene2;
+
+                addedCon = Neat.getConnection(pick);
+
+                if (gene1.enabled !== gene2.enabled) {
+                    addedCon.enabled = Math.random() < 0.75 ? false : true;
+                } else {
+                    addedCon.enabled = gene1.enabled;
                 }
+
                 indexG1++;
                 indexG2++;
             }
@@ -324,10 +328,16 @@ export class Genome {
     }
 
     mutateNode(): NodeGene | null {
-        const con = this.#connections.randomElement();
-        if (!(con instanceof ConnectionGene)) {
-            return null;
+        let con: ConnectionGene | null = null;
+
+        for (let tries = 0; tries < 20; tries++) {
+            const c = this.#connections.randomElement();
+            if (c instanceof ConnectionGene && c.enabled) {
+                con = c;
+                break;
+            }
         }
+        if (!con) return null;
 
         const from: NodeGene = con.from;
         const to: NodeGene = con.to;
@@ -371,13 +381,12 @@ export class Genome {
                 exists2 = true;
             }
         });
+        con1.weight = 1;
+        con2.weight = con.weight;
         if (!exists1) {
-            con1.weight = 1;
-            con2.weight = con.weight;
             this.#connections.addSorted(con1);
         }
         if (!exists2) {
-            con2.enabled = con.enabled;
             this.#connections.addSorted(con2);
         }
         this.#nodes.add(middle);
@@ -409,7 +418,7 @@ export class Genome {
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH * this.#mutationPressure;
+            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -427,8 +436,7 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight =
-                con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH * this.#mutationPressure;
+            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -491,9 +499,7 @@ export class Genome {
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
-        if (!this.#selfOpt || con.enabled) {
-            con.enabled = !con.enabled;
-        }
+        con.enabled = !con.enabled;
         return con;
     }
 
@@ -592,13 +598,24 @@ export class Genome {
             }
         }
     }
+    #removeDead(start = 0) {
+        for (let i = start; i < this.#connections.size(); i += 1) {
+            const c = this.#connections.get(i);
+            if (!(c instanceof ConnectionGene)) continue;
+            if (!c.enabled) {
+                this.removeConnection(c);
+            }
+        }
+    }
 
     optimization() {
+        this.#removeDead();
         this.#pruneDeadGraph();
     }
 
-    mutate(selfOpt = false, mutationPressure = 1) {
-        this.#mutationPressure = mutationPressure ?? 1;
+    mutate(selfOpt = false) {
+        this.#weightsPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].weights ?? 1;
+        this.#topologyPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].topology ?? 1;
         this.#selfOpt = selfOpt;
         const optimize = this.#selfOpt || this.#neat.optimization;
         if (optimize) {
@@ -607,20 +624,15 @@ export class Genome {
         let prob: number;
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * this.#mutationPressure;
-            prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
-            if (optimize) {
-                prob = prob > 1 ? 1 : prob;
-            }
+            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * this.#topologyPressure;
+            prob = Math.max(prob, this.#neat.CT - this.#connections.size());
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * this.#mutationPressure;
-            if (optimize) {
-                prob = prob > 1 ? 1 : prob;
-            }
+            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * this.#topologyPressure;
+
             while (prob > Math.random()) {
                 prob--;
                 this.mutateNode();
@@ -628,30 +640,24 @@ export class Genome {
         }
 
         prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateLinkToggle();
         }
 
         const minWeight = Math.min(this.#connections.size(), this.#nodes.size() - this.#neat.CT);
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE * this.#weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightRandom();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * this.#mutationPressure;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * this.#weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightShift();
