@@ -63,8 +63,8 @@ export class Species {
             return a.scoreRaw > b.scoreRaw ? -1 : 1;
         });
 
-        const elems = survivors * this.#clients.length;
-        for (let i = this.#clients.length - 1; i > elems; i -= 1) {
+        const keep = Math.ceil(survivors * this.#clients.length);
+        for (let i = this.#clients.length - 1; i >= keep; i--) {
             if (this.#clients[i].bestScore) {
                 continue;
             }

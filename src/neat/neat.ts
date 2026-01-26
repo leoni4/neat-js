@@ -158,7 +158,7 @@ export class Neat {
     #clients: Array<Client> = [];
     #champion: {
         client: Client;
-        score: number;
+        rawScore: number;
         epoch: number;
     } | null = null;
     #species: Array<Species> = [];
@@ -752,16 +752,16 @@ export class Neat {
 
     #updateChampion() {
         if (this.#champion) {
-            if (Math.abs(this.#champion.score - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
+            if (Math.abs(this.#champion.rawScore - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
                 this.#stagnationCount += 1;
             } else {
-                this.#networkScoreRaw = this.#champion.score;
+                this.#networkScoreRaw = this.#champion.rawScore;
                 this.#stagnationCount = 0;
             }
 
             if (this.#stagnationCount > 430) {
-                this.#PRESSURE = EMutationPressure.NORMAL;
-                this.#stagnationCount = 0;
+                this.#PRESSURE = EMutationPressure.PANIC;
+                this.#stagnationCount = 400;
             } else if (this.#stagnationCount > 400) {
                 this.#PRESSURE = EMutationPressure.PANIC;
             } else if (this.#stagnationCount > 200) {
@@ -778,10 +778,10 @@ export class Neat {
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        if (!this.#champion || bestClient.score > this.#champion?.score) {
+        if (!this.#champion || bestClient.score > this.#champion?.rawScore) {
             this.#champion = {
                 client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),
-                score: bestClient.score,
+                rawScore: bestClient.score,
                 epoch: 0,
             };
         } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
@@ -790,7 +790,7 @@ export class Neat {
                 this.loadGenome(this.#champion.client.genome.save()),
                 this.#outputActivation,
             );
-            incertedChampion.score = this.#champion.score;
+            incertedChampion.score = this.#champion.rawScore;
             this.#clients[this.#clients.length - 1] = incertedChampion;
         }
     }
