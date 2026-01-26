@@ -1,5 +1,5 @@
 import { Genome } from '../genome/index.js';
-import { Client } from '../neat/index.js';
+import { Client, EActivation } from '../neat/index.js';
 import { Frame } from './frame.js';
 
 export class Controls {
@@ -10,7 +10,7 @@ export class Controls {
     constructor(genome: Genome, frame: Frame) {
         this.#frame = frame;
         this.#genome = genome;
-        this.#client = new Client(genome, 'none');
+        this.#client = new Client(genome, EActivation.none, EActivation.none);
 
         this.#initControls();
     }
@@ -33,6 +33,20 @@ export class Controls {
 
     set genome(value: Genome) {
         this.#genome = value;
+    }
+    #submit() {
+        const rawInput = (<HTMLInputElement>document.getElementById('inp')).value.split(',');
+        console.log('- predicting -');
+        const input = rawInput.map(a => {
+            return parseInt(a);
+        });
+        console.log('input:', input);
+        const output = this.#client.calculate(input);
+        console.log(
+            'output:',
+            output.map(a => Math.round(a)),
+        );
+        // console.log('outputRaw:', output);
     }
 
     #initControls() {
@@ -71,17 +85,22 @@ export class Controls {
         });
         document.getElementById('toggle')?.addEventListener('click', () => {
             this.#frame.toggle = !this.#frame.toggle;
+            console.log(this.#genome);
+            this.#frame.genome = this.#genome;
+        });
+        document.getElementById('optimization')?.addEventListener('click', () => {
+            this.#genome.optimization();
+            console.log(this.#genome);
+            this.#frame.genome = this.#genome;
+        });
+        document.getElementById('inp')?.addEventListener('keyup', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.#submit();
+            }
         });
         document.getElementById('c')?.addEventListener('click', () => {
-            const rawInput = (<HTMLInputElement>document.getElementById('inp')).value.split(',');
-            console.log('- predicting -');
-            const input = rawInput.map(a => {
-                return parseInt(a);
-            });
-            console.log('input:', input);
-            const output = this.#client.calculate(input)[0];
-            console.log('output:', Math.round(output));
-            console.log('outputRaw:', output);
+            this.#submit();
         });
     }
 }

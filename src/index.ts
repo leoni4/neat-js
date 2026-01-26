@@ -19,4 +19,4 @@ export { RandomHashSet } from './dataStructures/randomHashSet.js';
 export { RandomSelector } from './dataStructures/randomSelector.js';
 
 // Enums and types
-export { OutputActivation } from './neat/neat.js';
+export { EActivation } from './neat/neat.js';

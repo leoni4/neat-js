@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
 
@@ -8,7 +8,7 @@ describe('Genome - mutateLink', () => {
     let genome: Genome;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome = neat.emptyGenome();
     });
 
@@ -49,7 +49,7 @@ describe('Genome - mutateLink', () => {
     describe('same x-coordinate handling', () => {
         it('should return null after multiple retries with same x-coordinates', () => {
             // Create a genome with only input and output nodes (different x but limited options)
-            const singleLayerNeat = new Neat(5, 1, 1, OutputActivation.sigmoid);
+            const singleLayerNeat = new Neat(5, 1, 1, EActivation.sigmoid);
             const singleLayerGenome = singleLayerNeat.emptyGenome();
 
             // After creating all possible connections, mutateLink should return null

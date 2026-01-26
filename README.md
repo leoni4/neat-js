@@ -13,14 +13,14 @@ npm install @leoni4/neat-js
 ### Basic Library Usage
 
 ```typescript
-import { Neat, OutputActivation } from '@leoni4/neat-js';
+import { Neat, EActivation } from '@leoni4/neat-js';
 
 // Create a NEAT instance
 const neat = new Neat(
     2, // input nodes
     1, // output nodes
     100, // population size
-    OutputActivation.sigmoid, // output activation function
+    EActivation.sigmoid, // output activation function
 );
 
 // Training data (XOR example)

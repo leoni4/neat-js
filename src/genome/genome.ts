@@ -1,11 +1,12 @@
 import { RandomHashSet } from '../dataStructures/index.js';
-import { Neat } from '../neat/index.js';
+import { Neat, MUTATION_PRESSURE_CONST } from '../neat/index.js';
 import { ConnectionGene } from './connectionGene.js';
 import { NodeGene } from './nodeGene.js';
 import { MUTATION_CONSTANTS, NETWORK_CONSTANTS } from '../neat/constants.js';
 
 export type NodeSaveData = {
     innovationNumber: number;
+    bias: number;
     x: number;
     y: number;
 };
@@ -29,6 +30,8 @@ export class Genome {
     #neat: Neat;
     #optErrThreshold: number;
     #selfOpt = false;
+    #weightsPressure = 1;
+    #topologyPressure = 1;
 
     constructor(neat: Neat) {
         this.#neat = neat;
@@ -61,6 +64,7 @@ export class Genome {
             if (!(item instanceof NodeGene)) return;
             nodes.push({
                 innovationNumber: item.innovationNumber,
+                bias: item.bias,
                 x: item.x,
                 y: item.y,
             });
@@ -163,6 +167,36 @@ export class Genome {
     static crossOver(g1: Genome, g2: Genome): Genome {
         const genome: Genome = g1.neat.emptyGenome();
 
+        const cloneConnectionIntoChild = (src: ConnectionGene): ConnectionGene => {
+            const fromId = src.from.innovationNumber;
+            const toId = src.to.innovationNumber;
+
+            let from = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === fromId) as NodeGene;
+            let to = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === toId) as NodeGene;
+
+            if (!from) {
+                from = new NodeGene(fromId);
+                from.x = src.from.x;
+                from.y = src.from.y;
+                from.bias = src.from.bias;
+                genome.nodes.add(from);
+            }
+
+            if (!to) {
+                to = new NodeGene(toId);
+                to.x = src.to.x;
+                to.y = src.to.y;
+                to.bias = src.to.bias;
+                genome.nodes.add(to);
+            }
+
+            const con = genome.neat.getConnection(from, to);
+            con.weight = src.weight;
+            con.enabled = src.enabled;
+            con.replaceIndex = src.replaceIndex;
+            return con;
+        };
+
         let indexG1 = 0;
         let indexG2 = 0;
 
@@ -179,17 +213,20 @@ export class Genome {
                 indexG2++;
             } else if (inn1 < inn2) {
                 if (!g1.selfOpt || !genome.neat.optimization || gene1.enabled) {
-                    addedCon = Neat.getConnection(gene1);
+                    addedCon = cloneConnectionIntoChild(gene1);
                 }
                 indexG1++;
             } else {
-                if ((!g1.selfOpt && !g2.selfOpt) || !genome.neat.optimization || (gene1.enabled && gene2.enabled)) {
-                    if (Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD) {
-                        addedCon = Neat.getConnection(gene1);
-                    } else {
-                        addedCon = Neat.getConnection(gene2);
-                    }
+                const pick = Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD ? gene1 : gene2;
+
+                addedCon = cloneConnectionIntoChild(pick);
+
+                if (gene1.enabled !== gene2.enabled) {
+                    addedCon.enabled = Math.random() < 0.75 ? false : true;
+                } else {
+                    addedCon.enabled = gene1.enabled;
                 }
+
                 indexG1++;
                 indexG2++;
             }
@@ -205,17 +242,9 @@ export class Genome {
             }
 
             if (!g1.neat.optimization || gene1.enabled) {
-                genome.connections.addSorted(Neat.getConnection(gene1));
+                genome.connections.addSorted(cloneConnectionIntoChild(gene1));
             }
             indexG1++;
-        }
-        for (let i = 0; i < genome.connections.data.length; i++) {
-            const conn = genome.connections.get(i);
-            if (!(conn instanceof ConnectionGene)) {
-                throw new Error('gene is not a ConnectionGene');
-            }
-            genome.nodes.add(conn.from);
-            genome.nodes.add(conn.to);
         }
 
         return genome;
@@ -270,7 +299,6 @@ export class Genome {
                 if (!(c instanceof ConnectionGene)) continue;
                 if (c.from.innovationNumber === con.to.innovationNumber) {
                     removingTo.push(c);
-                    break;
                 }
             }
             this.#nodes.remove(con.to);
@@ -280,7 +308,7 @@ export class Genome {
         }
     }
 
-    mutateLink(): ConnectionGene | null {
+    mutateLink(triesTotal = 0): ConnectionGene | null {
         let geneA = this.#nodes.randomElement();
         let geneB = this.#nodes.randomElement();
 
@@ -312,8 +340,12 @@ export class Genome {
                 exists = true;
             }
         });
+
         if (exists) {
-            return null;
+            if (triesTotal > 10) {
+                return null;
+            }
+            return this.mutateLink(triesTotal + 1);
         }
 
         const con: ConnectionGene = this.#neat.getConnection(geneA, geneB);
@@ -324,13 +356,36 @@ export class Genome {
     }
 
     mutateNode(): NodeGene | null {
-        const con = this.#connections.randomElement();
-        if (!(con instanceof ConnectionGene)) {
-            return null;
-        }
+        let con: ConnectionGene | null = null;
 
-        const from: NodeGene = con.from;
-        const to: NodeGene = con.to;
+        const getLocalNodeById = (id: number): NodeGene => {
+            // 1) если уже есть в этом геноме — вернуть
+            const existing = this.#nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === id);
+            if (existing && existing instanceof NodeGene) return existing;
+
+            // 2) иначе создать локальную копию (шаблон берём из neat registry)
+            const global = this.#neat.getNode(id); // только как reference для x/y (и чтобы id существовал)
+            const node = new NodeGene(id);
+            node.x = global.x;
+            node.y = global.y;
+            node.bias = 0; // важно: локальный bias, не общий
+
+            this.#nodes.add(node);
+            return node;
+        };
+
+        for (let tries = 0; tries < 20; tries++) {
+            const c = this.#connections.randomElement();
+            if (c instanceof ConnectionGene && c.enabled) {
+                con = c;
+                break;
+            }
+        }
+        if (!con) return null;
+
+        const from: NodeGene = getLocalNodeById(con.from.innovationNumber);
+        const to: NodeGene = getLocalNodeById(con.to.innovationNumber);
+
         const replaceIndex = this.#neat.getReplaceIndex(from, to);
         let middle: NodeGene;
         const middleX = (from.x + to.x) / 2;
@@ -342,8 +397,8 @@ export class Genome {
             middleY < NETWORK_CONSTANTS.NODE_Y_MIN
                 ? NETWORK_CONSTANTS.NODE_Y_MIN
                 : middleY > NETWORK_CONSTANTS.NODE_Y_MAX
-                    ? NETWORK_CONSTANTS.NODE_Y_MAX
-                    : middleY;
+                  ? NETWORK_CONSTANTS.NODE_Y_MAX
+                  : middleY;
         if (middleX <= NETWORK_CONSTANTS.MIN_MIDDLE_X) {
             return null;
         }
@@ -353,7 +408,7 @@ export class Genome {
             middle.y = middleY;
             this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
         } else {
-            middle = this.#neat.getNode(replaceIndex);
+            middle = getLocalNodeById(replaceIndex);
             middle.x = middle.x || middleX;
             middle.y = middle.y || middleY;
         }
@@ -364,20 +419,25 @@ export class Genome {
         let exists2 = false;
         this.#connections.data.forEach(item => {
             if (item instanceof NodeGene) return;
-            if (item.from === from && item.to === middle) {
+            if (
+                item.from.innovationNumber === from.innovationNumber &&
+                item.to.innovationNumber === middle.innovationNumber
+            ) {
                 exists1 = true;
             }
-            if (item.from === middle && item.to === to) {
+            if (
+                item.from.innovationNumber === middle.innovationNumber &&
+                item.to.innovationNumber === to.innovationNumber
+            ) {
                 exists2 = true;
             }
         });
+        con1.weight = 1;
+        con2.weight = con.weight;
         if (!exists1) {
-            con1.weight = 1;
-            con2.weight = con.weight;
             this.#connections.addSorted(con1);
         }
         if (!exists2) {
-            con2.enabled = con.enabled;
             this.#connections.addSorted(con2);
         }
         this.#nodes.add(middle);
@@ -458,9 +518,9 @@ export class Genome {
             return null;
         }
 
-        let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
+        let newWeight = node.bias || this.#neat.BIAS_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.BIAS_RANDOM_STRENGTH;
         }
         node.bias = newWeight;
         return node;
@@ -490,46 +550,140 @@ export class Genome {
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
-        if (!this.#selfOpt || con.enabled) {
-            con.enabled = !con.enabled;
-        }
+        con.enabled = !con.enabled;
         return con;
     }
 
-    #optimization(start = 0) {
+    #pruneDeadGraph() {
+        const nodes = this.nodes.data.filter(n => n instanceof NodeGene) as NodeGene[];
+        const cons = this.connections.data.filter(c => c instanceof ConnectionGene) as ConnectionGene[];
+
+        const nodeById = new Map<number, NodeGene>();
+        for (const n of nodes) nodeById.set(n.innovationNumber, n);
+
+        const out = new Map<number, number[]>();
+        const inc = new Map<number, number[]>();
+
+        const enabledCons: ConnectionGene[] = [];
+        for (const c of cons) {
+            if (!c.enabled) continue;
+            const fromId = c.from.innovationNumber;
+            const toId = c.to.innovationNumber;
+
+            if (!nodeById.has(fromId) || !nodeById.has(toId)) continue;
+
+            enabledCons.push(c);
+
+            if (!out.has(fromId)) out.set(fromId, []);
+            out.get(fromId)!.push(toId);
+
+            if (!inc.has(toId)) inc.set(toId, []);
+            inc.get(toId)!.push(fromId);
+        }
+
+        const inputIds = nodes.filter(n => n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X).map(n => n.innovationNumber);
+
+        const outputIds = nodes.filter(n => n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X).map(n => n.innovationNumber);
+
+        const forward = new Set<number>();
+        const q1 = [...inputIds];
+        for (const id of q1) forward.add(id);
+
+        while (q1.length) {
+            const cur = q1.pop()!;
+            const next = out.get(cur);
+            if (!next) continue;
+            for (const to of next) {
+                if (!forward.has(to)) {
+                    forward.add(to);
+                    q1.push(to);
+                }
+            }
+        }
+
+        const backward = new Set<number>();
+        const q2 = [...outputIds];
+        for (const id of q2) backward.add(id);
+
+        while (q2.length) {
+            const cur = q2.pop()!;
+            const prev = inc.get(cur);
+            if (!prev) continue;
+            for (const from of prev) {
+                if (!backward.has(from)) {
+                    backward.add(from);
+                    q2.push(from);
+                }
+            }
+        }
+
+        const aliveNodes = new Set<number>();
+        for (const id of forward) {
+            if (backward.has(id)) aliveNodes.add(id);
+        }
+        for (const id of inputIds) aliveNodes.add(id);
+        for (const id of outputIds) aliveNodes.add(id);
+
+        for (let i = this.connections.size() - 1; i >= 0; i--) {
+            const c = this.connections.get(i);
+            if (!(c instanceof ConnectionGene)) continue;
+
+            const fromId = c.from.innovationNumber;
+            const toId = c.to.innovationNumber;
+
+            if (!aliveNodes.has(fromId) || !aliveNodes.has(toId)) {
+                this.removeConnection(c);
+            }
+        }
+
+        for (let i = this.nodes.size() - 1; i >= 0; i--) {
+            const n = this.nodes.get(i);
+            if (!(n instanceof NodeGene)) continue;
+
+            const id = n.innovationNumber;
+            const isInput = n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X;
+            const isOutput = n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X;
+
+            if (!isInput && !isOutput && !aliveNodes.has(id)) {
+                this.nodes.remove(n);
+            }
+        }
+    }
+    #removeDead(start = 0) {
         for (let i = start; i < this.#connections.size(); i += 1) {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
                 this.removeConnection(c);
-                return;
             }
         }
     }
 
+    optimization() {
+        this.#removeDead();
+        this.#pruneDeadGraph();
+    }
+
     mutate(selfOpt = false) {
+        this.#weightsPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].weights ?? 1;
+        this.#topologyPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].topology ?? 1;
         this.#selfOpt = selfOpt;
         const optimize = this.#selfOpt || this.#neat.optimization;
         if (optimize) {
-            this.#optimization();
+            this.optimization();
         }
         let prob: number;
 
         if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE;
-            prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
-            if (optimize) {
-                prob = prob > 1 ? 1 : prob;
-            }
+            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * this.#topologyPressure;
+            prob = Math.max(prob, this.#neat.CT - this.#connections.size());
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE;
-            if (optimize) {
-                prob = prob > 1 ? 1 : prob;
-            }
+            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * this.#topologyPressure;
+
             while (prob > Math.random()) {
                 prob--;
                 this.mutateNode();
@@ -537,30 +691,24 @@ export class Genome {
         }
 
         prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateLinkToggle();
         }
 
         const minWeight = Math.min(this.#connections.size(), this.#nodes.size() - this.#neat.CT);
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE * this.#weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightRandom();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
+        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * this.#weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
-        if (optimize) {
-            prob = prob > 1 ? 1 : prob;
-        }
+
         while (prob > Math.random()) {
             prob--;
             this.mutateWeightShift();

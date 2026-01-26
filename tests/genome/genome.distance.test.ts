@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 
 describe('Genome - distance', () => {
@@ -8,7 +8,7 @@ describe('Genome - distance', () => {
     let genome2: Genome;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome1 = neat.clients[0].genome;
         genome2 = neat.clients[0].genome;
     });
@@ -83,7 +83,7 @@ describe('Genome - distance', () => {
             const baseDistance = genome1.distance(genome2);
 
             // Add mutations to create disjoint genes
-            const testNeat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid);
             const testGenome1 = testNeat.clients[0].genome;
             const testGenome2 = testNeat.clients[0].genome;
 
@@ -149,7 +149,7 @@ describe('Genome - distance', () => {
         });
 
         it('should handle CT threshold correctly', () => {
-            const testNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
                 CT: 10,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -167,7 +167,7 @@ describe('Genome - distance', () => {
 
     describe('distance coefficients', () => {
         it('should use C1 coefficient for excess genes', () => {
-            const testNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
                 C1: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -186,7 +186,7 @@ describe('Genome - distance', () => {
         });
 
         it('should use C2 coefficient for disjoint genes', () => {
-            const testNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
                 C2: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -200,7 +200,7 @@ describe('Genome - distance', () => {
         });
 
         it('should use C3 coefficient for weight differences', () => {
-            const testNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
                 C3: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;

@@ -8,10 +8,12 @@ export class Calculator {
     #hiddenNodes: Array<Node> = [];
     #outputNodes: Array<Node> = [];
 
-    #outputActivation: string;
+    #EActivation: string;
+    #hiddenActivation: string;
 
-    constructor(genome: Genome, outputActivation: string) {
-        this.#outputActivation = outputActivation;
+    constructor(genome: Genome, EActivation: string, hiddenActivation: string) {
+        this.#EActivation = EActivation;
+        this.#hiddenActivation = hiddenActivation;
         const nodes = genome.nodes;
         const connections = genome.connections;
 
@@ -65,16 +67,16 @@ export class Calculator {
             this.#inputNodes[i].output = input[i];
         }
         for (let i = 0; i < this.#hiddenNodes.length; i++) {
-            this.#hiddenNodes[i].calculate('sigmoid');
+            this.#hiddenNodes[i].calculate(this.#hiddenActivation);
         }
         const output = new Array<number>(this.#outputNodes.length);
         for (let i = 0; i < this.#outputNodes.length; i++) {
-            this.#outputNodes[i].calculate(this.#outputActivation);
+            this.#outputNodes[i].calculate(this.#EActivation);
             output[i] = this.#outputNodes[i].output;
         }
 
         // Apply softmax if needed
-        if (this.#outputActivation === 'softmax') {
+        if (this.#EActivation === 'softmax') {
             const max = Math.max(...output);
             const exps = output.map(x => Math.exp(x - max));
             const sum = exps.reduce((a, b) => a + b, 0);

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 
 describe('Neat', () => {
     let neat: Neat;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 10, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 10, EActivation.sigmoid);
     });
 
     describe('constructor', () => {
@@ -101,7 +101,7 @@ describe('Neat', () => {
 
         it('should load genome data', () => {
             const saveData = neat.save();
-            const neat2 = new Neat(3, 2, 10, OutputActivation.sigmoid, undefined, saveData);
+            const neat2 = new Neat(3, 2, 10, EActivation.sigmoid, EActivation.sigmoid, undefined, saveData);
 
             expect(neat2.clients).toHaveLength(10);
         });
@@ -115,7 +115,7 @@ describe('Neat', () => {
 
     describe('parameters', () => {
         it('should accept custom parameters', () => {
-            const customNeat = new Neat(2, 1, 5, OutputActivation.sigmoid, {
+            const customNeat = new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, {
                 C1: 2,
                 C2: 2,
                 C3: 0.5,
@@ -133,15 +133,15 @@ describe('Neat', () => {
         });
     });
 
-    describe('OutputActivation enum', () => {
+    describe('EActivation enum', () => {
         it('should have all activation types', () => {
-            expect(OutputActivation.none).toBe('none');
-            expect(OutputActivation.sigmoid).toBe('sigmoid');
-            expect(OutputActivation.tanh).toBe('tanh');
-            expect(OutputActivation.relu).toBe('relu');
-            expect(OutputActivation.leakyRelu).toBe('leakyRelu');
-            expect(OutputActivation.linear).toBe('linear');
-            expect(OutputActivation.softmax).toBe('softmax');
+            expect(EActivation.none).toBe('none');
+            expect(EActivation.sigmoid).toBe('sigmoid');
+            expect(EActivation.tanh).toBe('tanh');
+            expect(EActivation.relu).toBe('relu');
+            expect(EActivation.leakyRelu).toBe('leakyRelu');
+            expect(EActivation.linear).toBe('linear');
+            expect(EActivation.softmax).toBe('softmax');
         });
     });
 });

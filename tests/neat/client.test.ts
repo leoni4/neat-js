@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Client } from '../../src/neat/client.js';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Species } from '../../src/neat/species.js';
 
 describe('Client', () => {
@@ -8,7 +8,7 @@ describe('Client', () => {
     let client: Client;
 
     beforeEach(() => {
-        neat = new Neat(2, 1, 10, OutputActivation.sigmoid);
+        neat = new Neat(2, 1, 10, EActivation.sigmoid);
         client = neat.clients[0];
     });
 
@@ -105,7 +105,7 @@ describe('Client', () => {
         });
 
         it('should return 0 for identical genomes', () => {
-            const client2 = new Client(client.genome, 'sigmoid');
+            const client2 = new Client(client.genome, EActivation.sigmoid, EActivation.sigmoid);
             const distance = client.distance(client2);
             expect(distance).toBe(0);
         });

@@ -1,58 +1,30 @@
-import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/index.js';
+import { Client, Neat, EActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from '../src/visual/frame.js';
+import { testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons, testSin01 } from './problems.js';
+
+(function () {
+    console.log(
+        'All tested',
+        !!(testXOR || testXNOR || testAND_OR || testParity3 || testCircle || testTwoMoons || testSin01),
+    );
+})();
 
 const params = {
-    // BIAS_SHIFT_STRENGTH: 0,
-    // C1: 0,
-    // C2: 0,
-    // C3: 0,
-    // CP: 0,
-    // CT: 0,
-    // MUTATION_RATE: 0,
-    // OPT_ERR_THRESHOLD: 0,
-    // PERMANENT_MAIN_CONNECTIONS: false,
-    // PROBABILITY_MUTATE_LINK: 0,
-    // PROBABILITY_MUTATE_NODES: 0,
-    // PROBABILITY_MUTATE_TOGGLE_LINK: 0,
-    // PROBABILITY_MUTATE_WEIGHT_RANDOM: 0,
-    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 0,
-    // SURVIVORS: 0,
-    // WEIGHT_RANDOM_STRENGTH: 0,
-    // WEIGHT_SHIFT_STRENGTH: 0,
+    // CP: 0.5,
+    // MUTATION_RATE: 2,
+    // PROBABILITY_MUTATE_WEIGHT_SHIFT: 6 * 2,
+    // WEIGHT_SHIFT_STRENGTH: 5,
+    // BIAS_SHIFT_STRENGTH: 1,
+    // etc
 } as INeatParams;
 
-const testXOR = {
-    input: [
-        [0, 0],
-        [1, 1],
-        [1, 0],
-        [0, 1],
-    ],
+const test = {
+    ...testTwoMoons,
     save: false,
     load: false,
-    clients: 100,
-    output: [[0], [0], [1], [1]],
-    params: params,
+    clients: 1000,
+    params,
 };
-
-const test20 = {
-    input: [] as number[][],
-    output: [] as number[][],
-    save: false,
-    load: false,
-    clients: 100,
-    params: params,
-};
-for (let i = 0; i < 100; i += 1) {
-    const arr: number[] = [];
-    for (let k = 0; k < 20; k += 1) {
-        arr.push(Math.random());
-    }
-    test20.input.push(arr);
-    test20.output.push([Math.random()]);
-}
-
-const test = testXOR;
 
 export function main() {
     let network;
@@ -67,7 +39,8 @@ export function main() {
         test.input[0].length,
         test.output[0].length,
         test.clients || 100,
-        OutputActivation.sigmoid,
+        EActivation.sigmoid,
+        EActivation.tanh,
         test.params,
         network,
     );
@@ -99,8 +72,11 @@ export function main() {
             complexity += c.genome.connections.size() + c.genome.nodes.size();
             localError = 0;
             test.input.forEach((inp: Array<number>, i: number) => {
-                const out = c.calculate(inp)[0];
-                localError += Math.abs(out - test.output[i][0]);
+                const out = c.calculate(inp);
+                const outError = out.reduce((comp, val, k) => {
+                    return comp + Math.abs(val - test.output[i][k]);
+                }, 0);
+                localError += outError;
             });
             c.error = localError / 4;
             c.score = 1 - c.error;
@@ -126,22 +102,23 @@ export function main() {
             );
         }
         if (frame) {
+            const champion = neat.champion?.client;
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
-            frame.client = topClient;
-            frame.genome = topClient.genome;
+            frame.client = champion || topClient;
+            frame.genome = champion?.genome || topClient.genome;
         }
-        // if (k > epochs || error === 0) {
-        //     console.log('###################');
-        //     console.log('Finished');
-        //     if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
-
-        //     if (test.save) {
-        //         localStorage.setItem('network', JSON.stringify(neat.save()));
-        //     }
-        //     return;
-        // }
+        if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
+            console.log('###################');
+            console.log('Finished');
+            if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
+            neat.evolve(true);
+            if (test.save) {
+                localStorage.setItem('network', JSON.stringify(neat.save()));
+            }
+            return;
+        }
         k++;
-        neat.evolve(error === 0, error);
+        neat.evolve(error <= neat.OPT_ERR_THRESHOLD);
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);

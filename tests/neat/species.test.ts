@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Species } from '../../src/neat/species.js';
 import { Client } from '../../src/neat/client.js';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 
 describe('Species', () => {
     let neat: Neat;
@@ -11,7 +11,7 @@ describe('Species', () => {
     let species: Species;
 
     beforeEach(() => {
-        neat = new Neat(2, 1, 10, OutputActivation.sigmoid);
+        neat = new Neat(2, 1, 10, EActivation.sigmoid);
         client1 = neat.clients[0];
         client2 = neat.clients[1];
         client3 = neat.clients[2];
