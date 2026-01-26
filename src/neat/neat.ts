@@ -11,7 +11,7 @@ import { RandomHashSet, RandomSelector } from '../dataStructures/index.js';
 import { Client } from './client.js';
 import { Species } from './species.js';
 
-export enum OutputActivation {
+export enum EActivation {
     none = 'none',
     sigmoid = 'sigmoid',
     tanh = 'tanh',
@@ -168,7 +168,8 @@ export class Neat {
 
     #optimization = false;
 
-    #outputActivation: OutputActivation;
+    #outputActivation: EActivation;
+    #hiddenActivation: EActivation;
 
     #PRESSURE = EMutationPressure.NORMAL;
 
@@ -176,7 +177,8 @@ export class Neat {
         inputNodes: number,
         outputNodes: number,
         clients: number,
-        outputActivation: OutputActivation = OutputActivation.sigmoid,
+        outputActivation: EActivation = EActivation.sigmoid,
+        hiddenActivation: EActivation = EActivation.tanh,
         params?: INeatParams,
         loadData?: LoadData,
     ) {
@@ -213,6 +215,7 @@ export class Neat {
         this.#EPS = params?.EPS ?? DEFAULT_PARAMS.EPS;
 
         this.#outputActivation = outputActivation;
+        this.#hiddenActivation = hiddenActivation;
         this.#inputNodes = inputNodes;
         this.#outputNodes = outputNodes;
         this.#maxClients = clients;
@@ -445,7 +448,7 @@ export class Neat {
             nodeGene.y = (i + 1) / (this.#outputNodes + 1);
         }
         for (let i = 0; i < this.#maxClients; i += 1) {
-            const c: Client = new Client(this.emptyGenome(), this.#outputActivation);
+            const c: Client = new Client(this.emptyGenome(), this.#outputActivation, this.#hiddenActivation);
             c.generateCalculator();
             this.#clients.push(c);
         }
@@ -469,7 +472,7 @@ export class Neat {
         });
 
         for (let i = 0; i < this.#maxClients; i += 1) {
-            const c: Client = new Client(this.loadGenome(data.genome), this.#outputActivation);
+            const c: Client = new Client(this.loadGenome(data.genome), this.#outputActivation, this.#hiddenActivation);
             this.#clients.push(c);
         }
     }
@@ -794,7 +797,11 @@ export class Neat {
         const bestClient = this.#clients[0];
         if (!this.#champion || bestClient.score > this.#champion?.scoreRaw) {
             this.#champion = {
-                client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),
+                client: new Client(
+                    this.loadGenome(bestClient.genome.save()),
+                    this.#outputActivation,
+                    this.#hiddenActivation,
+                ),
                 scoreRaw: bestClient.score,
                 epoch: 0,
             };
@@ -803,6 +810,7 @@ export class Neat {
             const incertedChampion = new Client(
                 this.loadGenome(this.#champion.client.genome.save()),
                 this.#outputActivation,
+                this.#hiddenActivation,
             );
             incertedChampion.score = this.#champion.scoreRaw;
             this.#clients[this.#clients.length - 1] = incertedChampion;

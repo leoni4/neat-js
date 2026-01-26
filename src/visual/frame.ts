@@ -1,7 +1,7 @@
 import { ConnectionGene, Genome, NodeGene } from '../genome/index.js';
 import Konva from 'konva';
 import { Controls } from './controls.js';
-import { Client } from '../neat/index.js';
+import { Client, EActivation } from '../neat/index.js';
 
 interface FrameOptions {
     width?: number;
@@ -24,7 +24,7 @@ export class Frame {
         this.#width = options?.width || 800;
         this.#height = options?.height || 650;
         this.#genome = client.genome;
-        this.#client = new Client(client.genome, 'none');
+        this.#client = new Client(client.genome, EActivation.none, EActivation.none);
         this.#controls = new Controls(client.genome, this);
         this.#stage = new Konva.Stage({
             container: containerId,

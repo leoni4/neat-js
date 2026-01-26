@@ -1,12 +1,13 @@
-import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/index.js';
+import { Client, Neat, EActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from '../src/visual/frame.js';
 import { testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons, testSin01 } from './problems.js';
 
 (function () {
-    console.log(!!testXOR, !!testXNOR, !!testAND_OR, !!testParity3, !!testCircle, !!testTwoMoons, !!testSin01);
+    console.log(
+        'All tested',
+        !!(testXOR || testXNOR || testAND_OR || testParity3 || testCircle || testTwoMoons || testSin01),
+    );
 })();
-// OK: testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons
-// FAIL: testSin01
 
 const params = {
     // CP: 0.5,
@@ -38,7 +39,8 @@ export function main() {
         test.input[0].length,
         test.output[0].length,
         test.clients || 100,
-        OutputActivation.sigmoid,
+        EActivation.sigmoid,
+        EActivation.tanh,
         test.params,
         network,
     );

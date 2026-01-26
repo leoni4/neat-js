@@ -1,5 +1,5 @@
 import { Genome } from '../genome/index.js';
-import { Client } from '../neat/index.js';
+import { Client, EActivation } from '../neat/index.js';
 import { Frame } from './frame.js';
 
 export class Controls {
@@ -10,7 +10,7 @@ export class Controls {
     constructor(genome: Genome, frame: Frame) {
         this.#frame = frame;
         this.#genome = genome;
-        this.#client = new Client(genome, 'none');
+        this.#client = new Client(genome, EActivation.none, EActivation.none);
 
         this.#initControls();
     }
