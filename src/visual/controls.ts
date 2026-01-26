@@ -41,9 +41,12 @@ export class Controls {
             return parseInt(a);
         });
         console.log('input:', input);
-        const output = this.#client.calculate(input)[0];
-        console.log('output:', Math.round(output));
-        console.log('outputRaw:', output);
+        const output = this.#client.calculate(input);
+        console.log(
+            'output:',
+            output.map(a => Math.round(a)),
+        );
+        // console.log('outputRaw:', output);
     }
 
     #initControls() {

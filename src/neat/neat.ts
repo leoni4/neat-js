@@ -158,7 +158,7 @@ export class Neat {
     #clients: Array<Client> = [];
     #champion: {
         client: Client;
-        rawScore: number;
+        scoreRaw: number;
         epoch: number;
     } | null = null;
     #species: Array<Species> = [];
@@ -422,8 +422,8 @@ export class Neat {
         return this.#C3;
     }
 
-    get champion(): Client | undefined {
-        return this.#champion?.client;
+    get champion() {
+        return this.#champion;
     }
 
     reset(inputNodes: number, outputNodes: number) {
@@ -737,8 +737,7 @@ export class Neat {
 
         this.#clients.sort((a, b) => b.score - a.score);
 
-        const maxScore = Math.max(...this.#clients.map(c => c.score));
-        const ties = this.#clients.map((c, i) => ({ c, i })).filter(({ c }) => maxScore - c.score <= this.#EPS);
+        const ties = this.#clients.map((c, i) => ({ c, i })).filter(({ c }) => c.scoreRaw === rawMax);
 
         if (ties.length === 0) {
             this.#clients[0].bestScore = true;
@@ -752,16 +751,15 @@ export class Neat {
 
     #updateChampion() {
         if (this.#champion) {
-            if (Math.abs(this.#champion.rawScore - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
+            if (Math.abs(this.#champion.scoreRaw - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
                 this.#stagnationCount += 1;
             } else {
-                this.#networkScoreRaw = this.#champion.rawScore;
+                this.#networkScoreRaw = this.#champion.scoreRaw;
                 this.#stagnationCount = 0;
             }
 
             if (this.#stagnationCount > 430) {
-                this.#PRESSURE = EMutationPressure.PANIC;
-                this.#stagnationCount = 400;
+                this.#stagnationCount = 350;
             } else if (this.#stagnationCount > 400) {
                 this.#PRESSURE = EMutationPressure.PANIC;
             } else if (this.#stagnationCount > 200) {
@@ -773,15 +771,14 @@ export class Neat {
             }
 
             this.#champion.epoch += 1;
-            if (this.#champion.epoch < this.#OPTIMIZATION_PERIOD) return;
         }
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        if (!this.#champion || bestClient.score > this.#champion?.rawScore) {
+        if (!this.#champion || bestClient.score > this.#champion?.scoreRaw) {
             this.#champion = {
                 client: new Client(this.loadGenome(bestClient.genome.save()), this.#outputActivation),
-                rawScore: bestClient.score,
+                scoreRaw: bestClient.score,
                 epoch: 0,
             };
         } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
@@ -790,7 +787,7 @@ export class Neat {
                 this.loadGenome(this.#champion.client.genome.save()),
                 this.#outputActivation,
             );
-            incertedChampion.score = this.#champion.rawScore;
+            incertedChampion.score = this.#champion.scoreRaw;
             this.#clients[this.#clients.length - 1] = incertedChampion;
         }
     }
