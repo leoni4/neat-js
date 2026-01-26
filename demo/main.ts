@@ -1,12 +1,12 @@
 import { Client, Neat, OutputActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from '../src/visual/frame.js';
-import {
-    //  testXOR, testXNOR, testAND_OR, testParity3, testSin01, testCircle,
-    testTwoMoons,
-} from './problems.js';
+import { testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons, testSin01 } from './problems.js';
 
-// OK: testXOR, testXNOR, testAND_OR, testParity3, testCircle
-// FAIL: testSin01, testTwoMoons
+(function () {
+    console.log(!!testXOR, !!testXNOR, !!testAND_OR, !!testParity3, !!testCircle, !!testTwoMoons, !!testSin01);
+})();
+// OK: testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons
+// FAIL: testSin01
 
 const params = {
     // CP: 0.5,
@@ -18,7 +18,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testTwoMoons,
+    ...testSin01,
     save: false,
     load: false,
     clients: 1000,

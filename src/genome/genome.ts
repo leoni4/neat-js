@@ -6,6 +6,7 @@ import { MUTATION_CONSTANTS, NETWORK_CONSTANTS } from '../neat/constants.js';
 
 export type NodeSaveData = {
     innovationNumber: number;
+    bias: number;
     x: number;
     y: number;
 };
@@ -63,6 +64,7 @@ export class Genome {
             if (!(item instanceof NodeGene)) return;
             nodes.push({
                 innovationNumber: item.innovationNumber,
+                bias: item.bias,
                 x: item.x,
                 y: item.y,
             });
@@ -165,6 +167,36 @@ export class Genome {
     static crossOver(g1: Genome, g2: Genome): Genome {
         const genome: Genome = g1.neat.emptyGenome();
 
+        const cloneConnectionIntoChild = (src: ConnectionGene): ConnectionGene => {
+            const fromId = src.from.innovationNumber;
+            const toId = src.to.innovationNumber;
+
+            let from = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === fromId) as NodeGene;
+            let to = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === toId) as NodeGene;
+
+            if (!from) {
+                from = new NodeGene(fromId);
+                from.x = src.from.x;
+                from.y = src.from.y;
+                from.bias = src.from.bias;
+                genome.nodes.add(from);
+            }
+
+            if (!to) {
+                to = new NodeGene(toId);
+                to.x = src.to.x;
+                to.y = src.to.y;
+                to.bias = src.to.bias;
+                genome.nodes.add(to);
+            }
+
+            const con = genome.neat.getConnection(from, to);
+            con.weight = src.weight;
+            con.enabled = src.enabled;
+            con.replaceIndex = src.replaceIndex;
+            return con;
+        };
+
         let indexG1 = 0;
         let indexG2 = 0;
 
@@ -181,13 +213,13 @@ export class Genome {
                 indexG2++;
             } else if (inn1 < inn2) {
                 if (!g1.selfOpt || !genome.neat.optimization || gene1.enabled) {
-                    addedCon = Neat.getConnection(gene1);
+                    addedCon = cloneConnectionIntoChild(gene1);
                 }
                 indexG1++;
             } else {
                 const pick = Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD ? gene1 : gene2;
 
-                addedCon = Neat.getConnection(pick);
+                addedCon = cloneConnectionIntoChild(pick);
 
                 if (gene1.enabled !== gene2.enabled) {
                     addedCon.enabled = Math.random() < 0.75 ? false : true;
@@ -210,17 +242,9 @@ export class Genome {
             }
 
             if (!g1.neat.optimization || gene1.enabled) {
-                genome.connections.addSorted(Neat.getConnection(gene1));
+                genome.connections.addSorted(cloneConnectionIntoChild(gene1));
             }
             indexG1++;
-        }
-        for (let i = 0; i < genome.connections.data.length; i++) {
-            const conn = genome.connections.get(i);
-            if (!(conn instanceof ConnectionGene)) {
-                throw new Error('gene is not a ConnectionGene');
-            }
-            genome.nodes.add(conn.from);
-            genome.nodes.add(conn.to);
         }
 
         return genome;
@@ -284,7 +308,7 @@ export class Genome {
         }
     }
 
-    mutateLink(): ConnectionGene | null {
+    mutateLink(triesTotal = 0): ConnectionGene | null {
         let geneA = this.#nodes.randomElement();
         let geneB = this.#nodes.randomElement();
 
@@ -316,8 +340,12 @@ export class Genome {
                 exists = true;
             }
         });
+
         if (exists) {
-            return null;
+            if (triesTotal > 10) {
+                return null;
+            }
+            return this.mutateLink(triesTotal + 1);
         }
 
         const con: ConnectionGene = this.#neat.getConnection(geneA, geneB);
@@ -330,6 +358,22 @@ export class Genome {
     mutateNode(): NodeGene | null {
         let con: ConnectionGene | null = null;
 
+        const getLocalNodeById = (id: number): NodeGene => {
+            // 1) если уже есть в этом геноме — вернуть
+            const existing = this.#nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === id);
+            if (existing && existing instanceof NodeGene) return existing;
+
+            // 2) иначе создать локальную копию (шаблон берём из neat registry)
+            const global = this.#neat.getNode(id); // только как reference для x/y (и чтобы id существовал)
+            const node = new NodeGene(id);
+            node.x = global.x;
+            node.y = global.y;
+            node.bias = 0; // важно: локальный bias, не общий
+
+            this.#nodes.add(node);
+            return node;
+        };
+
         for (let tries = 0; tries < 20; tries++) {
             const c = this.#connections.randomElement();
             if (c instanceof ConnectionGene && c.enabled) {
@@ -339,8 +383,9 @@ export class Genome {
         }
         if (!con) return null;
 
-        const from: NodeGene = con.from;
-        const to: NodeGene = con.to;
+        const from: NodeGene = getLocalNodeById(con.from.innovationNumber);
+        const to: NodeGene = getLocalNodeById(con.to.innovationNumber);
+
         const replaceIndex = this.#neat.getReplaceIndex(from, to);
         let middle: NodeGene;
         const middleX = (from.x + to.x) / 2;
@@ -363,7 +408,7 @@ export class Genome {
             middle.y = middleY;
             this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
         } else {
-            middle = this.#neat.getNode(replaceIndex);
+            middle = getLocalNodeById(replaceIndex);
             middle.x = middle.x || middleX;
             middle.y = middle.y || middleY;
         }
@@ -374,10 +419,16 @@ export class Genome {
         let exists2 = false;
         this.#connections.data.forEach(item => {
             if (item instanceof NodeGene) return;
-            if (item.from === from && item.to === middle) {
+            if (
+                item.from.innovationNumber === from.innovationNumber &&
+                item.to.innovationNumber === middle.innovationNumber
+            ) {
                 exists1 = true;
             }
-            if (item.from === middle && item.to === to) {
+            if (
+                item.from.innovationNumber === middle.innovationNumber &&
+                item.to.innovationNumber === to.innovationNumber
+            ) {
                 exists2 = true;
             }
         });

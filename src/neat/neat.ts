@@ -477,14 +477,22 @@ export class Neat {
     loadGenome(data: GenomeSaveData) {
         const genome: Genome = new Genome(this);
 
-        data.nodes.forEach((nodeItem: NodeSaveData) => {
-            const node = this.getNode(nodeItem.innovationNumber);
+        const nodeMap = new Map<number, NodeGene>();
+
+        data.nodes.forEach(nodeItem => {
+            const node = new NodeGene(nodeItem.innovationNumber);
+            node.x = nodeItem.x;
+            node.y = nodeItem.y;
+            node.bias = nodeItem.bias;
+
+            nodeMap.set(node.innovationNumber, node);
             genome.nodes.add(node);
         });
 
         data.connections.forEach((con: ConnectionSaveData) => {
-            const geneA = this.getNode(con.from);
-            const geneB = this.getNode(con.to);
+            const geneA = nodeMap.get(con.from);
+            const geneB = nodeMap.get(con.to);
+            if (!geneA || !geneB) return;
             const connectionNode = this.getConnection(geneA, geneB);
             connectionNode.weight = con.weight;
             connectionNode.replaceIndex = con.replaceIndex;
@@ -556,9 +564,18 @@ export class Neat {
 
     emptyGenome(): Genome {
         const genome: Genome = new Genome(this);
+
         for (let i = 0; i < this.#inputNodes + this.#outputNodes; i += 1) {
-            genome.nodes.add(this.getNode(i + 1));
+            const global = this.getNode(i + 1);
+            const node = new NodeGene(i + 1);
+
+            node.x = global.x;
+            node.y = global.y;
+            node.bias = 0;
+
+            genome.nodes.add(node);
         }
+
         return genome;
     }
 
