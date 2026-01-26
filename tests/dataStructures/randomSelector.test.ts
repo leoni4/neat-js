@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RandomSelector } from '../../src/dataStructures/randomSelector.js';
 import { Species } from '../../src/neat/species.js';
 import { Client } from '../../src/neat/client.js';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 
 describe('RandomSelector', () => {
     let randomSelector: RandomSelector;
@@ -16,7 +16,7 @@ describe('RandomSelector', () => {
 
     beforeEach(() => {
         randomSelector = new RandomSelector(0.8);
-        neat = new Neat(3, 2, 10, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 10, EActivation.sigmoid, EActivation.sigmoid);
 
         client1 = neat.clients[0];
         client2 = neat.clients[1];

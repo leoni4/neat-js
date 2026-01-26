@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
 import { NETWORK_CONSTANTS } from '../../src/neat/constants.js';
@@ -9,7 +9,7 @@ describe('Genome - removeConnection', () => {
     let genome: Genome;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 1, EActivation.sigmoid);
         genome = neat.clients[0].genome;
         // Ensure genome has at least one connection for removal tests
         if (genome.connections.size() === 0) {
@@ -42,7 +42,7 @@ describe('Genome - removeConnection', () => {
     describe('PERMANENT_MAIN_CONNECTIONS protection', () => {
         it('should not remove main input-output connections when protected', () => {
             // Create NEAT with PERMANENT_MAIN_CONNECTIONS
-            const protectedNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const protectedNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid, {
                 PERMANENT_MAIN_CONNECTIONS: true,
             });
             const protectedGenome = protectedNeat.clients[0].genome;
@@ -72,7 +72,7 @@ describe('Genome - removeConnection', () => {
 
         it('should allow removing non-main connections even when protection is on', () => {
             // Create NEAT with PERMANENT_MAIN_CONNECTIONS
-            const protectedNeat = new Neat(3, 2, 1, OutputActivation.sigmoid, {
+            const protectedNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid, {
                 PERMANENT_MAIN_CONNECTIONS: true,
             });
             const protectedGenome = protectedNeat.clients[0].genome;

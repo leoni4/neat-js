@@ -17,7 +17,7 @@ import {
     Connection,
     RandomHashSet,
     RandomSelector,
-    OutputActivation,
+    EActivation,
 } from '../dist/index.js';
 
 console.log('✓ ESM imports successful');
@@ -35,7 +35,7 @@ const exports = {
     Connection,
     RandomHashSet,
     RandomSelector,
-    OutputActivation,
+    EActivation,
 };
 
 for (const [name, value] of Object.entries(exports)) {
@@ -95,20 +95,20 @@ try {
     process.exit(1);
 }
 
-// Test 5: Test OutputActivation enum
+// Test 5: Test EActivation enum
 try {
-    if (typeof OutputActivation.linear !== 'string') {
-        throw new Error('OutputActivation.linear is not a string');
+    if (typeof EActivation.linear !== 'string') {
+        throw new Error('EActivation.linear is not a string');
     }
-    if (typeof OutputActivation.sigmoid !== 'string') {
-        throw new Error('OutputActivation.sigmoid is not a string');
+    if (typeof EActivation.sigmoid !== 'string') {
+        throw new Error('EActivation.sigmoid is not a string');
     }
-    if (OutputActivation.linear !== 'linear') {
-        throw new Error('OutputActivation.linear should equal "linear"');
+    if (EActivation.linear !== 'linear') {
+        throw new Error('EActivation.linear should equal "linear"');
     }
-    console.log('✓ OutputActivation enum is accessible');
+    console.log('✓ EActivation enum is accessible');
 } catch (error) {
-    console.error('✗ OutputActivation enum test failed:', error.message);
+    console.error('✗ EActivation enum test failed:', error.message);
     process.exit(1);
 }
 

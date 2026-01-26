@@ -10,13 +10,13 @@ export class Client {
     #bestScore = false;
     #species: Species | null;
     #calculator: Calculator | null;
-    #outputActivation: string;
+    #EActivation: string;
     #hiddenActivation: string;
     #complexity = 0;
     #adjustedScore = 0;
 
-    constructor(genome: Genome, outputActivation: string, hiddenActivation: string) {
-        this.#outputActivation = outputActivation;
+    constructor(genome: Genome, EActivation: string, hiddenActivation: string) {
+        this.#EActivation = EActivation;
         this.#hiddenActivation = hiddenActivation;
         this.#genome = genome;
         this.#calculator = null;
@@ -88,7 +88,7 @@ export class Client {
     }
 
     generateCalculator() {
-        this.#calculator = new Calculator(this.#genome, this.#outputActivation, this.#hiddenActivation);
+        this.#calculator = new Calculator(this.#genome, this.#EActivation, this.#hiddenActivation);
     }
 
     distance(client: Client): number {

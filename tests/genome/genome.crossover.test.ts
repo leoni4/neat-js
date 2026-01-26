@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
 
@@ -9,7 +9,7 @@ describe('Genome - crossOver', () => {
     let genome2: Genome;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome1 = neat.clients[0].genome;
         genome2 = neat.clients[0].genome;
     });

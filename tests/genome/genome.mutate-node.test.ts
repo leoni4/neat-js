@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, OutputActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { NodeGene } from '../../src/genome/nodeGene.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
@@ -10,7 +10,7 @@ describe('Genome - mutateNode', () => {
     let genome: Genome;
 
     beforeEach(() => {
-        neat = new Neat(3, 2, 1, OutputActivation.sigmoid);
+        neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome = neat.clients[0].genome;
         // Ensure genome has at least one connection for mutation tests
         if (genome.connections.size() === 0) {
@@ -104,7 +104,7 @@ describe('Genome - mutateNode', () => {
     describe('MIN_MIDDLE_X constraint', () => {
         it('should return null if middle x-coordinate is below MIN_MIDDLE_X', () => {
             // Create a genome where from and to nodes are very close
-            const testNeat = new Neat(1, 1, 1, OutputActivation.sigmoid);
+            const testNeat = new Neat(1, 1, 1, EActivation.sigmoid);
             const testGenome = testNeat.emptyGenome();
 
             // Manually create a connection with nodes very close to each other

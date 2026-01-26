@@ -48,13 +48,13 @@ All parameters are thoroughly documented in the `docs/params/` directory:
 
 ```typescript
 const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
-  MUTATION_RATE: 1.5, // More aggressive
-  SURVIVORS: 0.3, // Strong selection (top 30%)
-  WEIGHT_SHIFT_STRENGTH: 0.3, // Larger changes
-  PROBABILITY_MUTATE_WEIGHT_SHIFT: 5, // Frequent weight tuning
-  PROBABILITY_MUTATE_LINK: 0.5, // Slower growth
-  LAMBDA_HIGH: 0.4, // Favor simplicity
-  CP: 3, // Fewer species
+    MUTATION_RATE: 1.5, // More aggressive
+    SURVIVORS: 0.3, // Strong selection (top 30%)
+    WEIGHT_SHIFT_STRENGTH: 0.3, // Larger changes
+    PROBABILITY_MUTATE_WEIGHT_SHIFT: 5, // Frequent weight tuning
+    PROBABILITY_MUTATE_LINK: 0.5, // Slower growth
+    LAMBDA_HIGH: 0.4, // Favor simplicity
+    CP: 3, // Fewer species
 });
 ```
 
@@ -64,13 +64,13 @@ const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
 
 ```typescript
 const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
-  MUTATION_RATE: 0.8, // More conservative
-  SURVIVORS: 0.5, // Weak selection (top 50%)
-  PROBABILITY_MUTATE_LINK: 1.2, // Faster structural growth
-  PROBABILITY_MUTATE_NODES: 0.05, // More depth
-  LAMBDA_LOW: 0.05, // Minimal complexity penalty
-  CP: 2, // More species
-  C3: 0.05, // Less weight-based speciation
+    MUTATION_RATE: 0.8, // More conservative
+    SURVIVORS: 0.5, // Weak selection (top 50%)
+    PROBABILITY_MUTATE_LINK: 1.2, // Faster structural growth
+    PROBABILITY_MUTATE_NODES: 0.05, // More depth
+    LAMBDA_LOW: 0.05, // Minimal complexity penalty
+    CP: 2, // More species
+    C3: 0.05, // Less weight-based speciation
 });
 ```
 
@@ -80,13 +80,13 @@ const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
 
 ```typescript
 const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
-  MUTATION_RATE: 0.5, // Conservative
-  WEIGHT_SHIFT_STRENGTH: 0.1, // Small adjustments only
-  BIAS_SHIFT_STRENGTH: 0.08, // Small adjustments only
-  PROBABILITY_MUTATE_LINK: 0.1, // Minimal structural changes
-  PROBABILITY_MUTATE_NODES: 0.01, // Very rare depth changes
-  OPT_ERR_THRESHOLD: 0.02, // Optimize earlier
-  LAMBDA_HIGH: 0.5, // Strong simplicity push
+    MUTATION_RATE: 0.5, // Conservative
+    WEIGHT_SHIFT_STRENGTH: 0.1, // Small adjustments only
+    BIAS_SHIFT_STRENGTH: 0.08, // Small adjustments only
+    PROBABILITY_MUTATE_LINK: 0.1, // Minimal structural changes
+    PROBABILITY_MUTATE_NODES: 0.01, // Very rare depth changes
+    OPT_ERR_THRESHOLD: 0.02, // Optimize earlier
+    LAMBDA_HIGH: 0.5, // Strong simplicity push
 });
 ```
 
@@ -96,12 +96,12 @@ const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
 
 ```typescript
 const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
-  LAMBDA_LOW: 0.15, // Penalize complexity earlier
-  LAMBDA_HIGH: 0.4, // Strong optimization penalty
-  PROBABILITY_MUTATE_LINK: 0.6, // Slower growth
-  PROBABILITY_MUTATE_NODES: 0.02, // Fewer nodes
-  OPT_ERR_THRESHOLD: 0.015, // Optimize slightly earlier
-  EPS: 1e-3, // Stronger simplicity tie-breaking
+    LAMBDA_LOW: 0.15, // Penalize complexity earlier
+    LAMBDA_HIGH: 0.4, // Strong optimization penalty
+    PROBABILITY_MUTATE_LINK: 0.6, // Slower growth
+    PROBABILITY_MUTATE_NODES: 0.02, // Fewer nodes
+    OPT_ERR_THRESHOLD: 0.015, // Optimize slightly earlier
+    EPS: 1e-3, // Stronger simplicity tie-breaking
 });
 ```
 
@@ -111,11 +111,11 @@ const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
 
 ```typescript
 const neat = new Neat(inputNodes, outputNodes, populationSize, activation, {
-  MUTATION_RATE: 2, // High mutation
-  WEIGHT_RANDOM_STRENGTH: 1.5, // Wider exploration
-  PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.1, // More complete randomization
-  SURVIVORS: 0.35, // Stronger selection
-  CP: 4, // More species for diversity
+    MUTATION_RATE: 2, // High mutation
+    WEIGHT_RANDOM_STRENGTH: 1.5, // Wider exploration
+    PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.1, // More complete randomization
+    SURVIVORS: 0.35, // Stronger selection
+    CP: 4, // More species for diversity
 });
 ```
 
@@ -202,52 +202,52 @@ Please see the [full documentation index](./params/00_INDEX.md).
 ## 🔧 Example: Creating a Custom Configuration
 
 ```typescript
-import { Neat, OutputActivation } from "neat-js";
+import { Neat, EActivation } from 'neat-js';
 
 const customNeat = new Neat(
-  3, // 3 inputs
-  2, // 2 outputs
-  100, // population of 100
-  OutputActivation.sigmoid, // sigmoid activation
-  {
-    // Speciation - favor topology over weights
-    C1: 1.2,
-    C2: 1.2,
-    C3: 0.05,
-    CP: 4,
+    3, // 3 inputs
+    2, // 2 outputs
+    100, // population of 100
+    EActivation.sigmoid, // sigmoid activation
+    {
+        // Speciation - favor topology over weights
+        C1: 1.2,
+        C2: 1.2,
+        C3: 0.05,
+        CP: 4,
 
-    // Evolution - balanced approach
-    MUTATION_RATE: 1,
-    SURVIVORS: 0.4,
+        // Evolution - balanced approach
+        MUTATION_RATE: 1,
+        SURVIVORS: 0.4,
 
-    // Mutations - conservative growth
-    WEIGHT_SHIFT_STRENGTH: 0.2,
-    BIAS_SHIFT_STRENGTH: 0.18,
-    PROBABILITY_MUTATE_LINK: 0.6,
-    PROBABILITY_MUTATE_NODES: 0.02,
+        // Mutations - conservative growth
+        WEIGHT_SHIFT_STRENGTH: 0.2,
+        BIAS_SHIFT_STRENGTH: 0.18,
+        PROBABILITY_MUTATE_LINK: 0.6,
+        PROBABILITY_MUTATE_NODES: 0.02,
 
-    // Optimization - moderate complexity control
-    OPT_ERR_THRESHOLD: 0.01,
-    LAMBDA_LOW: 0.08,
-    LAMBDA_HIGH: 0.35,
-    EPS: 1e-4,
+        // Optimization - moderate complexity control
+        OPT_ERR_THRESHOLD: 0.01,
+        LAMBDA_LOW: 0.08,
+        LAMBDA_HIGH: 0.35,
+        EPS: 1e-4,
 
-    // Protection
-    PERMANENT_MAIN_CONNECTIONS: false,
-  }
+        // Protection
+        PERMANENT_MAIN_CONNECTIONS: false,
+    },
 );
 
 // Use the NEAT instance
 for (let generation = 0; generation < 1000; generation++) {
-  // Evaluate each client
-  for (const client of neat.clients) {
-    const output = client.calculate([input1, input2, input3]);
-    client.score = evaluateFitness(output);
-    client.error = calculateError(output);
-  }
+    // Evaluate each client
+    for (const client of neat.clients) {
+        const output = client.calculate([input1, input2, input3]);
+        client.score = evaluateFitness(output);
+        client.error = calculateError(output);
+    }
 
-  // Evolve to next generation
-  neat.evolve(false, averageError);
+    // Evolve to next generation
+    neat.evolve(false, averageError);
 }
 ```
 
