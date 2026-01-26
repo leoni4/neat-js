@@ -19,7 +19,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testSin01,
+    ...testTwoMoons,
     save: false,
     load: false,
     clients: 1000,
