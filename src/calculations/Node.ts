@@ -1,5 +1,6 @@
 import { Connection } from './Connection.js';
 import { NodeGene } from '../genome/nodeGene.js';
+import { EActivation } from '../neat/index.js';
 
 export class Node {
     #x: number;
@@ -66,7 +67,7 @@ export class Node {
         }
     }
 
-    calculate(EActivation: string) {
+    calculate(activation: EActivation) {
         let sum = 0;
         for (let i = 0; i < this.#connections.length; i += 1) {
             const c = this.#connections[i];
@@ -80,7 +81,7 @@ export class Node {
             // Not an input node (input nodes have x = 0)
             sum += this.#node.bias;
         }
-        this.#output = this.#activationFunction(sum, EActivation);
+        this.#output = this.#activationFunction(sum, activation);
     }
 
     compareTo(node: Node): number {
