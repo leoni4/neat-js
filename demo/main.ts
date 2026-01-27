@@ -26,6 +26,8 @@ const test = {
     params,
 };
 
+const doneTimers: number[] = [];
+
 export function main() {
     let network;
     if (test.load) {
@@ -103,21 +105,45 @@ export function main() {
         }
         const champion = neat.champion?.client;
         const frameClient = champion || topClient;
+        let DA = '';
+        if (doneTimers.length) {
+            DA =
+                '(D:' +
+                doneTimers.length +
+                ' AvgE: ' +
+                Math.floor(doneTimers.reduce((a, b) => a + b, 0) / doneTimers.length) +
+                ' ) ';
+        }
         if (frame) {
-            frame.text = 'EPOCH: ' + k + ' | error: ' + error;
+            let text = '';
+            if (doneTimers.length) {
+                text += DA;
+            }
+            text += 'EPOCH: ' + k + ' | error: ' + error;
+            frame.text = text;
             frame.client = frameClient;
             frame.genome = frameClient.genome;
         }
         if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
             console.log('###################');
             console.log('Finished');
-            if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
-            frameClient.genome.optimization();
-            frame.client = frameClient;
-            frame.genome = frameClient.genome;
+            doneTimers.push(k);
+            if (frame) {
+                frame.text = DA + 'EPOCH: ' + k + ' | error: ' + error + ' (finished)';
+                frameClient.genome.optimization();
+                frame.client = frameClient;
+                frame.genome = frameClient.genome;
+            }
             if (test.save) {
                 localStorage.setItem('network', JSON.stringify(neat.save()));
             }
+            setTimeout(() => {
+                error = 1;
+                const { frame } = main();
+                if (frame) {
+                    frame.controls.proceed = true;
+                }
+            }, 1000);
             return;
         }
         k++;
@@ -125,6 +151,11 @@ export function main() {
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);
+
+    return {
+        neat,
+        frame,
+    };
 }
 
 // Run the demo

@@ -60,10 +60,9 @@ export class Node {
             case 'leakyRelu':
                 return sum > 0 ? sum : 0.01 * sum;
             case 'softmax':
-                // Note: Softmax requires access to all outputs, handle at Calculator level
                 return sum;
             default:
-                return 1 / (1 + Math.exp(-sum)); // fallback to sigmoid
+                return 1 / (1 + Math.exp(-sum));
         }
     }
 
@@ -75,10 +74,7 @@ export class Node {
                 sum += c.weight * c.from.output;
             }
         }
-        // Apply bias to both hidden and output nodes (input nodes don't need bias as they have fixed values)
-        // Bias allows the network to shift the activation function, improving learning capability
         if (this.#x !== 0) {
-            // Not an input node (input nodes have x = 0)
             sum += this.#node.bias;
         }
         this.#output = this.#activationFunction(sum, activation);

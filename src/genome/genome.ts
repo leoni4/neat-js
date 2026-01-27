@@ -258,6 +258,10 @@ export class Genome {
         ) {
             return;
         }
+        if (!this.#connections.contains(con)) {
+            console.warn('Trying to remove none existing Connection');
+            return;
+        }
         this.#connections.remove(con);
         let singleFrom = true;
         let singleTo = true;
@@ -287,7 +291,7 @@ export class Genome {
                     removingFrom.push(c);
                 }
             }
-            this.#nodes.remove(con.from);
+            this.#nodes.removeByInnovation(con.from.innovationNumber);
             removingFrom.forEach(c => {
                 this.removeConnection(c, false, true, false);
             });
@@ -301,7 +305,7 @@ export class Genome {
                     removingTo.push(c);
                 }
             }
-            this.#nodes.remove(con.to);
+            this.#nodes.removeByInnovation(con.to.innovationNumber);
             removingTo.forEach(c => {
                 this.removeConnection(c, false, false, true);
             });
@@ -359,16 +363,14 @@ export class Genome {
         let con: ConnectionGene | null = null;
 
         const getLocalNodeById = (id: number): NodeGene => {
-            // 1) если уже есть в этом геноме — вернуть
             const existing = this.#nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === id);
             if (existing && existing instanceof NodeGene) return existing;
 
-            // 2) иначе создать локальную копию (шаблон берём из neat registry)
-            const global = this.#neat.getNode(id); // только как reference для x/y (и чтобы id существовал)
+            const global = this.#neat.getNode(id);
             const node = new NodeGene(id);
             node.x = global.x;
             node.y = global.y;
-            node.bias = 0; // важно: локальный bias, не общий
+            node.bias = 0;
 
             this.#nodes.add(node);
             return node;
@@ -453,8 +455,6 @@ export class Genome {
     #mutateWeightShiftNode(): NodeGene | null {
         let counter = 0;
         let node;
-        // Skip only input nodes (they receive direct input values, bias is not meaningful)
-        // Output and hidden nodes can have bias mutations
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
             node = this.#nodes.randomElement();
@@ -504,8 +504,6 @@ export class Genome {
     #mutateWeightRandomNode(): NodeGene | null {
         let counter = 0;
         let node;
-        // Skip only input nodes (they receive direct input values, bias is not meaningful)
-        // Output and hidden nodes can have bias mutations
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
             node = this.#nodes.randomElement();
@@ -641,26 +639,25 @@ export class Genome {
             if (!(n instanceof NodeGene)) continue;
 
             const id = n.innovationNumber;
-            const isInput = n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X;
-            const isOutput = n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X;
+            const isInput = n.x === NETWORK_CONSTANTS.INPUT_NODE_X;
+            const isOutput = n.x === NETWORK_CONSTANTS.OUTPUT_NODE_X;
 
             if (!isInput && !isOutput && !aliveNodes.has(id)) {
                 this.nodes.remove(n);
             }
         }
     }
-    #removeDead(start = 0) {
-        const toRemove: ConnectionGene[] = [];
-        for (let i = start; i < this.#connections.size(); i += 1) {
+
+    #removeDead() {
+        for (let i = 0; i < this.#connections.size(); i += 1) {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
-                toRemove.push(c);
+                this.removeConnection(c);
+                this.#removeDead();
+                return;
             }
         }
-        toRemove.forEach(c => {
-            this.removeConnection(c);
-        });
     }
 
     optimization() {

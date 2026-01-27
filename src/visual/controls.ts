@@ -19,6 +19,10 @@ export class Controls {
         return this.#proceed;
     }
 
+    set proceed(val: boolean) {
+        this.#proceed = val;
+    }
+
     get client(): Client {
         return this.#client;
     }
@@ -46,7 +50,6 @@ export class Controls {
             'output:',
             output.map(a => Number(a.toFixed(2))),
         );
-        // console.log('outputRaw:', output);
     }
 
     #initControls() {

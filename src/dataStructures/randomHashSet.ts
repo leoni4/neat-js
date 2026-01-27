@@ -63,15 +63,34 @@ export class RandomHashSet {
     remove(arg: number | ConnectionGene | NodeGene) {
         if (arg instanceof ConnectionGene || arg instanceof NodeGene) {
             const index = this.#data.indexOf(arg);
+            if (index === -1) {
+                console.warn('Trying to remove() none existing Gene');
+                return;
+            }
+
             this.#data.splice(index, 1);
             this.#set.delete(arg);
         } else {
-            if (arg < 0 || arg >= this.#set.size) {
+            if (arg < 0 || arg >= this.#data.length) {
+                console.warn('Trying to remove() none existing Gene');
                 return;
             }
-            this.#set.delete(this.#data[arg]);
+            const real = this.#data[arg];
+            this.#set.delete(real);
             this.#data.splice(arg, 1);
         }
+    }
+
+    removeByInnovation(innovationNumber: number) {
+        const index = this.#data.findIndex(g => g.innovationNumber === innovationNumber);
+        if (index === -1) {
+            console.warn('Trying to removeByInnovation none existing Gene');
+            return;
+        }
+
+        const real = this.#data[index];
+        this.#data.splice(index, 1);
+        this.#set.delete(real);
     }
 
     get data(): Array<NodeGene | ConnectionGene> {

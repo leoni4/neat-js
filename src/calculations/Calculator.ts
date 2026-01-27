@@ -26,9 +26,9 @@ export class Calculator {
             const node: Node = new Node(n.x, n);
             nodeHashmap.set(n.innovationNumber, node);
 
-            if (n.x <= NETWORK_CONSTANTS.INPUT_THRESHOLD_X) {
+            if (n.x === NETWORK_CONSTANTS.INPUT_NODE_X) {
                 this.#inputNodes.push(node);
-            } else if (n.x >= NETWORK_CONSTANTS.OUTPUT_THRESHOLD_X) {
+            } else if (n.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) {
                 this.#outputNodes.push(node);
             } else {
                 node.hidden = true;
@@ -76,7 +76,6 @@ export class Calculator {
             output[i] = this.#outputNodes[i].output;
         }
 
-        // Apply softmax if needed
         if (this.#outputActivation === EActivation.softmax) {
             const max = Math.max(...output);
             const exps = output.map(x => Math.exp(x - max));
