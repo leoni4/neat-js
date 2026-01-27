@@ -1,6 +1,7 @@
 import { Genome } from '../genome/index.js';
 import { Species } from './species.js';
 import { Calculator } from '../calculations/index.js';
+import { EActivation } from '../neat/index.js';
 
 export class Client {
     #genome: Genome;
@@ -10,13 +11,13 @@ export class Client {
     #bestScore = false;
     #species: Species | null;
     #calculator: Calculator | null;
-    #EActivation: string;
-    #hiddenActivation: string;
+    #outputActivation: EActivation;
+    #hiddenActivation: EActivation;
     #complexity = 0;
     #adjustedScore = 0;
 
-    constructor(genome: Genome, EActivation: string, hiddenActivation: string) {
-        this.#EActivation = EActivation;
+    constructor(genome: Genome, outputActivation: EActivation, hiddenActivation: EActivation) {
+        this.#outputActivation = outputActivation;
         this.#hiddenActivation = hiddenActivation;
         this.#genome = genome;
         this.#calculator = null;
@@ -88,7 +89,7 @@ export class Client {
     }
 
     generateCalculator() {
-        this.#calculator = new Calculator(this.#genome, this.#EActivation, this.#hiddenActivation);
+        this.#calculator = new Calculator(this.#genome, this.#outputActivation, this.#hiddenActivation);
     }
 
     distance(client: Client): number {

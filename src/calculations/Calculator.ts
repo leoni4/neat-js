@@ -2,17 +2,18 @@ import { ConnectionGene, Genome, NodeGene } from '../genome/index.js';
 import { Node } from './Node.js';
 import { Connection } from './Connection.js';
 import { NETWORK_CONSTANTS } from '../neat/constants.js';
+import { EActivation } from '../neat/index.js';
 
 export class Calculator {
     #inputNodes: Array<Node> = [];
     #hiddenNodes: Array<Node> = [];
     #outputNodes: Array<Node> = [];
 
-    #EActivation: string;
-    #hiddenActivation: string;
+    #outputActivation: EActivation;
+    #hiddenActivation: EActivation;
 
-    constructor(genome: Genome, EActivation: string, hiddenActivation: string) {
-        this.#EActivation = EActivation;
+    constructor(genome: Genome, outputActivation: EActivation, hiddenActivation: EActivation) {
+        this.#outputActivation = outputActivation;
         this.#hiddenActivation = hiddenActivation;
         const nodes = genome.nodes;
         const connections = genome.connections;
@@ -71,12 +72,12 @@ export class Calculator {
         }
         const output = new Array<number>(this.#outputNodes.length);
         for (let i = 0; i < this.#outputNodes.length; i++) {
-            this.#outputNodes[i].calculate(this.#EActivation);
+            this.#outputNodes[i].calculate(this.#outputActivation);
             output[i] = this.#outputNodes[i].output;
         }
 
         // Apply softmax if needed
-        if (this.#EActivation === 'softmax') {
+        if (this.#outputActivation === EActivation.softmax) {
             const max = Math.max(...output);
             const exps = output.map(x => Math.exp(x - max));
             const sum = exps.reduce((a, b) => a + b, 0);
