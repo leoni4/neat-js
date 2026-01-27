@@ -44,7 +44,7 @@ export class Controls {
         const output = this.#client.calculate(input);
         console.log(
             'output:',
-            output.map(a => Math.round(a)),
+            output.map(a => Number(a.toFixed(2))),
         );
         // console.log('outputRaw:', output);
     }

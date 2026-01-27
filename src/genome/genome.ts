@@ -650,13 +650,17 @@ export class Genome {
         }
     }
     #removeDead(start = 0) {
+        const toRemove: ConnectionGene[] = [];
         for (let i = start; i < this.#connections.size(); i += 1) {
             const c = this.#connections.get(i);
             if (!(c instanceof ConnectionGene)) continue;
             if (!c.enabled) {
-                this.removeConnection(c);
+                toRemove.push(c);
             }
         }
+        toRemove.forEach(c => {
+            this.removeConnection(c);
+        });
     }
 
     optimization() {

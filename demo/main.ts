@@ -19,7 +19,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testTwoMoons,
+    ...testXOR,
     save: false,
     load: false,
     clients: 1000,
@@ -101,17 +101,20 @@ export function main() {
                 error,
             );
         }
+        const champion = neat.champion?.client;
+        const frameClient = champion || topClient;
         if (frame) {
-            const champion = neat.champion?.client;
             frame.text = 'EPOCH: ' + k + ' | error: ' + error;
-            frame.client = champion || topClient;
-            frame.genome = champion?.genome || topClient.genome;
+            frame.client = frameClient;
+            frame.genome = frameClient.genome;
         }
         if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
             console.log('###################');
             console.log('Finished');
             if (frame) frame.text = 'EPOCH: ' + k + ' | error: ' + error + ' (Finished)';
-            neat.evolve(true);
+            frameClient.genome.optimization();
+            frame.client = frameClient;
+            frame.genome = frameClient.genome;
             if (test.save) {
                 localStorage.setItem('network', JSON.stringify(neat.save()));
             }
