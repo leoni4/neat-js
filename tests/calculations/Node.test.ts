@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Node } from '../../src/calculations/Node.js';
 import { Connection } from '../../src/calculations/Connection.js';
 import { NodeGene } from '../../src/genome/nodeGene.js';
+import { EActivation } from '../../src/neat/index.js';
 
 describe('Node', () => {
     let nodeGene: NodeGene;
@@ -70,7 +71,7 @@ describe('Node', () => {
 
             node.connections = [connection];
             node.hidden = true;
-            node.calculate('sigmoid');
+            node.calculate(EActivation.sigmoid);
 
             // sigmoid(2.0 * 1.0 + 0.5) = sigmoid(2.5) = 1 / (1 + e^(-2.5))
             const expectedOutput = 1 / (1 + Math.exp(-2.5));
@@ -87,10 +88,173 @@ describe('Node', () => {
 
             node.connections = [connection];
             node.hidden = true;
-            node.calculate('none');
+            node.calculate(EActivation.none);
 
             // With 'none' activation, output = sum = 2.0 * 1.0 + 0.5 = 2.5
             expect(node.output).toBe(2.5);
+        });
+
+        it('should calculate output with linear activation', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = 1.5;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 3.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.linear);
+
+            // With 'linear' activation, output = sum = 3.0 * 1.5 + 0.5 = 5.0
+            expect(node.output).toBe(5.0);
+        });
+
+        it('should calculate output with tanh activation', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = 1.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 2.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.tanh);
+
+            // tanh(2.0 * 1.0 + 0.5) = tanh(2.5)
+            const expectedOutput = Math.tanh(2.5);
+            expect(node.output).toBeCloseTo(expectedOutput, 5);
+        });
+
+        it('should calculate output with tanh activation for negative values', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = -1.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 3.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.tanh);
+
+            // tanh(3.0 * -1.0 + 0.5) = tanh(-2.5)
+            const expectedOutput = Math.tanh(-2.5);
+            expect(node.output).toBeCloseTo(expectedOutput, 5);
+        });
+
+        it('should calculate output with relu activation for positive values', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = 1.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 2.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.relu);
+
+            // relu(2.0 * 1.0 + 0.5) = max(0, 2.5) = 2.5
+            expect(node.output).toBe(2.5);
+        });
+
+        it('should calculate output with relu activation for negative values', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = -2.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 1.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.relu);
+
+            // relu(1.0 * -2.0 + 0.5) = max(0, -1.5) = 0
+            expect(node.output).toBe(0);
+        });
+
+        it('should calculate output with relu activation at zero threshold', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = -0.5;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 1.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.relu);
+
+            // relu(1.0 * -0.5 + 0.5) = max(0, 0) = 0
+            expect(node.output).toBe(0);
+        });
+
+        it('should calculate output with leakyRelu activation for positive values', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = 1.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 2.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.leakyRelu);
+
+            // leakyRelu(2.0 * 1.0 + 0.5) = 2.5 (positive, so no leak)
+            expect(node.output).toBe(2.5);
+        });
+
+        it('should calculate output with leakyRelu activation for negative values', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = -3.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 1.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.leakyRelu);
+
+            // leakyRelu(1.0 * -3.0 + 0.5) = 0.01 * -2.5 = -0.025
+            expect(node.output).toBe(-0.025);
+        });
+
+        it('should calculate output with leakyRelu activation at zero', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = -0.5;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 1.0;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.leakyRelu);
+
+            // leakyRelu(1.0 * -0.5 + 0.5) = 0 (exactly at threshold)
+            expect(node.output).toBe(0);
+        });
+
+        it('should calculate output with softmax activation', () => {
+            const fromNode = new Node(0.1, new NodeGene(2));
+            fromNode.output = 2.0;
+
+            const connection = new Connection(fromNode, node);
+            connection.weight = 1.5;
+            connection.enabled = true;
+
+            node.connections = [connection];
+            node.hidden = true;
+            node.calculate(EActivation.softmax);
+
+            // With 'softmax' activation at node level, output = sum = 1.5 * 2.0 + 0.5 = 3.5
+            // Note: softmax normalization typically happens across multiple nodes
+            expect(node.output).toBe(3.5);
         });
 
         it('should skip disabled connections', () => {
@@ -110,7 +274,7 @@ describe('Node', () => {
 
             node.connections = [connection1, connection2];
             node.hidden = false;
-            node.calculate('none');
+            node.calculate(EActivation.none);
 
             // Only connection1 should be counted: 2.0 * 1.0 + 0.5 (bias) = 2.5
             // Bias is applied because x !== 0 (not an input node)
@@ -120,7 +284,7 @@ describe('Node', () => {
         it('should include bias for hidden nodes', () => {
             node.hidden = true;
             node.connections = [];
-            node.calculate('none');
+            node.calculate(EActivation.none);
 
             // For hidden node with no connections, output = bias = 0.5
             expect(node.output).toBe(0.5);
@@ -129,7 +293,7 @@ describe('Node', () => {
         it('should not include bias for non-hidden nodes', () => {
             node.hidden = false;
             node.connections = [];
-            node.calculate('none');
+            node.calculate(EActivation.none);
 
             // For non-hidden nodes (unless x = 0, i.e., input nodes), bias IS added
             // This node has x = 0.5, so bias is applied
@@ -143,7 +307,7 @@ describe('Node', () => {
             const inputNode = new Node(0, inputNodeGene);
             inputNode.hidden = false;
             inputNode.connections = [];
-            inputNode.calculate('none');
+            inputNode.calculate(EActivation.none);
 
             // For input nodes (x = 0), bias is NOT added
             expect(inputNode.output).toBe(0);
@@ -166,7 +330,7 @@ describe('Node', () => {
 
             node.connections = [connection1, connection2];
             node.hidden = false;
-            node.calculate('none');
+            node.calculate(EActivation.none);
 
             // 1.5 * 1.0 + 0.5 * 2.0 + 0.5 (bias) = 3.0
             // Bias is applied because x !== 0 (not an input node)
