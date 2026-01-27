@@ -649,13 +649,20 @@ export class Genome {
     }
 
     #removeDead() {
-        for (let i = 0; i < this.#connections.size(); i += 1) {
-            const c = this.#connections.get(i);
-            if (!(c instanceof ConnectionGene)) continue;
-            if (!c.enabled) {
-                this.removeConnection(c);
-                this.#removeDead();
-                return;
+        let removedAny = true;
+
+        while (removedAny) {
+            removedAny = false;
+
+            for (let i = 0; i < this.#connections.size(); i += 1) {
+                const c = this.#connections.get(i);
+                if (!(c instanceof ConnectionGene)) continue;
+
+                if (!c.enabled) {
+                    this.removeConnection(c);
+                    removedAny = true;
+                    break;
+                }
             }
         }
     }
