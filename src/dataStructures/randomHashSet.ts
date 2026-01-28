@@ -1,11 +1,9 @@
 import { ConnectionGene, NodeGene } from '../genome/index.js';
 
 export class RandomHashSet {
-    #set: Set<NodeGene | ConnectionGene>;
     #data: Array<NodeGene | ConnectionGene>;
 
     constructor() {
-        this.#set = new Set();
         this.#data = [];
     }
 
@@ -19,7 +17,7 @@ export class RandomHashSet {
     }
 
     randomElement(): NodeGene | ConnectionGene | null {
-        if (!this.#set.size) {
+        if (!this.#data.length) {
             return null;
         }
         return this.#data[Math.floor(this.#data.length * Math.random())];
@@ -27,7 +25,6 @@ export class RandomHashSet {
 
     add(gene: NodeGene | ConnectionGene) {
         if (!this.contains(gene)) {
-            this.#set.add(gene);
             this.#data.push(gene);
         }
     }
@@ -38,11 +35,9 @@ export class RandomHashSet {
                 const innovation = this.get(i).innovationNumber;
                 if (gene.innovationNumber < innovation) {
                     this.#data.splice(i, 0, gene);
-                    this.#set.add(gene);
                     return;
                 }
             }
-            this.#set.add(gene);
             this.#data.push(gene);
         }
     }
@@ -52,7 +47,6 @@ export class RandomHashSet {
     }
 
     clear() {
-        this.#set.clear();
         this.#data = [];
     }
 
@@ -69,14 +63,11 @@ export class RandomHashSet {
             }
 
             this.#data.splice(index, 1);
-            this.#set.delete(arg);
         } else {
             if (arg < 0 || arg >= this.#data.length) {
                 console.warn('Trying to remove() none existing Gene');
                 return;
             }
-            const real = this.#data[arg];
-            this.#set.delete(real);
             this.#data.splice(arg, 1);
         }
     }
@@ -88,9 +79,7 @@ export class RandomHashSet {
             return;
         }
 
-        const real = this.#data[index];
         this.#data.splice(index, 1);
-        this.#set.delete(real);
     }
 
     get data(): Array<NodeGene | ConnectionGene> {

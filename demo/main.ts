@@ -27,6 +27,8 @@ const test = {
 };
 
 const doneTimers: number[] = [];
+let finished = 0;
+let globalFrame: Frame | null = null;
 
 export function main() {
     let network;
@@ -47,11 +49,11 @@ export function main() {
         network,
     );
 
-    // neat.evolve();
-    let frame: Frame | null = null;
-    if (typeof document !== 'undefined') {
-        console.log('Create frame');
-        frame = new Frame(neat.clients[0], 'container');
+    if (!globalFrame && typeof document !== 'undefined') {
+        globalFrame = new Frame(neat.clients[0], 'container');
+    }
+    const frame = globalFrame;
+    if (frame) {
         frame.client = neat.clients[0];
         frame.genome = neat.clients[0].genome;
     }
@@ -109,7 +111,7 @@ export function main() {
         if (doneTimers.length) {
             DA =
                 '(D:' +
-                doneTimers.length +
+                finished +
                 ' AvgE: ' +
                 Math.floor(doneTimers.reduce((a, b) => a + b, 0) / doneTimers.length) +
                 ' ) ';
@@ -125,9 +127,11 @@ export function main() {
             frame.genome = frameClient.genome;
         }
         if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
+            finished += 1;
             console.log('###################');
             console.log('Finished');
             doneTimers.push(k);
+            if (doneTimers.length > 200) doneTimers.shift();
             if (frame) {
                 frame.text = DA + 'EPOCH: ' + k + ' | error: ' + error + ' (finished)';
                 frameClient.genome.optimization();
@@ -139,10 +143,7 @@ export function main() {
             }
             setTimeout(() => {
                 error = 1;
-                const { frame } = main();
-                if (frame) {
-                    frame.controls.proceed = true;
-                }
+                main();
             }, 1000);
             return;
         }
@@ -151,11 +152,6 @@ export function main() {
         // console.timeEnd('run()');
         setTimeout(run, 1);
     }, 1);
-
-    return {
-        neat,
-        frame,
-    };
 }
 
 // Run the demo
