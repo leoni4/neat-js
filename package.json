@@ -28,7 +28,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:esm": "node tests/esm-smoke-test.mjs",
-        "lint": "eslint src tests --ext .ts",
+        "lint": "eslint src tests",
         "typecheck": "tsc --noEmit",
         "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
         "prepare": "npm run build"
