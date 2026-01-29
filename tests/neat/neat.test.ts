@@ -129,7 +129,7 @@ describe('Neat', () => {
         it('should use default parameters when not specified', () => {
             expect(neat.C1).toBe(1);
             expect(neat.C2).toBe(1);
-            expect(neat.C3).toBe(0.1);
+            expect(neat.C3).toBe(0.2);
         });
     });
 
