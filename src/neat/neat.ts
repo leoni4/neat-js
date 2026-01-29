@@ -46,6 +46,12 @@ export interface INeatParams {
     EPS?: number;
 }
 
+const HISTORY_WINDOW = 80;
+
+const SMALL_GAIN_THRESHOLD = 0.001;
+const COMPLEXITY_GROWTH_ABS = 30;
+const COMPLEXITY_GROWTH_RATIO = 0.1;
+
 const DEFAULT_PARAMS = {
     C1: 1,
     C2: 1,
@@ -784,79 +790,111 @@ export class Neat {
         }
     }
 
+    #updateStagnationAndPressure() {
+        if (!this.#champion) return;
+
+        const delta = Math.abs(this.#champion.scoreRaw - this.#networkScoreRaw);
+        if (delta <= this.#OPT_ERR_THRESHOLD) {
+            this.#stagnationCount += 1;
+        } else {
+            this.#networkScoreRaw = this.#champion.scoreRaw;
+            this.#stagnationCount = 0;
+        }
+
+        this.#champion.scoreHistory ??= [];
+        this.#champion.complexityHistory ??= [];
+
+        this.#champion.scoreHistory.push(this.#champion.scoreRaw);
+        this.#champion.complexityHistory.push(this.#champion.complexity);
+
+        if (this.#champion.scoreHistory.length > HISTORY_WINDOW) this.#champion.scoreHistory.shift();
+        if (this.#champion.complexityHistory.length > HISTORY_WINDOW) this.#champion.complexityHistory.shift();
+
+        const canCompact = this.#stagnationCount > HISTORY_WINDOW && this.#champion.scoreHistory.length >= 2;
+
+        if (canCompact) {
+            const scoreHist = this.#champion.scoreHistory;
+            const compHist = this.#champion.complexityHistory;
+
+            const s0 = scoreHist[0];
+            const sBest = Math.max(...scoreHist);
+            const gain = sBest - s0;
+
+            const c0 = compHist[0];
+            const c1 = compHist[compHist.length - 1];
+            const growthAbs = c1 - c0;
+            const growthRatio = c0 > 0 ? growthAbs / c0 : growthAbs > 0 ? 1 : 0;
+
+            const growingMeaningfully = growthAbs >= COMPLEXITY_GROWTH_ABS || growthRatio >= COMPLEXITY_GROWTH_RATIO;
+
+            const tinyProgress = gain <= SMALL_GAIN_THRESHOLD;
+
+            if (growingMeaningfully && tinyProgress) {
+                this.#PRESSURE = EMutationPressure.COMPACT;
+                this.#optimization = true;
+
+                return;
+            }
+        }
+
+        if (this.#stagnationCount > 405) {
+            this.#stagnationCount = 200;
+        } else if (this.#stagnationCount > 400) {
+            this.#PRESSURE = EMutationPressure.PANIC;
+        } else if (this.#stagnationCount > 200) {
+            this.#PRESSURE = EMutationPressure.ESCAPE;
+        } else if (this.#stagnationCount > 80) {
+            this.#PRESSURE = EMutationPressure.BOOST;
+        } else {
+            this.#PRESSURE = EMutationPressure.NORMAL;
+        }
+    }
+
     #updateChampion() {
         if (this.#champion) {
-            if (Math.abs(this.#champion.scoreRaw - this.#networkScoreRaw) <= this.#OPT_ERR_THRESHOLD) {
-                this.#stagnationCount += 1;
-            } else {
-                this.#networkScoreRaw = this.#champion.scoreRaw;
-                this.#stagnationCount = 0;
-            }
-
-            if (
-                this.#stagnationCount > 80 &&
-                this.champion &&
-                this.champion.complexityHistory[this.champion.complexityHistory.length - 1] -
-                    this.champion.complexityHistory[0] >
-                    0 &&
-                this.champion.scoreHistory[this.champion.scoreHistory.length - 1] > this.champion.scoreHistory[0]
-            ) {
-                this.#PRESSURE = EMutationPressure.COMPACT;
-            } else {
-                if (this.#stagnationCount > 430) {
-                    this.#stagnationCount = 350;
-                } else if (this.#stagnationCount > 400) {
-                    this.#PRESSURE = EMutationPressure.PANIC;
-                } else if (this.#stagnationCount > 200) {
-                    this.#PRESSURE = EMutationPressure.ESCAPE;
-                } else if (this.#stagnationCount > 80) {
-                    this.#PRESSURE = EMutationPressure.BOOST;
-                } else {
-                    this.#PRESSURE = EMutationPressure.NORMAL;
-                }
-            }
+            this.#updateStagnationAndPressure();
             this.#champion.epoch += 1;
         }
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        const bestClientComplexity = bestClient.genome.connections.size() + bestClient.genome.nodes.size();
-        if (
+
+        const bestScore = bestClient.score;
+        const bestComplexity = bestClient.genome.connections.size() + bestClient.genome.nodes.size();
+
+        const EPS_SCORE = SMALL_GAIN_THRESHOLD;
+
+        const shouldReplace =
             !this.#champion ||
-            bestClient.score > this.#champion?.scoreRaw ||
-            (bestClient.score === this.#champion?.scoreRaw && this.#champion?.complexity > bestClientComplexity)
-        ) {
-            const complexityHistory = [...(this.#champion?.complexityHistory ?? [])];
-            complexityHistory.push(bestClientComplexity);
-            if (complexityHistory.length > 80) {
-                complexityHistory.shift();
-            }
-            const scoreHistory = [...(this.#champion?.scoreHistory ?? [])];
-            scoreHistory.push(bestClient.score);
-            if (scoreHistory.length > 80) {
-                scoreHistory.shift();
-            }
+            bestScore > this.#champion.scoreRaw + EPS_SCORE ||
+            (Math.abs(bestScore - this.#champion.scoreRaw) <= EPS_SCORE && bestComplexity < this.#champion.complexity);
+
+        if (shouldReplace) {
             this.#champion = {
                 client: new Client(
                     this.loadGenome(bestClient.genome.save()),
                     this.#outputActivation,
                     this.#hiddenActivation,
                 ),
-                complexity: bestClientComplexity,
-                complexityHistory: complexityHistory,
-                scoreRaw: bestClient.score,
-                scoreHistory: scoreHistory,
+                complexity: bestComplexity,
+                scoreRaw: bestScore,
+                scoreHistory: this.#champion?.scoreHistory ?? [],
+                complexityHistory: this.#champion?.complexityHistory ?? [],
                 epoch: 0,
             };
-        } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
+
+            return;
+        }
+
+        if (this.#champion && this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {
             this.#champion.epoch = 0;
-            const incertedChampion = new Client(
+            const insertedChampion = new Client(
                 this.loadGenome(this.#champion.client.genome.save()),
                 this.#outputActivation,
                 this.#hiddenActivation,
             );
-            incertedChampion.score = this.#champion.scoreRaw;
-            this.#clients[this.#clients.length - 1] = incertedChampion;
+            insertedChampion.score = this.#champion.scoreRaw;
+            this.#clients[this.#clients.length - 1] = insertedChampion;
         }
     }
 }

@@ -43,7 +43,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testWaveMix01,
+    ...testRings,
     save: false,
     load: false,
     clients: 1000,
