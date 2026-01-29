@@ -107,6 +107,7 @@ export class Client {
         if (!this.#calculator) {
             this.generateCalculator();
         }
+
         return this.#calculator?.calculate(input) || [];
     }
 }

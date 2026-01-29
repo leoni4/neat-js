@@ -81,6 +81,7 @@ export class Genome {
                 to: item.to.innovationNumber,
             });
         });
+
         return {
             nodes,
             connections,
@@ -129,6 +130,7 @@ export class Genome {
                 weightDiff += Math.abs(gene1.weight - gene2.weight);
             }
         }
+        disjoint += g2.connections.size() - indexG2;
 
         let indexNode1 = 0;
         let indexNode2 = 0;
@@ -154,12 +156,15 @@ export class Genome {
                 weightDiff += Math.abs(node1.bias - node2.bias);
             }
         }
+        if (g2.nodes.size() > indexNode2) {
+            disjoint += g2.nodes.size() - indexNode2;
+        }
 
         weightDiff /= similar || 1;
 
         const excess = g1.connections.size() - indexG1 + g1.nodes.size() - indexNode1;
         let N = Math.max(g1.connections.size(), g2.connections.size());
-        N = N < this.#neat.CT ? 1 : N;
+        N = N < this.#neat.CT ? this.#neat.CT : N;
 
         return (this.#neat.C1 * excess) / N + (this.#neat.C2 * disjoint) / N + this.#neat.C3 * weightDiff;
     }
@@ -194,6 +199,7 @@ export class Genome {
             con.weight = src.weight;
             con.enabled = src.enabled;
             con.replaceIndex = src.replaceIndex;
+
             return con;
         };
 
@@ -260,6 +266,7 @@ export class Genome {
         }
         if (!this.#connections.contains(con)) {
             console.warn('Trying to remove none existing Connection');
+
             return;
         }
         this.#connections.remove(con);
@@ -349,6 +356,7 @@ export class Genome {
             if (triesTotal > 10) {
                 return null;
             }
+
             return this.mutateLink(triesTotal + 1);
         }
 
@@ -356,6 +364,7 @@ export class Genome {
         con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
 
         this.#connections.addSorted(con);
+
         return con;
     }
 
@@ -373,6 +382,7 @@ export class Genome {
             node.bias = 0;
 
             this.#nodes.add(node);
+
             return node;
         };
 
@@ -475,6 +485,7 @@ export class Genome {
             newWeight = 0;
         }
         node.bias = newWeight;
+
         return node;
     }
 
@@ -493,6 +504,7 @@ export class Genome {
             newWeight = 0;
         }
         con.weight = newWeight;
+
         return con;
     }
 
@@ -521,6 +533,7 @@ export class Genome {
             newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.BIAS_RANDOM_STRENGTH;
         }
         node.bias = newWeight;
+
         return node;
     }
 
@@ -535,6 +548,7 @@ export class Genome {
             newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
         }
         con.weight = newWeight;
+
         return con;
     }
 
@@ -549,6 +563,7 @@ export class Genome {
             return null;
         }
         con.enabled = !con.enabled;
+
         return con;
     }
 

@@ -1,11 +1,35 @@
 import { Client, Neat, EActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from '../src/visual/frame.js';
-import { testXOR, testXNOR, testAND_OR, testParity3, testCircle, testTwoMoons, testSin01 } from './problems.js';
+import {
+    testXOR,
+    testXNOR,
+    testAND_OR,
+    testParity3,
+    testCircle,
+    testTwoMoons,
+    testSin01,
+    testParity5,
+    testMajority7,
+    testRings,
+    testWaveMix01,
+} from './problems.js';
 
 (function () {
     console.log(
         'All tested',
-        !!(testXOR || testXNOR || testAND_OR || testParity3 || testCircle || testTwoMoons || testSin01),
+        !!(
+            testXOR ||
+            testXNOR ||
+            testAND_OR ||
+            testParity3 ||
+            testCircle ||
+            testTwoMoons ||
+            testSin01 ||
+            testParity5 ||
+            testMajority7 ||
+            testRings ||
+            testWaveMix01
+        ),
     );
 })();
 
@@ -19,7 +43,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testXOR,
+    ...testWaveMix01,
     save: false,
     load: false,
     clients: 1000,
@@ -64,6 +88,7 @@ export function main() {
     setTimeout(function run() {
         if (!frame?.controls.proceed) {
             setTimeout(run, 1);
+
             return;
         }
         //  console.time('run()');
@@ -145,6 +170,7 @@ export function main() {
                 error = 1;
                 main();
             }, 1000);
+
             return;
         }
         k++;

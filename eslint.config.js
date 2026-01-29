@@ -67,6 +67,7 @@ export default [
         rules: {
             ...tseslint.configs.recommended.rules,
             '@typescript-eslint/no-this-alias': 0,
+            'padding-line-between-statements': ['error', { blankLine: 'always', prev: '*', next: 'return' }],
         },
     },
     // Prettier config (must be last to override other configs)

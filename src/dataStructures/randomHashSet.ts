@@ -13,6 +13,7 @@ export class RandomHashSet {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -20,6 +21,7 @@ export class RandomHashSet {
         if (!this.#data.length) {
             return null;
         }
+
         return this.#data[Math.floor(this.#data.length * Math.random())];
     }
 
@@ -35,6 +37,7 @@ export class RandomHashSet {
                 const innovation = this.get(i).innovationNumber;
                 if (gene.innovationNumber < innovation) {
                     this.#data.splice(i, 0, gene);
+
                     return;
                 }
             }
@@ -59,6 +62,7 @@ export class RandomHashSet {
             const index = this.#data.indexOf(arg);
             if (index === -1) {
                 console.warn('Trying to remove() none existing Gene');
+
                 return;
             }
 
@@ -66,6 +70,7 @@ export class RandomHashSet {
         } else {
             if (arg < 0 || arg >= this.#data.length) {
                 console.warn('Trying to remove() none existing Gene');
+
                 return;
             }
             this.#data.splice(arg, 1);
@@ -76,6 +81,7 @@ export class RandomHashSet {
         const index = this.#data.findIndex(g => g.innovationNumber === innovationNumber);
         if (index === -1) {
             console.warn('Trying to removeByInnovation none existing Gene');
+
             return;
         }
 

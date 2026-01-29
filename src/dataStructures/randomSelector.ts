@@ -34,6 +34,7 @@ export class RandomSelector {
                 return this.#objects[i];
             }
         }
+
         return this.#objects[0];
     }
 

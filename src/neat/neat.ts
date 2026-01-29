@@ -49,7 +49,7 @@ export interface INeatParams {
 const DEFAULT_PARAMS = {
     C1: 1,
     C2: 1,
-    C3: 0.1,
+    C3: 0.2,
     CP: 1,
 
     CT: 1,
@@ -80,6 +80,10 @@ const DEFAULT_PARAMS = {
 type MutationPressureType = 'topology' | 'weights';
 
 export const MUTATION_PRESSURE_CONST: Record<EMutationPressure, Record<MutationPressureType, number>> = {
+    COMPACT: {
+        topology: 0.2,
+        weights: 1,
+    },
     NORMAL: {
         topology: 1,
         weights: 1,
@@ -99,6 +103,7 @@ export const MUTATION_PRESSURE_CONST: Record<EMutationPressure, Record<MutationP
 };
 
 export enum EMutationPressure {
+    COMPACT = 'COMPACT',
     NORMAL = 'NORMAL',
     BOOST = 'BOOST',
     ESCAPE = 'ESCAPE',
@@ -159,6 +164,9 @@ export class Neat {
     #champion: {
         client: Client;
         scoreRaw: number;
+        scoreHistory: number[];
+        complexity: number;
+        complexityHistory: number[];
         epoch: number;
     } | null = null;
     #species: Array<Species> = [];
@@ -541,6 +549,7 @@ export class Neat {
             }
             genome.nodes[index].innovationNumber = trueIndex;
         });
+
         return {
             genome,
             evolveCounts: this.#evolveCounts,
@@ -562,6 +571,7 @@ export class Neat {
         const hashKey = connectionGene.getHashKey();
         const foundCon = this.#allConnections.get(hashKey);
         if (!foundCon) return 0;
+
         return foundCon.replaceIndex;
     }
 
@@ -586,6 +596,7 @@ export class Neat {
         const connectionGene = new ConnectionGene(con.innovationNumber, con.from, con.to);
         connectionGene.weight = con.weight;
         connectionGene.enabled = con.enabled;
+
         return connectionGene;
     }
 
@@ -614,6 +625,7 @@ export class Neat {
             nodeGene = new NodeGene(this.#allNodes.size() + 1);
             this.#allNodes.add(nodeGene);
         }
+
         return nodeGene;
     }
 
@@ -673,6 +685,9 @@ export class Neat {
             }
         }
         selector.reset();
+
+        if (this.#species.length < 8) this.#CP *= 0.95;
+        else if (this.#species.length > 25) this.#CP *= 1.05;
     }
 
     #removeExtinct() {
@@ -778,31 +793,59 @@ export class Neat {
                 this.#stagnationCount = 0;
             }
 
-            if (this.#stagnationCount > 430) {
-                this.#stagnationCount = 350;
-            } else if (this.#stagnationCount > 400) {
-                this.#PRESSURE = EMutationPressure.PANIC;
-            } else if (this.#stagnationCount > 200) {
-                this.#PRESSURE = EMutationPressure.ESCAPE;
-            } else if (this.#stagnationCount > 80) {
-                this.#PRESSURE = EMutationPressure.BOOST;
+            if (
+                this.#stagnationCount > 80 &&
+                this.champion &&
+                this.champion.complexityHistory[this.champion.complexityHistory.length - 1] -
+                    this.champion.complexityHistory[0] >
+                    0 &&
+                this.champion.scoreHistory[this.champion.scoreHistory.length - 1] > this.champion.scoreHistory[0]
+            ) {
+                this.#PRESSURE = EMutationPressure.COMPACT;
             } else {
-                this.#PRESSURE = EMutationPressure.NORMAL;
+                if (this.#stagnationCount > 430) {
+                    this.#stagnationCount = 350;
+                } else if (this.#stagnationCount > 400) {
+                    this.#PRESSURE = EMutationPressure.PANIC;
+                } else if (this.#stagnationCount > 200) {
+                    this.#PRESSURE = EMutationPressure.ESCAPE;
+                } else if (this.#stagnationCount > 80) {
+                    this.#PRESSURE = EMutationPressure.BOOST;
+                } else {
+                    this.#PRESSURE = EMutationPressure.NORMAL;
+                }
             }
-
             this.#champion.epoch += 1;
         }
 
         this.#clients.sort((a, b) => b.score - a.score);
         const bestClient = this.#clients[0];
-        if (!this.#champion || bestClient.score > this.#champion?.scoreRaw) {
+        const bestClientComplexity = bestClient.genome.connections.size() + bestClient.genome.nodes.size();
+        if (
+            !this.#champion ||
+            bestClient.score > this.#champion?.scoreRaw ||
+            (bestClient.score === this.#champion?.scoreRaw && this.#champion?.complexity > bestClientComplexity)
+        ) {
+            const complexityHistory = [...(this.#champion?.complexityHistory ?? [])];
+            complexityHistory.push(bestClientComplexity);
+            if (complexityHistory.length > 80) {
+                complexityHistory.shift();
+            }
+            const scoreHistory = [...(this.#champion?.scoreHistory ?? [])];
+            scoreHistory.push(bestClient.score);
+            if (scoreHistory.length > 80) {
+                scoreHistory.shift();
+            }
             this.#champion = {
                 client: new Client(
                     this.loadGenome(bestClient.genome.save()),
                     this.#outputActivation,
                     this.#hiddenActivation,
                 ),
+                complexity: bestClientComplexity,
+                complexityHistory: complexityHistory,
                 scoreRaw: bestClient.score,
+                scoreHistory: scoreHistory,
                 epoch: 0,
             };
         } else if (this.#champion.epoch >= this.#OPTIMIZATION_PERIOD) {

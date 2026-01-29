@@ -24,8 +24,10 @@ export class Species {
         if (force || client.distance(this.#representative) < this.#representative.genome.neat.CP) {
             client.species = this;
             this.#clients.push(client);
+
             return true;
         }
+
         return false;
     }
 

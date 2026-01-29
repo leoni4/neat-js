@@ -35,6 +35,7 @@ export class NodeGene extends Gene {
 
     equals(obj: unknown): boolean {
         if (!(obj instanceof NodeGene)) return false;
+
         return this.innovationNumber === obj.innovationNumber;
     }
 
