@@ -49,37 +49,6 @@ for (let epoch = 0; epoch < 1000; epoch++) {
 }
 ```
 
-### Using Visualization (Optional)
-
-If you want to visualize the neural network, install Konva as a peer dependency:
-
-```bash
-npm install konva
-```
-
-Then import the visualization components:
-
-```typescript
-import { Neat } from '@leoni4/neat-js';
-import { Frame } from '@leoni4/neat-js/visual';
-
-const neat = new Neat(2, 1, 100);
-
-// Create a visualization frame
-const frame = new Frame(
-    neat.clients[0], // client to visualize
-    'container', // DOM element ID
-    {
-        width: 800,
-        height: 600,
-    },
-);
-
-// Update the frame as your network evolves
-frame.client = neat.clients[0];
-frame.genome = neat.clients[0].genome;
-```
-
 ## Development
 
 ### Running the Demo
@@ -93,7 +62,7 @@ npm install
 npm start
 ```
 
-The demo will start a Vite development server at http://localhost:3000 with a visual demonstration of the NEAT algorithm solving the XOR problem.
+The demo will start a Vite development server at http://localhost:3000 with a visual demonstration of the NEAT algorithm solving the selected problem.
 
 ### Available Scripts
 
@@ -113,11 +82,6 @@ The demo will start a Vite development server at http://localhost:3000 with a vi
 - **`Client`** - Individual neural network in the population
 - **`Genome`** - Genetic representation of a neural network
 - **`Species`** - Group of similar genomes
-
-### Visual Components (Optional)
-
-- **`Frame`** - Visual renderer for neural networks (requires Konva)
-- **`Controls`** - UI controls for interacting with the visualization
 
 ### Data Structures
 

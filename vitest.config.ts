@@ -7,7 +7,7 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
-            exclude: ['node_modules/', 'dist/', 'tests/', '*.config.*', 'src/visual/**', 'index.cjs', 'index.html'],
+            exclude: ['node_modules/', 'dist/', 'tests/', '*.config.*', 'index.cjs', 'index.html'],
         },
     },
 });

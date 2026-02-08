@@ -1,5 +1,5 @@
-import { Genome } from '../genome/index.js';
-import { Client, EActivation } from '../neat/index.js';
+import { Genome } from '../../src/genome/index.js';
+import { Client, EActivation } from '../../src/neat/index.js';
 import { Frame } from './frame.js';
 
 export class Controls {

@@ -1,5 +1,5 @@
 import { Client, Neat, EActivation, type INeatParams } from '../src/neat/index.js';
-import { Frame } from '../src/visual/frame.js';
+import { Frame } from './visual/frame.js';
 import {
     testXOR,
     testXNOR,
@@ -43,7 +43,7 @@ const params = {
 } as INeatParams;
 
 const test = {
-    ...testRings,
+    ...testXOR,
     save: false,
     load: false,
     clients: 1000,
