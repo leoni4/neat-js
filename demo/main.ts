@@ -14,24 +14,20 @@ import {
     testWaveMix01,
 } from './problems.js';
 
-(function () {
-    console.log(
-        'All tested',
-        !!(
-            testXOR ||
-            testXNOR ||
-            testAND_OR ||
-            testParity3 ||
-            testCircle ||
-            testTwoMoons ||
-            testSin01 ||
-            testParity5 ||
-            testMajority7 ||
-            testRings ||
-            testWaveMix01
-        ),
-    );
-})();
+// Problem catalog
+const PROBLEMS = {
+    XOR: { name: 'XOR Gate', test: testXOR },
+    XNOR: { name: 'XNOR Gate', test: testXNOR },
+    AND_OR: { name: 'AND & OR Gates', test: testAND_OR },
+    Parity3: { name: 'Parity-3', test: testParity3 },
+    Parity5: { name: 'Parity-5', test: testParity5 },
+    Majority7: { name: 'Majority-7', test: testMajority7 },
+    Circle: { name: 'Circle Classification', test: testCircle },
+    TwoMoons: { name: 'Two Moons', test: testTwoMoons },
+    Rings: { name: 'Rings Classification', test: testRings },
+    Sin01: { name: 'Sine Wave [0,1]', test: testSin01 },
+    WaveMix01: { name: 'Wave Mix [0,1]', test: testWaveMix01 },
+};
 
 const params = {
     // CP: 0.5,
@@ -42,19 +38,41 @@ const params = {
     // etc
 } as INeatParams;
 
-const test = {
-    ...testXOR,
-    save: false,
-    load: false,
-    clients: 1000,
-    params,
-};
+let currentProblem: keyof typeof PROBLEMS = 'XOR';
+let shouldRestart = false;
+let currentTimeout: number | null = null;
 
 const doneTimers: number[] = [];
 let finished = 0;
 let globalFrame: Frame | null = null;
 
+function updateStatus(text: string) {
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+        statusEl.textContent = text;
+    }
+}
+
 export function main() {
+    // Stop any running evolution
+    if (currentTimeout) {
+        clearTimeout(currentTimeout);
+        currentTimeout = null;
+    }
+
+    shouldRestart = false;
+
+    const problemConfig = PROBLEMS[currentProblem];
+    const test = {
+        ...problemConfig.test,
+        save: false,
+        load: false,
+        clients: 1000,
+        params,
+    };
+
+    updateStatus(`Starting evolution for ${problemConfig.name}...`);
+
     let network;
     if (test.load) {
         const net = localStorage.getItem('network');
@@ -85,9 +103,17 @@ export function main() {
     let error = 1;
     const epochs = 1 / 0;
 
-    setTimeout(function run() {
+    currentTimeout = setTimeout(function run() {
+        // Check if we should restart with a new problem
+        if (shouldRestart) {
+            updateStatus('Restarting with new problem...');
+            main();
+
+            return;
+        }
+
         if (!frame?.controls.proceed) {
-            setTimeout(run, 1);
+            currentTimeout = setTimeout(run, 1);
 
             return;
         }
@@ -146,10 +172,11 @@ export function main() {
             if (doneTimers.length) {
                 text += DA;
             }
-            text += 'EPOCH: ' + k + ' | error: ' + error;
+            text += 'EPOCH: ' + k + ' | error: ' + error.toFixed(6);
             frame.text = text;
             frame.client = frameClient;
             frame.genome = frameClient.genome;
+            updateStatus(`${problemConfig.name} - ${text}`);
         }
         if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
             finished += 1;
@@ -158,7 +185,9 @@ export function main() {
             doneTimers.push(k);
             if (doneTimers.length > 200) doneTimers.shift();
             if (frame) {
-                frame.text = DA + 'EPOCH: ' + k + ' | error: ' + error + ' (finished)';
+                const finalText = DA + 'EPOCH: ' + k + ' | error: ' + error.toFixed(6) + ' ✓ SOLVED';
+                frame.text = finalText;
+                updateStatus(`${problemConfig.name} - ${finalText}`);
                 frameClient.genome.optimization();
                 frame.client = frameClient;
                 frame.genome = frameClient.genome;
@@ -166,7 +195,7 @@ export function main() {
             if (test.save) {
                 localStorage.setItem('network', JSON.stringify(neat.save()));
             }
-            setTimeout(() => {
+            currentTimeout = setTimeout(() => {
                 error = 1;
                 main();
             }, 1000);
@@ -176,9 +205,25 @@ export function main() {
         k++;
         neat.evolve(error <= neat.OPT_ERR_THRESHOLD);
         // console.timeEnd('run()');
-        setTimeout(run, 1);
+        currentTimeout = setTimeout(run, 1);
     }, 1);
 }
 
+// Initialize problem selector
+function initProblemSelector() {
+    const selector = document.getElementById('problem-select') as HTMLSelectElement;
+    if (selector) {
+        selector.addEventListener('change', e => {
+            const target = e.target as HTMLSelectElement;
+            currentProblem = target.value as keyof typeof PROBLEMS;
+            shouldRestart = true;
+            updateStatus(`Switching to ${PROBLEMS[currentProblem].name}...`);
+        });
+    }
+}
+
 // Run the demo
+if (typeof document !== 'undefined') {
+    initProblemSelector();
+}
 main();

@@ -145,8 +145,16 @@ export class Frame {
                 biasRadius = radius + Math.abs(radius * item.bias);
                 biasRadius = biasRadius < 5 ? 5 : biasRadius > this.#height / 20 ? this.#height / 20 : biasRadius;
             }
+
+            let x = this.#width * item.x;
+            if (x < (biasRadius ?? radius)) {
+                x = (biasRadius ?? radius) + 2;
+            }
+            if (x + (biasRadius ?? radius) > this.#width) {
+                x = this.#width - (biasRadius ?? radius) - 2;
+            }
             const circle = new Konva.Circle({
-                x: this.#width * item.x,
+                x,
                 y: this.#height * item.y,
                 radius: biasRadius ?? radius,
                 fill: '#0f0',

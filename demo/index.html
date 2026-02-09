@@ -5,47 +5,229 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEAT.js Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 16px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        select,
+        input {
+            padding: 8px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select {
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #667eea;
+            color: white;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button#START {
+            background: #48bb78;
+            grid-column: 1 / -1;
+        }
+
+        button#START:hover {
+            background: #38a169;
+        }
+
+        .test-section {
+            border-top: 2px solid #e1e8ed;
+            padding-top: 20px;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .test-controls input {
+            flex: 1;
+        }
+
+        .test-controls button {
+            min-width: 100px;
+        }
+
+        .visualization {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-bar {
+            background: #f7fafc;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2d3748;
+        }
+
+        #container {
+            min-height: 400px;
+        }
+    </style>
 </head>
 
 <body>
-    <div id="controls">
-        <button id="START">
-            START
-        </button>
-        <button id="r-w">
-            Random weight
-        </button>
-        <button id="w-s">
-            Weight shift
-        </button>
-        <button id="l-m">
-            Link mutate
-        </button>
-        <button id="n-m">
-            Node mutate
-        </button>
-        <button id="l-t">
-            Link toggle
-        </button>
-        <button id="m">
-            Mutate
-        </button>
-        <button id="toggle">
-            Toggle weights
-        </button>
-        <button id="optimization">
-            optimization
-        </button>
-        <br>
-        <br>
-        <input id="inp">
-        <button id="c">
-            Calculate
-        </button>
-        <br>
-        <br>
+    <div class="app-container">
+        <div class="header">
+            <h1>🧬 NEAT.js Demo</h1>
+            <div class="header-controls">
+                <div class="control-group">
+                    <label for="problem-select">Problem:</label>
+                    <select id="problem-select">
+                        <option value="XOR">XOR Gate</option>
+                        <option value="XNOR">XNOR Gate</option>
+                        <option value="AND_OR">AND & OR Gates</option>
+                        <option value="Parity3">Parity-3</option>
+                        <option value="Parity5">Parity-5</option>
+                        <option value="Majority7">Majority-7</option>
+                        <option value="Circle">Circle Classification</option>
+                        <option value="TwoMoons">Two Moons</option>
+                        <option value="Rings">Rings Classification</option>
+                        <option value="Sin01">Sine Wave [0,1]</option>
+                        <option value="WaveMix01">Wave Mix [0,1]</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-title">Evolution Controls</div>
+            <div class="button-grid">
+                <button id="START">▶ START / PAUSE</button>
+                <button id="r-w">Random Weight</button>
+                <button id="w-s">Weight Shift</button>
+                <button id="l-m">Link Mutate</button>
+                <button id="n-m">Node Mutate</button>
+                <button id="l-t">Link Toggle</button>
+                <button id="m">Mutate</button>
+                <button id="toggle">Toggle Weights</button>
+                <button id="optimization">Optimize</button>
+            </div>
+
+            <div class="test-section">
+                <div class="controls-title">Test Network</div>
+                <div class="test-controls">
+                    <input id="inp" placeholder="Enter input values (comma-separated, e.g., 1,0)">
+                    <button id="c">Calculate</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <div id="status" class="status-bar">Ready...</div>
+            <div id="container"></div>
+        </div>
     </div>
-    <div id="container"></div>
+
     <script type="module" src="/main.ts"></script>
 </body>
 
