@@ -46,10 +46,10 @@ export class Controls {
         });
         console.log('input:', input);
         const output = this.#client.calculate(input);
-        console.log(
-            'output:',
-            output.map(a => Number(a.toFixed(2))),
-        );
+        const formattedOut = String(output.map(a => Number(a.toFixed(2))));
+        console.log('output:', formattedOut);
+        const outBlock = document.getElementById('out');
+        if (outBlock) outBlock.innerHTML = formattedOut;
     }
 
     #initControls() {

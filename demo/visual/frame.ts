@@ -179,7 +179,7 @@ export class Frame {
 
         const gensText = new Konva.Text({
             x: 10,
-            y: 60,
+            y: 40,
             text: `Nodes: ${this.#genome.nodes.data.length}`,
             fontSize: 20,
             fontFamily: 'Calibri',
@@ -187,21 +187,21 @@ export class Frame {
         });
         const constText = new Konva.Text({
             x: 10,
-            y: 30,
+            y: 5,
             text: `Connections: ${this.#genome.connections.data.length}`,
             fontSize: 20,
             fontFamily: 'Calibri',
             fill: '#000',
         });
-        const summary = new Konva.Text({
-            x: 10,
-            y: 0,
-            text: this.text,
-            fontSize: 20,
-            fontFamily: 'Calibri',
-            fill: '#000',
-        });
-        this.#layer.add(summary);
+        // const summary = new Konva.Text({
+        //     x: 10,
+        //     y: 0,
+        //     text: this.text,
+        //     fontSize: 20,
+        //     fontFamily: 'Calibri',
+        //     fill: '#000',
+        // });
+        // this.#layer.add(summary);
         this.#layer.add(constText);
         this.#layer.add(gensText);
         this.#layer.draw();

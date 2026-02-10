@@ -152,6 +152,10 @@
             min-width: 100px;
         }
 
+        .test-controls+.test-controls {
+            margin-top: 5px;
+        }
+
         .visualization {
             background: white;
             border-radius: 12px;
@@ -167,10 +171,14 @@
             font-family: 'Courier New', monospace;
             font-size: 13px;
             color: #2d3748;
+            line-height: 20px;
+            text-align: center;
         }
 
         #container {
             min-height: 400px;
+            margin: 0 auto;
+            width: 800px;
         }
     </style>
 </head>
@@ -218,6 +226,9 @@
                 <div class="test-controls">
                     <input id="inp" placeholder="Enter input values (comma-separated, e.g., 1,0)">
                     <button id="c">Calculate</button>
+                </div>
+                <div class="test-controls">
+                    <div id="out" class="status-bar">waiting for input...</div>
                 </div>
             </div>
         </div>

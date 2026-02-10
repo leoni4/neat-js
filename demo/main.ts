@@ -195,10 +195,20 @@ export function main() {
             if (test.save) {
                 localStorage.setItem('network', JSON.stringify(neat.save()));
             }
-            currentTimeout = setTimeout(() => {
-                error = 1;
-                main();
-            }, 1000);
+
+            function restart() {
+                currentTimeout = setTimeout(() => {
+                    if (!frame?.controls.proceed) {
+                        setTimeout(restart, 1);
+
+                        return;
+                    }
+                    error = 1;
+                    main();
+                }, 1000);
+            }
+
+            restart();
 
             return;
         }
