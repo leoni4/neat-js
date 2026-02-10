@@ -2,6 +2,12 @@
 
 A TypeScript implementation of the NEAT (NeuroEvolution of Augmenting Topologies) algorithm for evolving neural networks.
 
+## 🎮 Live Demo
+
+Try the interactive demo: **[https://leoni4.github.io/neat-js/](https://leoni4.github.io/neat-js/)**
+
+The demo showcases NEAT solving various problems including XOR, parity functions, and classification tasks with real-time visualization of the neural network evolution.
+
 ## Installation
 
 ```bash
