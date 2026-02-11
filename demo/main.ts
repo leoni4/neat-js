@@ -174,19 +174,20 @@ async function trainWithVisualization(
                     frame.genome = frameClient.genome;
                 }
 
+                function restart() {
+                    if (!frame?.controls.proceed) {
+                        setTimeout(restart, 1);
+
+                        return;
+                    }
+                    isTraining = false;
+                    resolve();
+                    setTimeout(() => main(), 1);
+                }
+
                 // Wait a bit then restart
                 setTimeout(() => {
-                    if (frame && !frame.controls.proceed) {
-                        setTimeout(() => {
-                            isTraining = false;
-                            resolve();
-                            setTimeout(() => main(), 100);
-                        }, 1000);
-                    } else {
-                        isTraining = false;
-                        resolve();
-                        setTimeout(() => main(), 1000);
-                    }
+                    restart();
                 }, 1000);
 
                 return;
