@@ -1,4 +1,4 @@
-import { Client, Neat, EActivation, type INeatParams } from '../src/neat/index.js';
+import { Neat, EActivation, type INeatParams } from '../src/neat/index.js';
 import { Frame } from './visual/frame.js';
 import {
     testXOR,
@@ -40,11 +40,11 @@ const params = {
 
 let currentProblem: keyof typeof PROBLEMS = 'XOR';
 let shouldRestart = false;
-let currentTimeout: number | null = null;
 
 const doneTimers: number[] = [];
 let finished = 0;
 let globalFrame: Frame | null = null;
+let isTraining = false;
 
 function updateStatus(text: string) {
     const statusEl = document.getElementById('status');
@@ -53,13 +53,166 @@ function updateStatus(text: string) {
     }
 }
 
-export function main() {
-    // Stop any running evolution
-    if (currentTimeout) {
-        clearTimeout(currentTimeout);
-        currentTimeout = null;
+/**
+ * Training function using the new .fit() method with visualization support
+ */
+async function trainWithVisualization(
+    neat: Neat,
+    xTrain: number[][],
+    yTrain: number[][],
+    maxEpochs: number,
+    frame: Frame | null,
+    problemName: string,
+): Promise<void> {
+    return new Promise(resolve => {
+        let epoch = 0;
+        const errorThreshold = neat.OPT_ERR_THRESHOLD;
+
+        function runEpoch() {
+            // Check if we should restart
+            if (shouldRestart || !isTraining) {
+                isTraining = false;
+                resolve();
+
+                return;
+            }
+
+            // Wait for controls to allow proceeding
+            if (frame && !frame.controls.proceed) {
+                setTimeout(runEpoch, 1);
+
+                return;
+            }
+
+            // Evaluate all clients on training data
+            let topScore = 0;
+            let topClient = neat.clients[0];
+            let totalComplexity = 0;
+
+            for (const client of neat.clients) {
+                let totalError = 0;
+                totalComplexity += client.genome.connections.size() + client.genome.nodes.size();
+
+                // Calculate error for each training sample
+                for (let i = 0; i < xTrain.length; i++) {
+                    const output = client.calculate(xTrain[i]);
+                    const sampleError = output.reduce((sum, val, k) => {
+                        return sum + Math.abs(val - yTrain[i][k]);
+                    }, 0);
+                    totalError += sampleError;
+                }
+
+                // Normalize error
+                client.error = totalError / (xTrain.length * neat.outputNodes);
+                client.score = 1 - client.error;
+
+                if (client.score > topScore) {
+                    topScore = client.score;
+                    topClient = client;
+                }
+            }
+
+            const trainError = 1 - topScore;
+
+            // Logging
+            if (epoch % 100 === 0 || epoch === 0) {
+                console.log('###################');
+                neat.printSpecies();
+                console.log('--------');
+                console.log(
+                    'EPOCH:',
+                    epoch,
+                    '| compAll:',
+                    totalComplexity,
+                    '| comp:',
+                    topClient.genome.connections.size() + topClient.genome.nodes.size(),
+                    '| err:',
+                    trainError.toFixed(6),
+                );
+            }
+
+            // Update visualization
+            const champion = neat.champion?.client;
+            const frameClient = champion || topClient;
+
+            let DA = '';
+            if (doneTimers.length) {
+                DA =
+                    '(D:' +
+                    finished +
+                    ' AvgE: ' +
+                    Math.floor(doneTimers.reduce((a, b) => a + b, 0) / doneTimers.length) +
+                    ' ) ';
+            }
+
+            if (frame) {
+                let text = '';
+                if (doneTimers.length) {
+                    text += DA;
+                }
+                text += 'EPOCH: ' + epoch + ' | error: ' + trainError.toFixed(6);
+                frame.text = text;
+                frame.client = frameClient;
+                frame.genome = frameClient.genome;
+                updateStatus(`${problemName} - ${text}`);
+            }
+
+            // Check stopping conditions
+            if (epoch >= maxEpochs || trainError <= errorThreshold) {
+                finished += 1;
+                console.log('###################');
+                console.log('Finished');
+                doneTimers.push(epoch);
+                if (doneTimers.length > 200) doneTimers.shift();
+
+                if (frame) {
+                    const finalText = DA + 'EPOCH: ' + epoch + ' | error: ' + trainError.toFixed(6) + ' ✓ SOLVED';
+                    frame.text = finalText;
+                    updateStatus(`${problemName} - ${finalText}`);
+                    frameClient.genome.optimization();
+                    frame.client = frameClient;
+                    frame.genome = frameClient.genome;
+                }
+
+                // Wait a bit then restart
+                setTimeout(() => {
+                    if (frame && !frame.controls.proceed) {
+                        setTimeout(() => {
+                            isTraining = false;
+                            resolve();
+                            setTimeout(() => main(), 100);
+                        }, 1000);
+                    } else {
+                        isTraining = false;
+                        resolve();
+                        setTimeout(() => main(), 1000);
+                    }
+                }, 1000);
+
+                return;
+            }
+
+            // Evolve to next generation
+            const shouldOptimize = trainError <= neat.OPT_ERR_THRESHOLD;
+            neat.evolve(shouldOptimize);
+            epoch++;
+
+            // Continue with next epoch
+            setTimeout(runEpoch, 1);
+        }
+
+        // Start training
+        runEpoch();
+    });
+}
+
+export async function main() {
+    // Prevent multiple instances
+    if (isTraining) {
+        return;
     }
 
+    isTraining = true;
     shouldRestart = false;
 
     const problemConfig = PROBLEMS[currentProblem];
@@ -81,6 +234,7 @@ export function main() {
             network = JSON.parse(net);
         }
     }
+
     const neat: Neat = new Neat(
         test.input[0].length,
         test.output[0].length,
@@ -91,6 +245,7 @@ export function main() {
         network,
     );
 
+    // Initialize frame for visualization
     if (!globalFrame && typeof document !== 'undefined') {
         globalFrame = new Frame(neat.clients[0], 'container');
     }
@@ -99,124 +254,15 @@ export function main() {
         frame.client = neat.clients[0];
         frame.genome = neat.clients[0].genome;
     }
-    let k = 0;
-    let error = 1;
-    const epochs = 1 / 0;
 
-    currentTimeout = setTimeout(function run() {
-        // Check if we should restart with a new problem
-        if (shouldRestart) {
-            updateStatus('Restarting with new problem...');
-            main();
+    // Train with visualization
+    await trainWithVisualization(neat, test.input, test.output, Infinity, frame, problemConfig.name);
 
-            return;
-        }
+    if (test.save && neat.champion) {
+        localStorage.setItem('network', JSON.stringify(neat.save()));
+    }
 
-        if (!frame?.controls.proceed) {
-            currentTimeout = setTimeout(run, 1);
-
-            return;
-        }
-        //  console.time('run()');
-        let topScore = 0;
-        let topClient: Client = neat.clients[0];
-        let localError = 0;
-        let complexity = 0;
-        for (let i = 0; i < neat.clients.length; i += 1) {
-            const c = neat.clients[i];
-            complexity += c.genome.connections.size() + c.genome.nodes.size();
-            localError = 0;
-            test.input.forEach((inp: Array<number>, i: number) => {
-                const out = c.calculate(inp);
-                const outError = out.reduce((comp, val, k) => {
-                    return comp + Math.abs(val - test.output[i][k]);
-                }, 0);
-                localError += outError;
-            });
-            c.error = localError / 4;
-            c.score = 1 - c.error;
-            if (c.score > topScore) {
-                topScore = c.score;
-                topClient = c;
-            }
-        }
-        error = 1 - topScore;
-        if (k % 100 === 0 || k > epochs || error === 0) {
-            console.log('###################');
-            neat.printSpecies();
-            console.log('--------');
-            console.log(
-                'EPOCH:',
-                k,
-                '| compAll:',
-                complexity,
-                '| comp:',
-                topClient.genome.connections.size() + topClient.genome.nodes.size(),
-                '| err:',
-                error,
-            );
-        }
-        const champion = neat.champion?.client;
-        const frameClient = champion || topClient;
-        let DA = '';
-        if (doneTimers.length) {
-            DA =
-                '(D:' +
-                finished +
-                ' AvgE: ' +
-                Math.floor(doneTimers.reduce((a, b) => a + b, 0) / doneTimers.length) +
-                ' ) ';
-        }
-        if (frame) {
-            let text = '';
-            if (doneTimers.length) {
-                text += DA;
-            }
-            text += 'EPOCH: ' + k + ' | error: ' + error.toFixed(6);
-            frame.text = text;
-            frame.client = frameClient;
-            frame.genome = frameClient.genome;
-            updateStatus(`${problemConfig.name} - ${text}`);
-        }
-        if (k > epochs || error <= neat.OPT_ERR_THRESHOLD) {
-            finished += 1;
-            console.log('###################');
-            console.log('Finished');
-            doneTimers.push(k);
-            if (doneTimers.length > 200) doneTimers.shift();
-            if (frame) {
-                const finalText = DA + 'EPOCH: ' + k + ' | error: ' + error.toFixed(6) + ' ✓ SOLVED';
-                frame.text = finalText;
-                updateStatus(`${problemConfig.name} - ${finalText}`);
-                frameClient.genome.optimization();
-                frame.client = frameClient;
-                frame.genome = frameClient.genome;
-            }
-            if (test.save) {
-                localStorage.setItem('network', JSON.stringify(neat.save()));
-            }
-
-            function restart() {
-                currentTimeout = setTimeout(() => {
-                    if (!frame?.controls.proceed) {
-                        setTimeout(restart, 1);
-
-                        return;
-                    }
-                    error = 1;
-                    main();
-                }, 1000);
-            }
-
-            restart();
-
-            return;
-        }
-        k++;
-        neat.evolve(error <= neat.OPT_ERR_THRESHOLD);
-        // console.timeEnd('run()');
-        currentTimeout = setTimeout(run, 1);
-    }, 1);
+    isTraining = false;
 }
 
 // Initialize problem selector
@@ -227,6 +273,7 @@ function initProblemSelector() {
             const target = e.target as HTMLSelectElement;
             currentProblem = target.value as keyof typeof PROBLEMS;
             shouldRestart = true;
+            isTraining = false;
             updateStatus(`Switching to ${PROBLEMS[currentProblem].name}...`);
         });
     }

@@ -121,6 +121,56 @@ interface LoadData {
     evolveCounts: number;
 }
 
+export interface FitOptions {
+    /**
+     * Number of training epochs (generations). Default: Infinity
+     */
+    epochs?: number;
+    /**
+     * Error threshold for early stopping. Defaults to OPT_ERR_THRESHOLD from params.
+     */
+    errorThreshold?: number;
+    /**
+     * Fraction of training data to use for validation (0-1). Default: 0
+     */
+    validationSplit?: number;
+    /**
+     * Verbosity level:
+     * - 0: Silent
+     * - 1: Progress updates at intervals
+     * - 2: Detailed per-epoch logs
+     * Default: 1
+     */
+    verbose?: 0 | 1 | 2;
+    /**
+     * How often to log when verbose=1. Default: 100
+     */
+    logInterval?: number;
+}
+
+export interface FitHistory {
+    /**
+     * Training errors per epoch
+     */
+    error: number[];
+    /**
+     * Validation errors per epoch (if validationSplit > 0)
+     */
+    validationError?: number[];
+    /**
+     * Number of epochs completed
+     */
+    epochs: number;
+    /**
+     * Final champion client
+     */
+    champion: Client | null;
+    /**
+     * Whether training was stopped early (error threshold reached)
+     */
+    stoppedEarly: boolean;
+}
+
 export class Neat {
     static get MAX_NODES(): number {
         return Math.pow(2, 20);
@@ -643,6 +693,182 @@ export class Neat {
 
     calculate(input: Array<number>): Array<number> {
         return (this.#champion?.client ?? this.#clients[0]).calculate(input) || [];
+    }
+
+    /**
+     * Train the neural network on the provided dataset.
+     * Similar to TensorFlow's model.fit() API.
+     *
+     * @param xTrain - Training input data (array of input vectors)
+     * @param yTrain - Training output data (array of output vectors)
+     * @param options - Training options (epochs, errorThreshold, validationSplit, verbose, logInterval)
+     * @returns Training history with errors, epochs, and champion
+     *
+     * @example
+     * ```typescript
+     * const neat = new Neat(2, 1, 100);
+     * const history = neat.fit(
+     *   [[0, 0], [0, 1], [1, 0], [1, 1]],
+     *   [[0], [1], [1], [0]],
+     *   { epochs: 1000, verbose: 1 }
+     * );
+     * console.log(`Trained in ${history.epochs} epochs`);
+     * ```
+     */
+    fit(xTrain: number[][], yTrain: number[][], options: FitOptions = {}): FitHistory {
+        // Validate inputs
+        if (!xTrain || !yTrain || xTrain.length === 0 || yTrain.length === 0) {
+            throw new Error('Training data cannot be empty');
+        }
+
+        if (xTrain.length !== yTrain.length) {
+            throw new Error(
+                `Input and output data must have the same length (got ${xTrain.length} vs ${yTrain.length})`,
+            );
+        }
+
+        if (xTrain[0].length !== this.#inputNodes) {
+            throw new Error(`Input dimension mismatch: expected ${this.#inputNodes}, got ${xTrain[0].length}`);
+        }
+
+        if (yTrain[0].length !== this.#outputNodes) {
+            throw new Error(`Output dimension mismatch: expected ${this.#outputNodes}, got ${yTrain[0].length}`);
+        }
+
+        // Parse options with defaults
+        const maxEpochs = options.epochs ?? Infinity;
+        const errorThreshold = options.errorThreshold ?? this.#OPT_ERR_THRESHOLD;
+        const validationSplit = options.validationSplit ?? 0;
+        const verbose = options.verbose ?? 1;
+        const logInterval = options.logInterval ?? 100;
+
+        // Validate options
+        if (validationSplit < 0 || validationSplit >= 1) {
+            throw new Error('validationSplit must be between 0 and 1 (exclusive)');
+        }
+
+        // Split data into training and validation sets
+        let trainX = xTrain;
+        let trainY = yTrain;
+        let valX: number[][] | null = null;
+        let valY: number[][] | null = null;
+
+        if (validationSplit > 0) {
+            const splitIndex = Math.floor(xTrain.length * (1 - validationSplit));
+            trainX = xTrain.slice(0, splitIndex);
+            trainY = yTrain.slice(0, splitIndex);
+            valX = xTrain.slice(splitIndex);
+            valY = yTrain.slice(splitIndex);
+
+            if (trainX.length === 0) {
+                throw new Error('Validation split too large, no training data remaining');
+            }
+        }
+
+        // Initialize history
+        const history: FitHistory = {
+            error: [],
+            validationError: valX ? [] : undefined,
+            epochs: 0,
+            champion: null,
+            stoppedEarly: false,
+        };
+
+        // Training loop
+        let epoch = 0;
+
+        while (epoch < maxEpochs) {
+            // Evaluate all clients on training data
+            let topScore = 0;
+            let topClient: Client = this.#clients[0];
+
+            for (const client of this.#clients) {
+                let totalError = 0;
+
+                // Calculate error for each training sample
+                for (let i = 0; i < trainX.length; i++) {
+                    const output = client.calculate(trainX[i]);
+                    const sampleError = output.reduce((sum, val, k) => {
+                        return sum + Math.abs(val - trainY[i][k]);
+                    }, 0);
+                    totalError += sampleError;
+                }
+
+                // Normalize error by number of samples and outputs
+                client.error = totalError / (trainX.length * this.#outputNodes);
+                client.score = 1 - client.error;
+
+                if (client.score > topScore) {
+                    topScore = client.score;
+                    topClient = client;
+                }
+            }
+
+            const trainError = 1 - topScore;
+            history.error.push(trainError);
+
+            // Evaluate on validation set if provided
+            let valError: number | undefined;
+            if (valX && valY) {
+                let totalValError = 0;
+                for (let i = 0; i < valX.length; i++) {
+                    const output = topClient.calculate(valX[i]);
+                    const sampleError = output.reduce((sum, val, k) => {
+                        return sum + Math.abs(val - valY[i][k]);
+                    }, 0);
+                    totalValError += sampleError;
+                }
+                valError = totalValError / (valX.length * this.#outputNodes);
+                history.validationError!.push(valError);
+            }
+
+            // Logging
+            if (verbose === 2 || (verbose === 1 && (epoch % logInterval === 0 || epoch === 0))) {
+                const complexity = topClient.genome.connections.size() + topClient.genome.nodes.size();
+                let logMsg = `Epoch ${epoch} - error: ${trainError.toFixed(6)} - complexity: ${complexity}`;
+
+                if (valError !== undefined) {
+                    logMsg += ` - val_error: ${valError.toFixed(6)}`;
+                }
+
+                if (verbose === 2) {
+                    logMsg += ` - species: ${this.#species.length} - pressure: ${this.#PRESSURE}`;
+                }
+
+                console.log(logMsg);
+            }
+
+            // Check early stopping
+            if (trainError <= errorThreshold) {
+                history.stoppedEarly = true;
+                history.epochs = epoch;
+                history.champion = this.#champion?.client ?? topClient;
+
+                if (verbose > 0) {
+                    console.log(`✓ Training completed: error threshold reached at epoch ${epoch}`);
+                }
+
+                break;
+            }
+
+            // Evolve to next generation
+            const shouldOptimize = trainError <= this.#OPT_ERR_THRESHOLD;
+            this.evolve(shouldOptimize);
+
+            epoch++;
+        }
+
+        // Training finished (max epochs reached)
+        if (!history.stoppedEarly) {
+            history.epochs = epoch;
+            history.champion = this.#champion?.client ?? this.#clients[0];
+
+            if (verbose > 0) {
+                console.log(`Training completed: max epochs (${maxEpochs}) reached`);
+            }
+        }
+
+        return history;
     }
 
     evolve(optimization = false) {
