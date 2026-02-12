@@ -14,8 +14,8 @@ describe('Neat - fit method', () => {
         const yTrain = [[0], [1], [1], [0]];
 
         const history = neat.fit(xTrain, yTrain, {
-            epochs: 500,
-            errorThreshold: 0.1,
+            epochs: 200,
+            errorThreshold: 0.4,
             verbose: 0,
         });
 

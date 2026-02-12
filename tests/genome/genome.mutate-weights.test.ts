@@ -12,7 +12,7 @@ describe('Genome - Weight Mutations', () => {
         neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome = neat.clients[0].genome;
         // Ensure genome has at least one connection for weight mutation tests
-        if (genome.connections.size() === 0) {
+        while (genome.connections.size() === 0) {
             genome.mutateLink();
         }
     });
