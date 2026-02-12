@@ -163,6 +163,28 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        .problem-description {
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .problem-description h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .problem-description p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+
         .status-bar {
             background: #f7fafc;
             border-radius: 6px;
@@ -172,13 +194,15 @@
             font-size: 13px;
             color: #2d3748;
             line-height: 20px;
-            text-align: center;
+        }
+
+        .inner {
+            margin: 0 auto;
+            max-width: 800px;
         }
 
         #container {
             min-height: 400px;
-            margin: 0 auto;
-            width: 800px;
         }
     </style>
 </head>
@@ -205,6 +229,11 @@
                     </select>
                 </div>
             </div>
+        </div>
+
+        <div class="problem-description">
+            <h2>📝 Problem Description</h2>
+            <p id="problem-description-text">Loading...</p>
         </div>
 
         <div class="controls-panel">
@@ -234,8 +263,10 @@
         </div>
 
         <div class="visualization">
-            <div id="status" class="status-bar">Ready...</div>
-            <div id="container"></div>
+            <div id="status" class="status-bar inner">
+                Ready...
+            </div>
+            <div id="container" class="inner"></div>
         </div>
     </div>
 

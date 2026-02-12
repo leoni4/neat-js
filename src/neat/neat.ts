@@ -121,7 +121,7 @@ interface LoadData {
     evolveCounts: number;
 }
 
-export interface FitOptions {
+export interface IFitOptions {
     /**
      * Number of training epochs (generations). Default: Infinity
      */
@@ -148,7 +148,7 @@ export interface FitOptions {
     logInterval?: number;
 }
 
-export interface FitHistory {
+export interface IFitHistory {
     /**
      * Training errors per epoch
      */
@@ -715,7 +715,7 @@ export class Neat {
      * console.log(`Trained in ${history.epochs} epochs`);
      * ```
      */
-    fit(xTrain: number[][], yTrain: number[][], options: FitOptions = {}): FitHistory {
+    fit(xTrain: number[][], yTrain: number[][], options: IFitOptions = {}): IFitHistory {
         // Validate inputs
         if (!xTrain || !yTrain || xTrain.length === 0 || yTrain.length === 0) {
             throw new Error('Training data cannot be empty');
@@ -766,7 +766,7 @@ export class Neat {
         }
 
         // Initialize history
-        const history: FitHistory = {
+        const history: IFitHistory = {
             error: [],
             validationError: valX ? [] : undefined,
             epochs: 0,
