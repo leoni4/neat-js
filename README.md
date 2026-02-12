@@ -1,4 +1,4 @@
-# NEAT.js
+# 🧬 NEAT.js
 
 A TypeScript implementation of the NEAT (NeuroEvolution of Augmenting Topologies) algorithm for evolving neural networks.
 

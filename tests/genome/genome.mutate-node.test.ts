@@ -13,7 +13,7 @@ describe('Genome - mutateNode', () => {
         neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome = neat.clients[0].genome;
         // Ensure genome has at least one connection for mutation tests
-        if (genome.connections.size() === 0) {
+        while (genome.connections.size() === 0) {
             genome.mutateLink();
         }
     });
