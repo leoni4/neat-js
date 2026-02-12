@@ -73,6 +73,7 @@ async function trainWithVisualization(
             if (shouldRestart || !isTraining) {
                 isTraining = false;
                 resolve();
+                setTimeout(() => main(), 1);
 
                 return;
             }
@@ -181,8 +182,8 @@ async function trainWithVisualization(
                         return;
                     }
                     isTraining = false;
-                    resolve();
-                    setTimeout(() => main(), 1);
+                    shouldRestart = true;
+                    runEpoch();
                 }
 
                 // Wait a bit then restart
