@@ -3,57 +3,17 @@ import { NodeGene } from './nodeGene.js';
 import { Neat } from '../neat/index.js';
 
 export class ConnectionGene extends Gene {
-    #from: NodeGene;
-    #to: NodeGene;
-    #weight = 0;
-    #enabled = true;
+    from: NodeGene;
+    to: NodeGene;
+    weight = 0;
+    enabled = true;
 
-    #replaceIndex = 0;
+    replaceIndex = 0;
 
     constructor(innovationNumber: number, from: NodeGene, to: NodeGene) {
         super(innovationNumber);
-        this.#from = from;
-        this.#to = to;
-    }
-
-    get replaceIndex(): number {
-        return this.#replaceIndex;
-    }
-
-    set replaceIndex(value: number) {
-        this.#replaceIndex = value;
-    }
-
-    get from(): NodeGene {
-        return this.#from;
-    }
-
-    set from(value: NodeGene) {
-        this.#from = value;
-    }
-
-    get to(): NodeGene {
-        return this.#to;
-    }
-
-    set to(value: NodeGene) {
-        this.#to = value;
-    }
-
-    get weight(): number {
-        return this.#weight;
-    }
-
-    set weight(value: number) {
-        this.#weight = value;
-    }
-
-    get enabled(): boolean {
-        return this.#enabled;
-    }
-
-    set enabled(value: boolean) {
-        this.#enabled = value;
+        this.from = from;
+        this.to = to;
     }
 
     getHashKey(): string {

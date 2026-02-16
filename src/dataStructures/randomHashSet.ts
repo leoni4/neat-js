@@ -1,15 +1,15 @@
 import { ConnectionGene, NodeGene } from '../genome/index.js';
 
 export class RandomHashSet {
-    #data: Array<NodeGene | ConnectionGene>;
+    private _data: Array<NodeGene | ConnectionGene>;
 
     constructor() {
-        this.#data = [];
+        this._data = [];
     }
 
     contains(gene: NodeGene | ConnectionGene): boolean {
-        for (let i = 0; i < this.#data.length; i += 1) {
-            if (this.#data[i].innovationNumber === gene.innovationNumber) {
+        for (let i = 0; i < this._data.length; i += 1) {
+            if (this._data[i].innovationNumber === gene.innovationNumber) {
                 return true;
             }
         }
@@ -18,16 +18,16 @@ export class RandomHashSet {
     }
 
     randomElement(): NodeGene | ConnectionGene | null {
-        if (!this.#data.length) {
+        if (!this._data.length) {
             return null;
         }
 
-        return this.#data[Math.floor(this.#data.length * Math.random())];
+        return this._data[Math.floor(this._data.length * Math.random())];
     }
 
     add(gene: NodeGene | ConnectionGene) {
         if (!this.contains(gene)) {
-            this.#data.push(gene);
+            this._data.push(gene);
         }
     }
 
@@ -36,59 +36,59 @@ export class RandomHashSet {
             for (let i = 0; i < this.size(); i++) {
                 const innovation = this.get(i).innovationNumber;
                 if (gene.innovationNumber < innovation) {
-                    this.#data.splice(i, 0, gene);
+                    this._data.splice(i, 0, gene);
 
                     return;
                 }
             }
-            this.#data.push(gene);
+            this._data.push(gene);
         }
     }
 
     size(): number {
-        return this.#data.length;
+        return this._data.length;
     }
 
     clear() {
-        this.#data = [];
+        this._data = [];
     }
 
     get(index: number): NodeGene | ConnectionGene {
-        return this.#data[index];
+        return this._data[index];
     }
 
     remove(arg: number | ConnectionGene | NodeGene) {
         if (arg instanceof ConnectionGene || arg instanceof NodeGene) {
-            const index = this.#data.indexOf(arg);
+            const index = this._data.indexOf(arg);
             if (index === -1) {
                 console.warn('Trying to remove() none existing Gene');
 
                 return;
             }
 
-            this.#data.splice(index, 1);
+            this._data.splice(index, 1);
         } else {
-            if (arg < 0 || arg >= this.#data.length) {
+            if (arg < 0 || arg >= this._data.length) {
                 console.warn('Trying to remove() none existing Gene');
 
                 return;
             }
-            this.#data.splice(arg, 1);
+            this._data.splice(arg, 1);
         }
     }
 
     removeByInnovation(innovationNumber: number) {
-        const index = this.#data.findIndex(g => g.innovationNumber === innovationNumber);
+        const index = this._data.findIndex(g => g.innovationNumber === innovationNumber);
         if (index === -1) {
             console.warn('Trying to removeByInnovation none existing Gene');
 
             return;
         }
 
-        this.#data.splice(index, 1);
+        this._data.splice(index, 1);
     }
 
     get data(): Array<NodeGene | ConnectionGene> {
-        return this.#data;
+        return this._data;
     }
 }

@@ -25,42 +25,42 @@ export interface GenomeSaveData {
 }
 
 export class Genome {
-    #connections: RandomHashSet = new RandomHashSet();
-    #nodes: RandomHashSet = new RandomHashSet();
-    #neat: Neat;
-    #optErrThreshold: number;
-    #selfOpt = false;
-    #weightsPressure = 1;
-    #topologyPressure = 1;
+    private _connections: RandomHashSet = new RandomHashSet();
+    private _nodes: RandomHashSet = new RandomHashSet();
+    private _neat: Neat;
+    private _optErrThreshold: number;
+    private _selfOpt = false;
+    private _weightsPressure = 1;
+    private _topologyPressure = 1;
 
     constructor(neat: Neat) {
-        this.#neat = neat;
-        this.#optErrThreshold = neat.OPT_ERR_THRESHOLD;
+        this._neat = neat;
+        this._optErrThreshold = neat.OPT_ERR_THRESHOLD;
     }
 
     get selfOpt(): boolean {
-        return this.#selfOpt;
+        return this._selfOpt;
     }
 
     get optErrThreshold(): number {
-        return this.#optErrThreshold;
+        return this._optErrThreshold;
     }
 
     get connections(): RandomHashSet {
-        return this.#connections;
+        return this._connections;
     }
 
     get nodes(): RandomHashSet {
-        return this.#nodes;
+        return this._nodes;
     }
 
     get neat(): Neat {
-        return this.#neat;
+        return this._neat;
     }
 
     save(): GenomeSaveData {
         const nodes: NodeSaveData[] = [];
-        this.#nodes.data.forEach(item => {
+        this._nodes.data.forEach(item => {
             if (!(item instanceof NodeGene)) return;
             nodes.push({
                 innovationNumber: item.innovationNumber,
@@ -70,7 +70,7 @@ export class Genome {
             });
         });
         const connections: ConnectionSaveData[] = [];
-        this.#connections.data.forEach(item => {
+        this._connections.data.forEach(item => {
             if (!(item instanceof ConnectionGene)) return;
 
             connections.push({
@@ -164,9 +164,9 @@ export class Genome {
 
         const excess = g1.connections.size() - indexG1 + g1.nodes.size() - indexNode1;
         let N = Math.max(g1.connections.size(), g2.connections.size());
-        N = N < this.#neat.CT ? this.#neat.CT : N;
+        N = N < this._neat.CT ? this._neat.CT : N;
 
-        return (this.#neat.C1 * excess) / N + (this.#neat.C2 * disjoint) / N + this.#neat.C3 * weightDiff;
+        return (this._neat.C1 * excess) / N + (this._neat.C2 * disjoint) / N + this._neat.C3 * weightDiff;
     }
 
     static crossOver(g1: Genome, g2: Genome): Genome {
@@ -258,23 +258,23 @@ export class Genome {
 
     removeConnection(con: ConnectionGene, replace = false, down = true, up = true) {
         if (
-            this.#neat.PERMANENT_MAIN_CONNECTIONS &&
+            this._neat.PERMANENT_MAIN_CONNECTIONS &&
             con.from.x === NETWORK_CONSTANTS.INPUT_NODE_X &&
             con.to.x === NETWORK_CONSTANTS.OUTPUT_NODE_X
         ) {
             return;
         }
-        if (!this.#connections.contains(con)) {
+        if (!this._connections.contains(con)) {
             console.warn('Trying to remove none existing Connection');
 
             return;
         }
-        this.#connections.remove(con);
+        this._connections.remove(con);
         let singleFrom = true;
         let singleTo = true;
         if (!replace) {
-            for (let i = 0; i < this.#connections.size(); i += 1) {
-                const c = this.#connections.get(i);
+            for (let i = 0; i < this._connections.size(); i += 1) {
+                const c = this._connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
 
                 if (singleFrom && c.from.innovationNumber === con.from.innovationNumber) {
@@ -291,28 +291,28 @@ export class Genome {
 
         if (con.from.x !== NETWORK_CONSTANTS.INPUT_NODE_X && singleFrom && !replace && down) {
             const removingFrom = [];
-            for (let i = 0; i < this.#connections.size(); i += 1) {
-                const c = this.#connections.get(i);
+            for (let i = 0; i < this._connections.size(); i += 1) {
+                const c = this._connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
                 if (c.to.innovationNumber === con.from.innovationNumber) {
                     removingFrom.push(c);
                 }
             }
-            this.#nodes.removeByInnovation(con.from.innovationNumber);
+            this._nodes.removeByInnovation(con.from.innovationNumber);
             removingFrom.forEach(c => {
                 this.removeConnection(c, false, true, false);
             });
         }
         if (con.to.x !== NETWORK_CONSTANTS.OUTPUT_NODE_X && singleTo && !replace && up) {
             const removingTo = [];
-            for (let i = 0; i < this.#connections.size(); i += 1) {
-                const c = this.#connections.get(i);
+            for (let i = 0; i < this._connections.size(); i += 1) {
+                const c = this._connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
                 if (c.from.innovationNumber === con.to.innovationNumber) {
                     removingTo.push(c);
                 }
             }
-            this.#nodes.removeByInnovation(con.to.innovationNumber);
+            this._nodes.removeByInnovation(con.to.innovationNumber);
             removingTo.forEach(c => {
                 this.removeConnection(c, false, false, true);
             });
@@ -320,8 +320,8 @@ export class Genome {
     }
 
     mutateLink(triesTotal = 0): ConnectionGene | null {
-        let geneA = this.#nodes.randomElement();
-        let geneB = this.#nodes.randomElement();
+        let geneA = this._nodes.randomElement();
+        let geneB = this._nodes.randomElement();
 
         if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
             return null;
@@ -332,7 +332,7 @@ export class Genome {
             if (triesCount > 10) {
                 return null;
             }
-            geneB = this.#nodes.randomElement();
+            geneB = this._nodes.randomElement();
         }
 
         if (!(geneB instanceof NodeGene)) {
@@ -345,7 +345,7 @@ export class Genome {
             geneB = temp;
         }
         let exists = false;
-        this.#connections.data.forEach(item => {
+        this._connections.data.forEach(item => {
             if (item instanceof NodeGene) return;
             if (item.from === geneA && item.to === geneB) {
                 exists = true;
@@ -360,10 +360,10 @@ export class Genome {
             return this.mutateLink(triesTotal + 1);
         }
 
-        const con: ConnectionGene = this.#neat.getConnection(geneA, geneB);
-        con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+        const con: ConnectionGene = this._neat.getConnection(geneA, geneB);
+        con.weight = (Math.random() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
 
-        this.#connections.addSorted(con);
+        this._connections.addSorted(con);
 
         return con;
     }
@@ -372,22 +372,22 @@ export class Genome {
         let con: ConnectionGene | null = null;
 
         const getLocalNodeById = (id: number): NodeGene => {
-            const existing = this.#nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === id);
+            const existing = this._nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === id);
             if (existing && existing instanceof NodeGene) return existing;
 
-            const global = this.#neat.getNode(id);
+            const global = this._neat.getNode(id);
             const node = new NodeGene(id);
             node.x = global.x;
             node.y = global.y;
             node.bias = 0;
 
-            this.#nodes.add(node);
+            this._nodes.add(node);
 
             return node;
         };
 
         for (let tries = 0; tries < 20; tries++) {
-            const c = this.#connections.randomElement();
+            const c = this._connections.randomElement();
             if (c instanceof ConnectionGene && c.enabled) {
                 con = c;
                 break;
@@ -398,7 +398,7 @@ export class Genome {
         const from: NodeGene = getLocalNodeById(con.from.innovationNumber);
         const to: NodeGene = getLocalNodeById(con.to.innovationNumber);
 
-        const replaceIndex = this.#neat.getReplaceIndex(from, to);
+        const replaceIndex = this._neat.getReplaceIndex(from, to);
         let middle: NodeGene;
         const middleX = (from.x + to.x) / 2;
         let middleY =
@@ -415,21 +415,21 @@ export class Genome {
             return null;
         }
         if (replaceIndex === 0) {
-            middle = this.#neat.getNode();
+            middle = this._neat.getNode();
             middle.x = middleX;
             middle.y = middleY;
-            this.#neat.setReplaceIndex(from, to, middle.innovationNumber);
+            this._neat.setReplaceIndex(from, to, middle.innovationNumber);
         } else {
             middle = getLocalNodeById(replaceIndex);
             middle.x = middle.x || middleX;
             middle.y = middle.y || middleY;
         }
 
-        const con1: ConnectionGene = this.#neat.getConnection(from, middle);
-        const con2: ConnectionGene = this.#neat.getConnection(middle, to);
+        const con1: ConnectionGene = this._neat.getConnection(from, middle);
+        const con2: ConnectionGene = this._neat.getConnection(middle, to);
         let exists1 = false;
         let exists2 = false;
-        this.#connections.data.forEach(item => {
+        this._connections.data.forEach(item => {
             if (item instanceof NodeGene) return;
             if (
                 item.from.innovationNumber === from.innovationNumber &&
@@ -447,12 +447,12 @@ export class Genome {
         con1.weight = 1;
         con2.weight = con.weight;
         if (!exists1) {
-            this.#connections.addSorted(con1);
+            this._connections.addSorted(con1);
         }
         if (!exists2) {
-            this.#connections.addSorted(con2);
+            this._connections.addSorted(con2);
         }
-        this.#nodes.add(middle);
+        this._nodes.add(middle);
 
         if (!exists1 || !exists2) {
             con.enabled = false;
@@ -467,7 +467,7 @@ export class Genome {
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
-            node = this.#nodes.randomElement();
+            node = this._nodes.randomElement();
         }
         if (counter >= 10) {
             return null;
@@ -479,7 +479,7 @@ export class Genome {
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH;
+            newWeight = node.bias + (Math.random() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -490,7 +490,7 @@ export class Genome {
     }
 
     #mutateWeightShiftConnection(): ConnectionGene | null {
-        const con = this.#connections.randomElement();
+        const con = this._connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
@@ -498,7 +498,7 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight = con.weight + (Math.random() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -518,7 +518,7 @@ export class Genome {
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
-            node = this.#nodes.randomElement();
+            node = this._nodes.randomElement();
         }
         if (counter >= 10) {
             return null;
@@ -528,9 +528,9 @@ export class Genome {
             return null;
         }
 
-        let newWeight = node.bias || this.#neat.BIAS_RANDOM_STRENGTH;
+        let newWeight = node.bias || this._neat.BIAS_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.BIAS_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
         }
         node.bias = newWeight;
 
@@ -538,14 +538,14 @@ export class Genome {
     }
 
     #mutateWeightRandomConnection(): ConnectionGene | null {
-        const con = this.#connections.randomElement();
+        const con = this._connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
 
-        let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
+        let newWeight = con.weight || this._neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
         }
         con.weight = newWeight;
 
@@ -558,7 +558,7 @@ export class Genome {
     }
 
     mutateLinkToggle(): ConnectionGene | null {
-        const con = this.#connections.randomElement();
+        const con = this._connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
@@ -669,8 +669,8 @@ export class Genome {
         while (removedAny) {
             removedAny = false;
 
-            for (let i = 0; i < this.#connections.size(); i += 1) {
-                const c = this.#connections.get(i);
+            for (let i = 0; i < this._connections.size(); i += 1) {
+                const c = this._connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
 
                 if (!c.enabled) {
@@ -688,24 +688,24 @@ export class Genome {
     }
 
     mutate(selfOpt = false) {
-        this.#weightsPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].weights ?? 1;
-        this.#topologyPressure = MUTATION_PRESSURE_CONST[this.#neat.PRESSURE].topology ?? 1;
-        this.#selfOpt = selfOpt;
-        const optimize = this.#selfOpt || this.#neat.optimization;
+        this._weightsPressure = MUTATION_PRESSURE_CONST[this._neat.PRESSURE].weights ?? 1;
+        this._topologyPressure = MUTATION_PRESSURE_CONST[this._neat.PRESSURE].topology ?? 1;
+        this._selfOpt = selfOpt;
+        const optimize = this._selfOpt || this._neat.optimization;
         if (optimize) {
             this.optimization();
         }
         let prob: number;
 
-        if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-            prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE * this.#topologyPressure;
-            prob = Math.max(prob, this.#neat.CT - this.#connections.size());
+        if ((!selfOpt && !this._neat.optimization) || this._connections.size() < this._neat.CT) {
+            prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
+            prob = Math.max(prob, this._neat.CT - this._connections.size());
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
             }
 
-            prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE * this.#topologyPressure;
+            prob = this._neat.PROBABILITY_MUTATE_NODES * this._neat.MUTATION_RATE * this._topologyPressure;
 
             while (prob > Math.random()) {
                 prob--;
@@ -713,15 +713,15 @@ export class Genome {
             }
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_TOGGLE_LINK;
+        prob = this._neat.PROBABILITY_MUTATE_TOGGLE_LINK;
 
         while (prob > Math.random()) {
             prob--;
             this.mutateLinkToggle();
         }
 
-        const minWeight = Math.min(this.#connections.size(), this.#nodes.size() - this.#neat.CT);
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE * this.#weightsPressure;
+        const minWeight = Math.min(this._connections.size(), this._nodes.size() - this._neat.CT);
+        prob = this._neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this._neat.MUTATION_RATE * this._weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
 
         while (prob > Math.random()) {
@@ -729,7 +729,7 @@ export class Genome {
             this.mutateWeightRandom();
         }
 
-        prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE * this.#weightsPressure;
+        prob = this._neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this._neat.MUTATION_RATE * this._weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
 
         while (prob > Math.random()) {

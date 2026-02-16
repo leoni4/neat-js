@@ -4,92 +4,28 @@ import { Calculator } from '../calculations/index.js';
 import { EActivation } from '../neat/index.js';
 
 export class Client {
-    #genome: Genome;
-    #score = 0;
-    #scoreRaw = 0;
-    #error = 0;
-    #bestScore = false;
-    #species: Species | null;
-    #calculator: Calculator | null;
-    #outputActivation: EActivation;
-    #hiddenActivation: EActivation;
-    #complexity = 0;
-    #adjustedScore = 0;
+    genome: Genome;
+    score = 0;
+    scoreRaw = 0;
+    error = 0;
+    bestScore = false;
+    species: Species | null;
+    private _calculator: Calculator | null;
+    private _outputActivation: EActivation;
+    private _hiddenActivation: EActivation;
+    complexity = 0;
+    adjustedScore = 0;
 
     constructor(genome: Genome, outputActivation: EActivation, hiddenActivation: EActivation) {
-        this.#outputActivation = outputActivation;
-        this.#hiddenActivation = hiddenActivation;
-        this.#genome = genome;
-        this.#calculator = null;
-        this.#species = null;
-    }
-
-    get bestScore(): boolean {
-        return this.#bestScore;
-    }
-
-    set bestScore(value: boolean) {
-        this.#bestScore = value;
-    }
-
-    get genome(): Genome {
-        return this.#genome;
-    }
-
-    set genome(value: Genome) {
-        this.#genome = value;
-    }
-
-    get error(): number {
-        return this.#error;
-    }
-
-    set error(value: number) {
-        this.#error = value;
-    }
-
-    get score(): number {
-        return this.#score;
-    }
-
-    set score(value: number) {
-        this.#score = value;
-    }
-
-    get scoreRaw(): number {
-        return this.#scoreRaw;
-    }
-
-    set scoreRaw(value: number) {
-        this.#scoreRaw = value;
-    }
-
-    get species(): Species | null {
-        return this.#species;
-    }
-
-    set species(value: Species | null) {
-        this.#species = value;
-    }
-
-    get complexity(): number {
-        return this.#complexity;
-    }
-
-    set complexity(value: number) {
-        this.#complexity = value;
-    }
-
-    get adjustedScore(): number {
-        return this.#adjustedScore;
-    }
-
-    set adjustedScore(value: number) {
-        this.#adjustedScore = value;
+        this._outputActivation = outputActivation;
+        this._hiddenActivation = hiddenActivation;
+        this.genome = genome;
+        this._calculator = null;
+        this.species = null;
     }
 
     generateCalculator() {
-        this.#calculator = new Calculator(this.#genome, this.#outputActivation, this.#hiddenActivation);
+        this._calculator = new Calculator(this.genome, this._outputActivation, this._hiddenActivation);
     }
 
     distance(client: Client): number {
@@ -104,10 +40,10 @@ export class Client {
     }
 
     calculate(input: Array<number>): Array<number> {
-        if (!this.#calculator) {
+        if (!this._calculator) {
             this.generateCalculator();
         }
 
-        return this.#calculator?.calculate(input) || [];
+        return this._calculator?.calculate(input) || [];
     }
 }

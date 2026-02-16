@@ -2,28 +2,28 @@ import { Client } from './client.js';
 import { Genome } from '../genome/index.js';
 
 export class Species {
-    #clients: Array<Client> = [];
-    #representative: Client;
-    #score = 0;
+    private _clients: Array<Client> = [];
+    private _representative: Client;
+    private _score = 0;
 
     constructor(client: Client) {
-        this.#representative = client;
-        this.#representative.species = this;
-        this.#clients.push(client);
+        this._representative = client;
+        this._representative.species = this;
+        this._clients.push(client);
     }
 
     get score(): number {
-        return this.#score;
+        return this._score;
     }
 
     get clients(): Array<Client> {
-        return this.#clients;
+        return this._clients;
     }
 
     put(client: Client, force = false): boolean {
-        if (force || client.distance(this.#representative) < this.#representative.genome.neat.CP) {
+        if (force || client.distance(this._representative) < this._representative.genome.neat.CP) {
             client.species = this;
-            this.#clients.push(client);
+            this._clients.push(client);
 
             return true;
         }
@@ -32,46 +32,46 @@ export class Species {
     }
 
     goExtinct() {
-        for (let i = 0; i < this.#clients.length; i += 1) {
-            const c = this.#clients[i];
+        for (let i = 0; i < this._clients.length; i += 1) {
+            const c = this._clients[i];
             c.species = null;
         }
-        this.#clients = [];
+        this._clients = [];
     }
 
     evaluateScore() {
         let value = 0;
-        for (let i = 0; i < this.#clients.length; i += 1) {
-            const c = this.#clients[i];
+        for (let i = 0; i < this._clients.length; i += 1) {
+            const c = this._clients[i];
             value += c.score;
         }
-        this.#score = value / this.#clients.length;
+        this._score = value / this._clients.length;
     }
 
     #getRandomClient(): Client {
-        return this.#clients[Math.floor(Math.random() * this.#clients.length)];
+        return this._clients[Math.floor(Math.random() * this._clients.length)];
     }
 
     reset() {
-        this.#representative = this.#getRandomClient();
+        this._representative = this.#getRandomClient();
         this.goExtinct();
-        this.#clients.push(this.#representative);
-        this.#representative.species = this;
-        this.#score = 0;
+        this._clients.push(this._representative);
+        this._representative.species = this;
+        this._score = 0;
     }
 
     kill(survivors = 0.5) {
-        this.#clients.sort((a, b) => {
+        this._clients.sort((a, b) => {
             return a.scoreRaw > b.scoreRaw ? -1 : 1;
         });
 
-        const keep = Math.ceil(survivors * this.#clients.length);
-        for (let i = this.#clients.length - 1; i >= keep; i--) {
-            if (this.#clients[i].bestScore) {
+        const keep = Math.ceil(survivors * this._clients.length);
+        for (let i = this._clients.length - 1; i >= keep; i--) {
+            if (this._clients[i].bestScore) {
                 continue;
             }
-            this.#clients[i].species = null;
-            this.#clients.splice(i, 1);
+            this._clients[i].species = null;
+            this._clients.splice(i, 1);
         }
     }
 
@@ -86,6 +86,6 @@ export class Species {
     }
 
     size(): number {
-        return this.#clients.length;
+        return this._clients.length;
     }
 }
