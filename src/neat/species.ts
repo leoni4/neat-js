@@ -48,12 +48,12 @@ export class Species {
         this._score = value / this._clients.length;
     }
 
-    #getRandomClient(): Client {
+    private getRandomClient(): Client {
         return this._clients[Math.floor(Math.random() * this._clients.length)];
     }
 
     reset() {
-        this._representative = this.#getRandomClient();
+        this._representative = this.getRandomClient();
         this.goExtinct();
         this._clients.push(this._representative);
         this._representative.species = this;
@@ -76,8 +76,8 @@ export class Species {
     }
 
     breed(): Genome {
-        const c1 = this.#getRandomClient();
-        const c2 = this.#getRandomClient();
+        const c1 = this.getRandomClient();
+        const c2 = this.getRandomClient();
         if (c1.score >= c2.score) {
             return Genome.crossOver(c1.genome, c2.genome);
         } else {

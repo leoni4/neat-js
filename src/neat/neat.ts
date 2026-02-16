@@ -284,7 +284,7 @@ export class Neat {
         this._outputNodes = outputNodes;
         this._maxClients = clients;
 
-        this.#validateConfiguration();
+        this.validateConfiguration();
 
         if (loadData) {
             this.load(loadData);
@@ -293,7 +293,7 @@ export class Neat {
         }
     }
 
-    #validateConfiguration(): void {
+    private validateConfiguration(): void {
         if (this._C1 < 0 || this._C2 < 0 || this._C3 < 0) {
             throw new Error('Distance coefficients (C1, C2, C3) must be non-negative');
         }
@@ -866,25 +866,25 @@ export class Neat {
     evolve(optimization = false) {
         this._evolveCounts++;
         this._optimization = optimization || this._evolveCounts % this._OPTIMIZATION_PERIOD === 0;
-        this.#updateChampion();
-        this.#normalizeScore();
-        this.#genSpecies();
-        this.#kill();
-        this.#removeExtinct();
-        this.#reproduce();
-        this.#mutate();
+        this.updateChampion();
+        this.normalizeScore();
+        this.genSpecies();
+        this.kill();
+        this.removeExtinct();
+        this.reproduce();
+        this.mutate();
         for (let i = 0; i < this._clients.length; i += 1) {
             this._clients[i].generateCalculator();
         }
     }
 
-    #mutate() {
+    private mutate() {
         for (let i = 0; i < this._clients.length; i += 1) {
             this._clients[i].mutate(this._evolveCounts === 1);
         }
     }
 
-    #reproduce() {
+    private reproduce() {
         const selector = new RandomSelector(this._SURVIVORS);
         for (let i = 0; i < this._species.length; i += 1) {
             selector.add(this._species[i]);
@@ -914,7 +914,7 @@ export class Neat {
         else if (this._species.length > 25) this._CP *= 1.05;
     }
 
-    #removeExtinct() {
+    private removeExtinct() {
         for (let i = this._species.length - 1; i >= 0; i--) {
             if (this._species[i].size() <= 1 && !this._species[i].clients[0]?.bestScore && this._species.length > 1) {
                 this._species[i].goExtinct();
@@ -923,13 +923,13 @@ export class Neat {
         }
     }
 
-    #kill() {
+    private kill() {
         for (let i = 0; i < this._species.length; i += 1) {
             this._species[i].kill(this._SURVIVORS);
         }
     }
 
-    #genSpecies() {
+    private genSpecies() {
         for (let i = 0; i < this._species.length; i += 1) {
             this._species[i].reset();
         }
@@ -956,7 +956,7 @@ export class Neat {
         }
     }
 
-    #normalizeScore() {
+    private normalizeScore() {
         let rawMax = -Infinity,
             rawMin = Infinity;
 
@@ -1008,7 +1008,7 @@ export class Neat {
         }
     }
 
-    #updateStagnationAndPressure() {
+    private updateStagnationAndPressure() {
         if (!this._champion) return;
 
         const delta = Math.abs(this._champion.scoreRaw - this._networkScoreRaw);
@@ -1068,9 +1068,9 @@ export class Neat {
         }
     }
 
-    #updateChampion() {
+    private updateChampion() {
         if (this._champion) {
-            this.#updateStagnationAndPressure();
+            this.updateStagnationAndPressure();
             this._champion.epoch += 1;
         }
 

@@ -462,7 +462,7 @@ export class Genome {
         return middle;
     }
 
-    #mutateWeightShiftNode(): NodeGene | null {
+    private mutateWeightShiftNode(): NodeGene | null {
         let counter = 0;
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
@@ -489,7 +489,7 @@ export class Genome {
         return node;
     }
 
-    #mutateWeightShiftConnection(): ConnectionGene | null {
+    private mutateWeightShiftConnection(): ConnectionGene | null {
         const con = this._connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -509,11 +509,11 @@ export class Genome {
     }
 
     mutateWeightShift(): void {
-        this.#mutateWeightShiftConnection();
-        this.#mutateWeightShiftNode();
+        this.mutateWeightShiftConnection();
+        this.mutateWeightShiftNode();
     }
 
-    #mutateWeightRandomNode(): NodeGene | null {
+    private mutateWeightRandomNode(): NodeGene | null {
         let counter = 0;
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
@@ -537,7 +537,7 @@ export class Genome {
         return node;
     }
 
-    #mutateWeightRandomConnection(): ConnectionGene | null {
+    private mutateWeightRandomConnection(): ConnectionGene | null {
         const con = this._connections.randomElement();
         if (!(con instanceof ConnectionGene)) {
             return null;
@@ -553,8 +553,8 @@ export class Genome {
     }
 
     mutateWeightRandom(): void {
-        this.#mutateWeightRandomConnection();
-        this.#mutateWeightRandomNode();
+        this.mutateWeightRandomConnection();
+        this.mutateWeightRandomNode();
     }
 
     mutateLinkToggle(): ConnectionGene | null {
@@ -567,7 +567,7 @@ export class Genome {
         return con;
     }
 
-    #pruneDeadGraph() {
+    private pruneDeadGraph() {
         const nodes = this.nodes.data.filter(n => n instanceof NodeGene) as NodeGene[];
         const cons = this.connections.data.filter(c => c instanceof ConnectionGene) as ConnectionGene[];
 
@@ -663,7 +663,7 @@ export class Genome {
         }
     }
 
-    #removeDead() {
+    private removeDead() {
         let removedAny = true;
 
         while (removedAny) {
@@ -683,8 +683,8 @@ export class Genome {
     }
 
     optimization() {
-        this.#removeDead();
-        this.#pruneDeadGraph();
+        this.removeDead();
+        this.pruneDeadGraph();
     }
 
     mutate(selfOpt = false) {

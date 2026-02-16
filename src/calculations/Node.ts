@@ -14,7 +14,7 @@ export class Node {
         this._node = node;
     }
 
-    #activationFunction(sum: number, type: string): number {
+    private activationFunction(sum: number, type: string): number {
         switch (type) {
             case 'none':
             case 'linear':
@@ -45,7 +45,7 @@ export class Node {
         if (this.x !== 0) {
             sum += this._node.bias;
         }
-        this.output = this.#activationFunction(sum, activation);
+        this.output = this.activationFunction(sum, activation);
     }
 
     compareTo(node: Node): number {
