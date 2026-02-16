@@ -5,16 +5,16 @@ import { NETWORK_CONSTANTS } from '../neat/constants.js';
 import { EActivation } from '../neat/index.js';
 
 export class Calculator {
-    #inputNodes: Array<Node> = [];
-    #hiddenNodes: Array<Node> = [];
-    #outputNodes: Array<Node> = [];
+    private _inputNodes: Array<Node> = [];
+    private _hiddenNodes: Array<Node> = [];
+    private _outputNodes: Array<Node> = [];
 
-    #outputActivation: EActivation;
-    #hiddenActivation: EActivation;
+    private _outputActivation: EActivation;
+    private _hiddenActivation: EActivation;
 
     constructor(genome: Genome, outputActivation: EActivation, hiddenActivation: EActivation) {
-        this.#outputActivation = outputActivation;
-        this.#hiddenActivation = hiddenActivation;
+        this._outputActivation = outputActivation;
+        this._hiddenActivation = hiddenActivation;
         const nodes = genome.nodes;
         const connections = genome.connections;
 
@@ -27,15 +27,15 @@ export class Calculator {
             nodeHashmap.set(n.innovationNumber, node);
 
             if (n.x === NETWORK_CONSTANTS.INPUT_NODE_X) {
-                this.#inputNodes.push(node);
+                this._inputNodes.push(node);
             } else if (n.x === NETWORK_CONSTANTS.OUTPUT_NODE_X) {
-                this.#outputNodes.push(node);
+                this._outputNodes.push(node);
             } else {
                 node.hidden = true;
-                this.#hiddenNodes.push(node);
+                this._hiddenNodes.push(node);
             }
         }
-        this.#hiddenNodes.sort((a, b) => {
+        this._hiddenNodes.sort((a, b) => {
             return a.compareTo(b);
         });
 
@@ -59,24 +59,24 @@ export class Calculator {
     }
 
     calculate(input: Array<number>): Array<number> {
-        if (input.length !== this.#inputNodes.length) {
+        if (input.length !== this._inputNodes.length) {
             throw new Error(
-                `Input length (${input.length}) does not match number of input nodes (${this.#inputNodes.length})`,
+                `Input length (${input.length}) does not match number of input nodes (${this._inputNodes.length})`,
             );
         }
-        for (let i = 0; i < this.#inputNodes.length; i++) {
-            this.#inputNodes[i].output = input[i];
+        for (let i = 0; i < this._inputNodes.length; i++) {
+            this._inputNodes[i].output = input[i];
         }
-        for (let i = 0; i < this.#hiddenNodes.length; i++) {
-            this.#hiddenNodes[i].calculate(this.#hiddenActivation);
+        for (let i = 0; i < this._hiddenNodes.length; i++) {
+            this._hiddenNodes[i].calculate(this._hiddenActivation);
         }
-        const output = new Array<number>(this.#outputNodes.length);
-        for (let i = 0; i < this.#outputNodes.length; i++) {
-            this.#outputNodes[i].calculate(this.#outputActivation);
-            output[i] = this.#outputNodes[i].output;
+        const output = new Array<number>(this._outputNodes.length);
+        for (let i = 0; i < this._outputNodes.length; i++) {
+            this._outputNodes[i].calculate(this._outputActivation);
+            output[i] = this._outputNodes[i].output;
         }
 
-        if (this.#outputActivation === EActivation.softmax) {
+        if (this._outputActivation === EActivation.softmax) {
             const max = Math.max(...output);
             const exps = output.map(x => Math.exp(x - max));
             const sum = exps.reduce((a, b) => a + b, 0);
