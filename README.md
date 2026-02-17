@@ -38,7 +38,7 @@ const inputs = [
 const outputs = [[0], [0], [1], [1]];
 
 const solved = neat.fit(inputs, outputs, {
-    verbose: 2,
+    verbose: 1,
 });
 
 console.log('solved in:', solved.epochs);
