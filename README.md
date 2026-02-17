@@ -19,14 +19,13 @@ npm install @leoni4/neat-js
 ### Basic Library Usage
 
 ```typescript
-import { Neat, EActivation } from '@leoni4/neat-js';
+import { Neat } from '@leoni4/neat-js';
 
 // Create a NEAT instance
 const neat = new Neat(
     2, // input nodes
     1, // output nodes
-    100, // population size
-    EActivation.sigmoid, // output activation function
+    1000, // population size
 );
 
 // Training data (XOR example)
@@ -38,6 +37,34 @@ const inputs = [
 ];
 const outputs = [[0], [0], [1], [1]];
 
+const solved = neat.fit(inputs, outputs, {
+    verbose: 2,
+});
+
+console.log('solved in:', solved.epochs);
+```
+
+### Manual Library Usage
+
+Could be helpfull with non linear score determination, or complex environment
+
+```typescript
+import { Neat } from '@leoni4/neat-js';
+
+// Create a NEAT instance same as above
+const neat = new Neat(2, 1, 1000);
+
+// Training data (XOR example) ... same as above
+const inputs = [
+    [0, 0],
+    [1, 1],
+    [1, 0],
+    [0, 1],
+];
+const outputs = [[0], [0], [1], [1]];
+
+let finalError = 1; // just for the demo
+let counter = 0;
 // Evolution loop
 for (let epoch = 0; epoch < 1000; epoch++) {
     // Evaluate each client
@@ -47,12 +74,27 @@ for (let epoch = 0; epoch < 1000; epoch++) {
             const output = client.calculate(input)[0];
             error += Math.abs(output - outputs[i][0]);
         });
-        client.score = 1 - error / inputs.length;
-    }
+        error = error / inputs.length;
 
+        // calculate error and score of the client
+        client.error = error;
+        client.score = 1 - client.error;
+
+        if (finalError > error) {
+            finalError = error;
+        }
+    }
+    counter++;
     // Evolve to next generation
     neat.evolve();
+
+    if (epoch % 10 === 0) console.log('Epoch:', epoch, ' Error:', finalError);
+
+    if (finalError < 0.01) break;
 }
+
+console.log('Total epochs:', counter, ' Final Error:', finalError);
+// ... rest of the logic
 ```
 
 ## Development
