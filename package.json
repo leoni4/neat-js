@@ -1,6 +1,6 @@
 {
     "name": "@leoni4/neat-js",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "NEAT Neural Network Implementation in TypeScript",
     "type": "module",
     "main": "./dist/index.js",
