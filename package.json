@@ -1,6 +1,6 @@
 {
     "name": "@leoni4/neat-js",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "NEAT Neural Network Implementation in TypeScript",
     "type": "module",
     "main": "./dist/index.js",
@@ -9,7 +9,8 @@
     "exports": {
         ".": {
             "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         }
     },
     "files": [
@@ -27,7 +28,7 @@
         "lint": "eslint src tests",
         "typecheck": "tsc --noEmit",
         "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
-        "prepare": "npm run build"
+        "prepublishOnly": "npm run build"
     },
     "lint-staged": {
         "*.{ts,js,json,md}": "prettier --write",
