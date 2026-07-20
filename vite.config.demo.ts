@@ -5,6 +5,7 @@ export default defineConfig(({ mode }) => ({
     base: mode === 'production' ? '/neat-js/' : '/',
     build: {
         outDir: '../dist-demo',
+        emptyOutDir: true,
     },
     server: {
         port: 3000,
