@@ -213,7 +213,7 @@ export class Neat {
 
     private _evolveCounts = 0;
 
-    private _networkScoreRaw = 0;
+    private _networkScoreRaw = -Infinity;
     private _stagnationCount = 0;
 
     private _clients: Array<Client> = [];
@@ -225,6 +225,8 @@ export class Neat {
         complexityHistory: number[];
         epoch: number;
     } | null = null;
+
+    private _runnerUp: Client | null = null;
     private _species: Array<Species> = [];
 
     private _allConnections: Map<string, ConnectionGene> = new Map<string, ConnectionGene>();
@@ -485,9 +487,25 @@ export class Neat {
         return this._champion;
     }
 
+    get runnerUp(): Client | null {
+        return this._runnerUp;
+    }
+
     reset(inputNodes: number, outputNodes: number) {
         this._inputNodes = inputNodes;
         this._outputNodes = outputNodes;
+
+        this._evolveCounts = 0;
+        this._networkScoreRaw = -Infinity;
+        this._stagnationCount = 0;
+
+        this._champion = null;
+        this._runnerUp = null;
+        this._species = [];
+
+        this._optimization = false;
+        this._PRESSURE = EMutationPressure.NORMAL;
+
         this._allConnections.clear();
         this._allNodes.clear();
         this._clients = [];
@@ -563,7 +581,7 @@ export class Neat {
     }
 
     save() {
-        const bestClient = this._clients.find(item => item.bestScore) || this._clients[0];
+        const bestClient = this._champion?.client ?? this._clients.find(item => item.bestScore) ?? this._clients[0];
         const genome = bestClient.genome.save();
         genome.nodes.sort((a, b) => {
             return a.innovationNumber > b.innovationNumber ? 1 : -1;
@@ -771,7 +789,7 @@ export class Neat {
 
         while (epoch < maxEpochs) {
             // Evaluate all clients on training data
-            let topScore = 0;
+            let topScore = -Infinity;
             let topClient: Client = this._clients[0];
 
             for (const client of this._clients) {
@@ -789,6 +807,8 @@ export class Neat {
                 // Normalize error by number of samples and outputs
                 client.error = totalError / (trainX.length * this._outputNodes);
                 client.score = 1 - client.error;
+                // tiny tie-breaker noise (important on flat landscapes)
+                client.score += Math.random() * 1e-9;
 
                 if (client.score > topScore) {
                     topScore = client.score;
@@ -832,9 +852,18 @@ export class Neat {
 
             // Check early stopping
             if (trainError <= errorThreshold) {
+                // evolve() will not be called, so explicitly
+                // capture the final evaluated generation.
+                const finalRawBest = this.prepareRawScores();
+
+                this.updateChampion(finalRawBest);
+
+                this.normalizeScore();
+                this.updateRunnerUp(this._clients[0]);
+
                 history.stoppedEarly = true;
                 history.epochs = epoch;
-                history.champion = this._champion?.client ?? topClient;
+                history.champion = this._champion?.client ?? finalRawBest;
 
                 if (verbose > 0) {
                     console.log(`✓ Training completed: error threshold reached at epoch ${epoch}`);
@@ -862,19 +891,89 @@ export class Neat {
 
         return history;
     }
+    private markBestRawClient(): Client {
+        if (this._clients.length === 0) {
+            throw new Error('Cannot select the best client from an empty population');
+        }
+
+        let bestClient = this._clients[0];
+
+        for (const client of this._clients) {
+            client.bestScore = false;
+
+            // Strict raw comparison:
+            // no EPS and no complexity tie-break.
+            if (client.scoreRaw > bestClient.scoreRaw) {
+                bestClient = client;
+            }
+        }
+
+        bestClient.bestScore = true;
+
+        return bestClient;
+    }
+
+    private prepareRawScores(): Client {
+        if (this._clients.length === 0) {
+            throw new Error('Cannot prepare scores for an empty population');
+        }
+
+        for (const client of this._clients) {
+            if (!Number.isFinite(client.score)) {
+                throw new Error(`Client has a non-finite score: ${client.score}`);
+            }
+
+            // tiny tie-breaker noise (important on flat landscapes)
+            client.score += Math.random() * 1e-9;
+            // Public score is the fitness assigned by fit()
+            // or by an external evaluation loop.
+            client.scoreRaw = client.score;
+            client.adjustedScore = client.scoreRaw;
+            client.complexity = client.genome.connections.size() + client.genome.nodes.size();
+        }
+
+        return this.markBestRawClient();
+    }
 
     evolve(optimization = false) {
         this._evolveCounts++;
+
         this._optimization = optimization || this._evolveCounts % this._OPTIMIZATION_PERIOD === 0;
-        this.updateChampion();
+
+        if (this._clients.length === 0) {
+            return;
+        }
+
+        // 1. Capture externally assigned objective fitness.
+        const currentRawBest = this.prepareRawScores();
+
+        // 2. Preserve the absolute raw champion.
+        this.updateChampion(currentRawBest);
+
+        // 3. Produce complexity-adjusted selection scores.
         this.normalizeScore();
+
+        // 4. Preserve the current complexity-aware winner.
+        this.updateRunnerUp(this._clients[0]);
+
+        // 5. During strict champion stagnation,
+        // return both elites into the population.
+        const elitesReinserted = this.reinsertElitesIfStagnant();
+
+        if (elitesReinserted) {
+            // Recalculate generation-relative scores after
+            // changing the population.
+            this.normalizeScore();
+        }
+
         this.genSpecies();
         this.kill();
         this.removeExtinct();
         this.reproduce();
         this.mutate();
-        for (let i = 0; i < this._clients.length; i += 1) {
-            this._clients[i].generateCalculator();
+
+        for (const client of this._clients) {
+            client.generateCalculator();
         }
     }
 
@@ -956,99 +1055,126 @@ export class Neat {
         }
     }
 
-    private normalizeScore() {
-        let rawMax = -Infinity,
-            rawMin = Infinity;
-
-        let cMax = -Infinity;
-
-        for (const cl of this._clients) {
-            cl.bestScore = false;
-            cl.scoreRaw = cl.score;
-            rawMax = Math.max(rawMax, cl.scoreRaw);
-            rawMin = Math.min(rawMin, cl.scoreRaw);
-
-            const c = cl.genome.connections.size() + cl.genome.nodes.size();
-            cl.complexity = c;
-            cMax = Math.max(cMax, c);
+    private normalizeScore(): void {
+        if (this._clients.length === 0) {
+            return;
         }
-        const span = rawMax - rawMin || 1;
-        const effectiveSpan = Math.max(span, 0.05);
+
+        let rawMax = -Infinity;
+        let rawMin = Infinity;
+        let maxComplexity = 0;
+
+        for (const client of this._clients) {
+            rawMax = Math.max(rawMax, client.scoreRaw);
+            rawMin = Math.min(rawMin, client.scoreRaw);
+            maxComplexity = Math.max(maxComplexity, client.complexity);
+        }
+
+        const rawSpan = rawMax - rawMin;
+        const effectiveSpan = Math.max(rawSpan, 0.05);
 
         const lambda = this._optimization ? this._LAMBDA_HIGH : this._LAMBDA_LOW;
-        for (const cl of this._clients) {
-            const cNorm = Math.log(1 + cl.complexity) / Math.log(1 + cMax);
-            const penalty = lambda * cNorm * effectiveSpan;
-            cl.adjustedScore = cl.scoreRaw - penalty;
+
+        for (const client of this._clients) {
+            const complexityNorm = maxComplexity > 0 ? Math.log1p(client.complexity) / Math.log1p(maxComplexity) : 0;
+
+            const complexityPenalty = lambda * complexityNorm * effectiveSpan;
+
+            client.adjustedScore = client.scoreRaw - complexityPenalty;
         }
 
-        let adjMax = -Infinity,
-            adjMin = Infinity;
-        for (const cl of this._clients) {
-            adjMax = Math.max(adjMax, cl.adjustedScore);
-            adjMin = Math.min(adjMin, cl.adjustedScore);
-        }
-        const adjSpan = adjMax - adjMin || 1;
+        let adjustedMax = -Infinity;
+        let adjustedMin = Infinity;
 
-        for (const cl of this._clients) {
-            cl.score = (cl.adjustedScore - adjMin) / adjSpan;
+        for (const client of this._clients) {
+            adjustedMax = Math.max(adjustedMax, client.adjustedScore);
+
+            adjustedMin = Math.min(adjustedMin, client.adjustedScore);
         }
 
-        this._clients.sort((a, b) => b.score - a.score);
+        const adjustedSpan = adjustedMax - adjustedMin;
 
-        const ties = this._clients.map((c, i) => ({ c, i })).filter(({ c }) => c.scoreRaw === rawMax);
-
-        if (ties.length === 0) {
-            this._clients[0].bestScore = true;
-        } else if (ties.length === 1) {
-            ties[0].c.bestScore = true;
-        } else {
-            ties.sort((a, b) => a.c.complexity - b.c.complexity);
-            ties[0].c.bestScore = true;
+        for (const client of this._clients) {
+            client.score = adjustedSpan <= this._EPS ? 1 : (client.adjustedScore - adjustedMin) / adjustedSpan;
         }
+
+        // Best complexity-adjusted clients first.
+        this._clients.sort((a, b) => {
+            const scoreDifference = b.score - a.score;
+
+            if (Math.abs(scoreDifference) > this._EPS) {
+                return scoreDifference;
+            }
+
+            return a.complexity - b.complexity;
+        });
     }
 
-    private updateStagnationAndPressure() {
-        if (!this._champion) return;
-
-        const delta = Math.abs(this._champion.scoreRaw - this._networkScoreRaw);
-        if (delta <= this._OPT_ERR_THRESHOLD) {
-            this._stagnationCount += 1;
-        } else {
-            this._networkScoreRaw = this._champion.scoreRaw;
-            this._stagnationCount = 0;
+    private updateStagnationAndPressure(currentBestComplexity: number): void {
+        if (!this._champion) {
+            return;
         }
 
-        this._champion.scoreHistory ??= [];
-        this._champion.complexityHistory ??= [];
+        if (!Number.isFinite(this._networkScoreRaw)) {
+            this._networkScoreRaw = this._champion.scoreRaw;
+
+            this._stagnationCount = 0;
+        } else {
+            const accumulatedGain = this._champion.scoreRaw - this._networkScoreRaw;
+
+            if (accumulatedGain <= this._OPT_ERR_THRESHOLD) {
+                this._stagnationCount++;
+            } else {
+                this._networkScoreRaw = this._champion.scoreRaw;
+
+                this._stagnationCount = 0;
+            }
+        }
 
         this._champion.scoreHistory.push(this._champion.scoreRaw);
-        this._champion.complexityHistory.push(this._champion.complexity);
 
-        if (this._champion.scoreHistory.length > HISTORY_WINDOW) this._champion.scoreHistory.shift();
-        if (this._champion.complexityHistory.length > HISTORY_WINDOW) this._champion.complexityHistory.shift();
+        this._champion.complexityHistory.push(currentBestComplexity);
 
-        const canCompact = this._stagnationCount > HISTORY_WINDOW && this._champion.scoreHistory.length >= 2;
+        if (this._champion.scoreHistory.length > HISTORY_WINDOW) {
+            this._champion.scoreHistory.shift();
+        }
+
+        if (this._champion.complexityHistory.length > HISTORY_WINDOW) {
+            this._champion.complexityHistory.shift();
+        }
+
+        const canCompact =
+            this._stagnationCount > HISTORY_WINDOW &&
+            this._champion.scoreHistory.length >= 2 &&
+            this._champion.complexityHistory.length >= 2;
 
         if (canCompact) {
-            const scoreHist = this._champion.scoreHistory;
-            const compHist = this._champion.complexityHistory;
+            const scoreHistory = this._champion.scoreHistory;
 
-            const s0 = scoreHist[0];
-            const sBest = Math.max(...scoreHist);
-            const gain = sBest - s0;
+            const complexityHistory = this._champion.complexityHistory;
 
-            const c0 = compHist[0];
-            const c1 = compHist[compHist.length - 1];
-            const growthAbs = c1 - c0;
-            const growthRatio = c0 > 0 ? growthAbs / c0 : growthAbs > 0 ? 1 : 0;
+            const firstScore = scoreHistory[0];
+            const bestScore = Math.max(...scoreHistory);
 
-            const growingMeaningfully = growthAbs >= COMPLEXITY_GROWTH_ABS || growthRatio >= COMPLEXITY_GROWTH_RATIO;
+            const gain = bestScore - firstScore;
+
+            const firstComplexity = complexityHistory[0];
+
+            const currentComplexity = complexityHistory[complexityHistory.length - 1];
+
+            const complexityGrowth = currentComplexity - firstComplexity;
+
+            const complexityGrowthRatio =
+                firstComplexity > 0 ? complexityGrowth / firstComplexity : complexityGrowth > 0 ? 1 : 0;
+
+            const growingMeaningfully =
+                complexityGrowth >= COMPLEXITY_GROWTH_ABS || complexityGrowthRatio >= COMPLEXITY_GROWTH_RATIO;
 
             const tinyProgress = gain <= SMALL_GAIN_THRESHOLD;
 
             if (growingMeaningfully && tinyProgress) {
                 this._PRESSURE = EMutationPressure.COMPACT;
+
                 this._optimization = true;
 
                 return;
@@ -1068,51 +1194,95 @@ export class Neat {
         }
     }
 
-    private updateChampion() {
-        if (this._champion) {
-            this.updateStagnationAndPressure();
-            this._champion.epoch += 1;
+    private reinsertElitesIfStagnant(): boolean {
+        if (this._champion === null || this._champion.epoch < this._OPTIMIZATION_PERIOD || this._clients.length === 0) {
+            return false;
         }
 
-        this._clients.sort((a, b) => b.score - a.score);
-        const bestClient = this._clients[0];
+        const elites: Client[] = [this._champion.client];
 
-        const bestScore = bestClient.score;
-        const bestComplexity = bestClient.genome.connections.size() + bestClient.genome.nodes.size();
+        if (this._runnerUp !== null) {
+            elites.push(this._runnerUp);
+        }
 
-        const EPS_SCORE = SMALL_GAIN_THRESHOLD;
+        const insertCount = Math.min(elites.length, this._clients.length);
 
-        const shouldReplace =
-            !this._champion ||
-            bestScore > this._champion.scoreRaw + EPS_SCORE ||
-            (Math.abs(bestScore - this._champion.scoreRaw) <= EPS_SCORE && bestComplexity < this._champion.complexity);
+        for (let i = 0; i < insertCount; i++) {
+            // Population is currently sorted by
+            // normalized selection score.
+            const targetIndex = this._clients.length - 1 - i;
+
+            const replacedClient = this._clients[targetIndex];
+
+            if (replacedClient.species !== null) {
+                replacedClient.species = null;
+            }
+
+            const eliteCopy = this.copyClient(elites[i]);
+
+            eliteCopy.bestScore = false;
+
+            this._clients[targetIndex] = eliteCopy;
+        }
+
+        this._champion.epoch = 0;
+
+        // Champion may now be the strongest raw client
+        // in the current population.
+        this.markBestRawClient();
+
+        return true;
+    }
+
+    private updateRunnerUp(selectionBest: Client): void {
+        // Snapshot of the current generation's
+        // best complexity-adjusted client.
+        this._runnerUp = this.copyClient(selectionBest);
+
+        this._runnerUp.bestScore = false;
+    }
+
+    private copyClient(client: Client): Client {
+        const copiedClient = new Client(
+            this.loadGenome(client.genome.save()),
+            this._outputActivation,
+            this._hiddenActivation,
+        );
+
+        copiedClient.score = client.score;
+        copiedClient.scoreRaw = client.scoreRaw;
+        copiedClient.adjustedScore = client.adjustedScore;
+        copiedClient.complexity = client.complexity;
+
+        copiedClient.error = client.error;
+        copiedClient.bestScore = false;
+
+        // Champion and runnerUp may be used outside evolve().
+        copiedClient.generateCalculator();
+
+        return copiedClient;
+    }
+
+    private updateChampion(currentBest: Client): void {
+        const shouldReplace = this._champion === null || currentBest.scoreRaw > this._champion.scoreRaw;
 
         if (shouldReplace) {
+            const scoreHistory = this._champion?.scoreHistory ?? [];
+
+            const complexityHistory = this._champion?.complexityHistory ?? [];
+
             this._champion = {
-                client: new Client(
-                    this.loadGenome(bestClient.genome.save()),
-                    this._outputActivation,
-                    this._hiddenActivation,
-                ),
-                complexity: bestComplexity,
-                scoreRaw: bestScore,
-                scoreHistory: this._champion?.scoreHistory ?? [],
-                complexityHistory: this._champion?.complexityHistory ?? [],
+                client: this.copyClient(currentBest),
+                scoreRaw: currentBest.scoreRaw,
+                complexity: currentBest.complexity,
+                scoreHistory,
+                complexityHistory,
                 epoch: 0,
             };
-
-            return;
+        } else {
+            this._champion!.epoch++;
         }
 
-        if (this._champion && this._champion.epoch >= this._OPTIMIZATION_PERIOD) {
-            this._champion.epoch = 0;
-            const insertedChampion = new Client(
-                this.loadGenome(this._champion.client.genome.save()),
-                this._outputActivation,
-                this._hiddenActivation,
-            );
-            insertedChampion.score = this._champion.scoreRaw;
-            this._clients[this._clients.length - 1] = insertedChampion;
-        }
+        this.updateStagnationAndPressure(currentBest.complexity);
     }
 }
