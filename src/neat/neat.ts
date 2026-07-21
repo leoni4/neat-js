@@ -44,6 +44,7 @@ export interface INeatParams {
     LAMBDA_HIGH?: number;
     LAMBDA_LOW?: number;
     EPS?: number;
+    LOAD_PERCENT?: number;
 }
 
 const HISTORY_WINDOW = 80;
@@ -82,6 +83,8 @@ const DEFAULT_PARAMS = {
     LAMBDA_HIGH: 0.3,
     LAMBDA_LOW: 0.1,
     EPS: 1e-4,
+
+    LOAD_PERCENT: 0.5,
 };
 type MutationPressureType = 'topology' | 'weights';
 
@@ -289,7 +292,7 @@ export class Neat {
         this.validateConfiguration();
 
         if (loadData) {
-            this.load(loadData);
+            this.load(loadData, params?.LOAD_PERCENT || DEFAULT_PARAMS.LOAD_PERCENT);
         } else {
             this.reset(inputNodes, outputNodes);
         }
@@ -528,7 +531,7 @@ export class Neat {
         }
     }
 
-    load(data: LoadData) {
+    load(data: LoadData, loadPercent: number) {
         if (!data.genome) {
             throw new Error('Invalid load data: "genome" property is required');
         }
@@ -545,8 +548,20 @@ export class Neat {
             node.y = item.y;
         });
 
+        const genome = this.loadGenome(data.genome);
+
+        const getGenome = (ptc: number): Genome => {
+            if (data && loadPercent && ptc < loadPercent) return genome;
+
+            return this.emptyGenome();
+        };
+
         for (let i = 0; i < this._maxClients; i += 1) {
-            const c: Client = new Client(this.loadGenome(data.genome), this._outputActivation, this._hiddenActivation);
+            const c: Client = new Client(
+                getGenome(i / this._maxClients),
+                this._outputActivation,
+                this._hiddenActivation,
+            );
             this._clients.push(c);
         }
     }
