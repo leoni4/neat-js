@@ -1,4 +1,4 @@
-import { Genome } from '../genome/index.js';
+import { Genome, NodeGene, type GenomeSaveData } from '../genome/index.js';
 import { Species } from './species.js';
 import { Calculator } from '../calculations/index.js';
 import { EActivation } from '../neat/index.js';
@@ -45,5 +45,44 @@ export class Client {
         }
 
         return this._calculator?.calculate(input) || [];
+    }
+
+    model(): GenomeSaveData {
+        const genome = this.genome.save();
+        const allNodes = this.genome.neat.allNodes;
+        genome.nodes.sort((a, b) => {
+            return a.innovationNumber > b.innovationNumber ? 1 : -1;
+        });
+        genome.connections.forEach(con => {
+            if (!con || con.replaceIndex === 0) {
+                return;
+            }
+            const localReplaceNode = genome.nodes.find(node => node.innovationNumber === con.replaceIndex);
+            if (!localReplaceNode) {
+                const globalReplaceNode = allNodes.data.find(node => node.innovationNumber === con.replaceIndex);
+                if (!globalReplaceNode || !(globalReplaceNode instanceof NodeGene)) {
+                    throw new Error('Not found node with replaceIndex, while saving');
+                }
+                con.replaceIndex = globalReplaceNode.innovationNumber;
+            }
+        });
+        genome.nodes.forEach((node, index) => {
+            const id = node.innovationNumber;
+            const trueIndex = index + 1;
+            if (id !== trueIndex) {
+                genome.connections.forEach(con => {
+                    if (con.from === id) {
+                        con.from = trueIndex;
+                    } else if (con.to === id) {
+                        con.to = trueIndex;
+                    } else if (con.replaceIndex === id) {
+                        con.replaceIndex = trueIndex;
+                    }
+                });
+            }
+            genome.nodes[index].innovationNumber = trueIndex;
+        });
+
+        return genome;
     }
 }

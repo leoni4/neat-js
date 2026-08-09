@@ -121,7 +121,7 @@ export enum EMutationPressure {
 
 interface LoadData {
     genome: GenomeSaveData;
-    evolveCounts: number;
+    evolveCounts?: number;
 }
 
 export interface IFitOptions {
@@ -400,8 +400,13 @@ export class Neat {
     get inputNodes(): number {
         return this._inputNodes;
     }
+
     get outputNodes(): number {
         return this._outputNodes;
+    }
+
+    get evolveCounts(): number {
+        return this._evolveCounts;
     }
 
     get PERMANENT_MAIN_CONNECTIONS(): boolean {
@@ -595,46 +600,10 @@ export class Neat {
         return genome;
     }
 
-    save() {
+    model() {
         const bestClient = this._champion?.client ?? this._clients.find(item => item.bestScore) ?? this._clients[0];
-        const genome = bestClient.genome.save();
-        genome.nodes.sort((a, b) => {
-            return a.innovationNumber > b.innovationNumber ? 1 : -1;
-        });
-        genome.connections.forEach(con => {
-            if (!con || con.replaceIndex === 0) {
-                return;
-            }
-            const localReplaceNode = genome.nodes.find(node => node.innovationNumber === con.replaceIndex);
-            if (!localReplaceNode) {
-                const globalReplaceNode = this._allNodes.data.find(node => node.innovationNumber === con.replaceIndex);
-                if (!globalReplaceNode || !(globalReplaceNode instanceof NodeGene)) {
-                    throw new Error('Not found node with replaceIndex, while saving');
-                }
-                con.replaceIndex = globalReplaceNode.innovationNumber;
-            }
-        });
-        genome.nodes.forEach((node, index) => {
-            const id = node.innovationNumber;
-            const trueIndex = index + 1;
-            if (id !== trueIndex) {
-                genome.connections.forEach(con => {
-                    if (con.from === id) {
-                        con.from = trueIndex;
-                    } else if (con.to === id) {
-                        con.to = trueIndex;
-                    } else if (con.replaceIndex === id) {
-                        con.replaceIndex = trueIndex;
-                    }
-                });
-            }
-            genome.nodes[index].innovationNumber = trueIndex;
-        });
 
-        return {
-            genome,
-            evolveCounts: this._evolveCounts,
-        };
+        return bestClient.model();
     }
 
     setReplaceIndex(node1: NodeGene, node2: NodeGene, index: number) {

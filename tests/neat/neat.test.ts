@@ -92,16 +92,19 @@ describe('Neat', () => {
 
     describe('save and load', () => {
         it('should save genome data', () => {
-            const saveData = neat.save();
-            expect(saveData.genome).toBeDefined();
-            expect(saveData.genome.nodes).toBeDefined();
-            expect(saveData.genome.connections).toBeDefined();
-            expect(saveData.evolveCounts).toBeDefined();
+            const genome = neat.model();
+            expect(genome).toBeDefined();
+            expect(genome.nodes).toBeDefined();
+            expect(genome.connections).toBeDefined();
         });
 
         it('should load genome data', () => {
-            const saveData = neat.save();
-            const neat2 = new Neat(3, 2, 10, EActivation.sigmoid, EActivation.sigmoid, undefined, saveData);
+            const genome = neat.model();
+            const evolveCounts = neat.evolveCounts;
+            const neat2 = new Neat(3, 2, 10, EActivation.sigmoid, EActivation.sigmoid, undefined, {
+                genome,
+                evolveCounts,
+            });
 
             expect(neat2.clients).toHaveLength(10);
         });

@@ -286,12 +286,12 @@ export async function main() {
 
     updateStatus(`Starting evolution for ${problemConfig.name}...`);
 
-    let network;
+    let genome;
     if (test.load) {
         const net = localStorage.getItem('network');
         if (net) {
             console.log('loading network');
-            network = JSON.parse(net);
+            genome = JSON.parse(net);
         }
     }
 
@@ -302,7 +302,7 @@ export async function main() {
         EActivation.sigmoid,
         EActivation.tanh,
         test.params,
-        network,
+        { genome },
     );
 
     // Initialize frame for visualization
@@ -319,7 +319,7 @@ export async function main() {
     await trainWithVisualization(neat, test.input, test.output, Infinity, frame, problemConfig.name);
 
     if (test.save && neat.champion) {
-        localStorage.setItem('network', JSON.stringify(neat.save()));
+        localStorage.setItem('network', JSON.stringify(neat.model()));
     }
 
     isTraining = false;
