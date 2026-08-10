@@ -286,12 +286,14 @@ export async function main() {
 
     updateStatus(`Starting evolution for ${problemConfig.name}...`);
 
-    let genome;
+    let loadData;
     if (test.load) {
         const net = localStorage.getItem('network');
         if (net) {
             console.log('loading network');
-            genome = JSON.parse(net);
+            const genome = JSON.parse(net);
+
+            loadData = { genome };
         }
     }
 
@@ -302,7 +304,7 @@ export async function main() {
         EActivation.sigmoid,
         EActivation.tanh,
         test.params,
-        { genome },
+        loadData,
     );
 
     // Initialize frame for visualization
