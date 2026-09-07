@@ -91,6 +91,7 @@ const params = {
     // WEIGHT_SHIFT_STRENGTH: 5,
     // BIAS_SHIFT_STRENGTH: 1,
     // etc
+    PERMANENT_MAIN_CONNECTIONS: true,
 } as INeatParams;
 
 let currentProblem: keyof typeof PROBLEMS = 'XOR';

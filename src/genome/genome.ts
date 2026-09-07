@@ -262,12 +262,12 @@ export class Genome {
             con.from.x === NETWORK_CONSTANTS.INPUT_NODE_X &&
             con.to.x === NETWORK_CONSTANTS.OUTPUT_NODE_X
         ) {
-            return;
+            return false;
         }
         if (!this._connections.contains(con)) {
             console.warn('Trying to remove none existing Connection');
 
-            return;
+            return false;
         }
         this._connections.remove(con);
         let singleFrom = true;
@@ -317,6 +317,8 @@ export class Genome {
                 this.removeConnection(c, false, false, true);
             });
         }
+
+        return true;
     }
 
     mutateLink(triesTotal = 0): ConnectionGene | null {
@@ -327,9 +329,10 @@ export class Genome {
             return null;
         }
         let triesCount = 0;
+        const maxTries = this.neat.inputNodes * this.neat.outputNodes * 5;
         while (geneB instanceof NodeGene && geneA.x === geneB.x) {
             triesCount += 1;
-            if (triesCount > 10) {
+            if (triesCount > maxTries) {
                 return null;
             }
             geneB = this._nodes.randomElement();
@@ -353,7 +356,7 @@ export class Genome {
         });
 
         if (exists) {
-            if (triesTotal > 10) {
+            if (triesTotal > maxTries) {
                 return null;
             }
 
@@ -664,18 +667,21 @@ export class Genome {
     }
 
     private removeDead() {
-        let removedAny = true;
+        let removeCalled = true;
+        let init = 0;
+        while (removeCalled) {
+            removeCalled = false;
 
-        while (removedAny) {
-            removedAny = false;
-
-            for (let i = 0; i < this._connections.size(); i += 1) {
+            for (let i = init; i < this._connections.size(); i += 1) {
                 const c = this._connections.get(i);
                 if (!(c instanceof ConnectionGene)) continue;
 
                 if (!c.enabled) {
-                    this.removeConnection(c);
-                    removedAny = true;
+                    const isRemoved = this.removeConnection(c);
+                    if (!isRemoved) {
+                        init = i + 1;
+                    }
+                    removeCalled = true;
                     break;
                 }
             }
@@ -697,9 +703,13 @@ export class Genome {
         }
         let prob: number;
 
-        if ((!selfOpt && !this._neat.optimization) || this._connections.size() < this._neat.CT) {
+        const mainCons = this._neat.inputNodes * this._neat.outputNodes;
+        const protectingMain = this._neat.PERMANENT_MAIN_CONNECTIONS && this._connections.size() < mainCons;
+
+        if (protectingMain || (!selfOpt && !this._neat.optimization) || this._connections.size() < this._neat.CT) {
             prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
             prob = Math.max(prob, this._neat.CT - this._connections.size());
+            prob = protectingMain ? mainCons : prob;
             while (prob > Math.random()) {
                 prob--;
                 this.mutateLink();
