@@ -154,7 +154,7 @@ Use it when CP falls close to `0` in long runs. With a CP close to `0`, only exa
 new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { CP: 1, CP_MIN: 0.3 });
 ```
 
-Note: `CP_MIN` does not by itself keep more species. Species with one client are still removed (`Neat.removeExtinct()`). On a test workload (85 inputs, population 100, 1,200 generations) the average species count stayed between 1 and 2 with and without `CP_MIN`, and the `distance()` calls per generation fell from about 3,700 to about 100-200.
+Note: `CP_MIN` does not by itself keep more species. Species with one client are still removed (`Neat.removeExtinct()`). On a test workload (85 inputs, population 100, 1,200 generations) the average species count stayed between 1 and 2 with and without `CP_MIN`, and the `distance()` calls per generation fell from about 3,700 to about 100-200. On the same workload, `SPECIES_SELECTION: 'proportional'` gave an average of about 8-9 species, with or without `CP_MIN: 0.3` (see [SPECIES_SELECTION](./03_mutation_strength.md#species_selection---parent-species-selection)).
 
 ## SPECIES_TARGET_MIN / SPECIES_TARGET_MAX - Target Species Range
 

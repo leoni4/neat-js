@@ -20,6 +20,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | **Evolution Control**              |                 |         |                                        |
 | `MUTATION_RATE`                    | `1`             | number  | Mutation probability multiplier        |
 | `SURVIVORS`                        | `0.4`           | number  | Survival rate (selection pressure)     |
+| `SPECIES_SELECTION`                | `'legacy'`      | string  | Parent species pick (or proportional)  |
 | **Weight/Bias Adjustment**         |                 |         |                                        |
 | `WEIGHT_SHIFT_STRENGTH`            | `0.2`           | number  | Weight shift magnitude                 |
 | `BIAS_SHIFT_STRENGTH`              | `0.15`          | number  | Bias shift magnitude                   |
@@ -74,6 +75,7 @@ new Neat(inputNodes, outputNodes, clients, EActivation.sigmoid, EActivation.tanh
 
 - **MUTATION_RATE:** Multiplier for the link, node, and weight mutation probabilities (constant; the pressure levels add their own multipliers)
 - **SURVIVORS:** What fraction survives selection (0.4 = top 40%) and which species can be parents
+- **SPECIES_SELECTION:** `'legacy'` (only the top species are parents) or `'proportional'` (parent species in proportion to their scores)
 - **WEIGHT_SHIFT_STRENGTH:** How much to adjust weights by
 - **BIAS_SHIFT_STRENGTH:** How much to adjust biases by
 - **WEIGHT_RANDOM_STRENGTH:** Range for weight randomization and new link weights

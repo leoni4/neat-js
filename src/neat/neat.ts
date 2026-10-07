@@ -32,6 +32,7 @@ export interface INeatParams {
     SPECIES_TARGET_MAX?: number;
     MUTATION_RATE?: number;
     SURVIVORS?: number;
+    SPECIES_SELECTION?: 'legacy' | 'proportional';
     WEIGHT_SHIFT_STRENGTH?: number;
     BIAS_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
@@ -71,6 +72,7 @@ const DEFAULT_PARAMS = {
     MUTATION_RATE: 1,
 
     SURVIVORS: 0.4,
+    SPECIES_SELECTION: 'legacy' as const,
 
     WEIGHT_SHIFT_STRENGTH: 0.2,
     BIAS_SHIFT_STRENGTH: 0.15,
@@ -197,6 +199,7 @@ export class Neat {
     private _PERMANENT_MAIN_CONNECTIONS: boolean;
 
     private _SURVIVORS: number;
+    private _SPECIES_SELECTION: 'legacy' | 'proportional';
 
     private _MUTATION_RATE: number;
 
@@ -275,6 +278,7 @@ export class Neat {
         this._MUTATION_RATE = params?.MUTATION_RATE ?? DEFAULT_PARAMS.MUTATION_RATE;
 
         this._SURVIVORS = params?.SURVIVORS ?? DEFAULT_PARAMS.SURVIVORS;
+        this._SPECIES_SELECTION = params?.SPECIES_SELECTION ?? DEFAULT_PARAMS.SPECIES_SELECTION;
 
         this._WEIGHT_SHIFT_STRENGTH = params?.WEIGHT_SHIFT_STRENGTH ?? DEFAULT_PARAMS.WEIGHT_SHIFT_STRENGTH;
         this._BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? DEFAULT_PARAMS.BIAS_SHIFT_STRENGTH;
@@ -317,6 +321,10 @@ export class Neat {
 
         if (this._SURVIVORS < 0 || this._SURVIVORS > 1) {
             throw new Error('SURVIVORS must be between 0 and 1 (inclusive)');
+        }
+
+        if (this._SPECIES_SELECTION !== 'legacy' && this._SPECIES_SELECTION !== 'proportional') {
+            throw new Error(`SPECIES_SELECTION must be 'legacy' or 'proportional' (got ${this._SPECIES_SELECTION})`);
         }
 
         if (this._MUTATION_RATE < 0) {
@@ -1030,7 +1038,9 @@ export class Neat {
     }
 
     private reproduce() {
-        const selector = new RandomSelector(this._SURVIVORS);
+        // 'proportional' uses the same roulette with factor 1 (x * 1 is exact), so both modes make one
+        // Math.random() call per pick.
+        const selector = new RandomSelector(this._SPECIES_SELECTION === 'proportional' ? 1 : this._SURVIVORS);
         for (let i = 0; i < this._species.length; i += 1) {
             selector.add(this._species[i]);
         }

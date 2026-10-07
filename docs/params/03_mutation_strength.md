@@ -82,7 +82,7 @@ The clients are sorted by **raw** score. `Neat.kill()` passes `SURVIVORS` to eac
 **In reproduction** (`Neat.reproduce()` and `RandomSelector.random()`):
 
 ```typescript
-const selector = new RandomSelector(this._SURVIVORS);
+const selector = new RandomSelector(this._SPECIES_SELECTION === 'proportional' ? 1 : this._SURVIVORS);
 for (let i = 0; i < this._species.length; i += 1) {
     selector.add(this._species[i]);
 }
@@ -97,14 +97,14 @@ for (let i = 0; i < this._clients.length; i += 1) {
 }
 ```
 
-`RandomSelector` sorts the species by average normalized score (highest first). `random()` draws a value in `[0, SURVIVORS × total score)` and returns the first species whose cumulative score reaches that value. So only the top species that hold the first `SURVIVORS` part of the total species score are picked as parents. `Species.breed()` picks two random members (they can be the same client) and calls `Genome.crossOver()` with the member that has the higher normalized score first.
+`RandomSelector` sorts the species by average normalized score (highest first). `random()` draws a value in `[0, SURVIVORS × total score)` and returns the first species whose cumulative score reaches that value. So only the top species that hold the first `SURVIVORS` part of the total species score are picked as parents. With `SPECIES_SELECTION: 'proportional'` the factor is `1` instead of `SURVIVORS` (see [SPECIES_SELECTION](#species_selection---parent-species-selection)). `Species.breed()` picks two random members (they can be the same client) and calls `Genome.crossOver()` with the member that has the higher normalized score first.
 
 ### Code References
 
 - **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
 - **Validation:** `Neat.validateConfiguration()` (throws if not in 0-1, warns if > 0.6)
 - **Usage in killing:** `Species.kill()`, called from `Neat.kill()`
-- **Usage in reproduction:** `Neat.reproduce()`, `RandomSelector.random()`
+- **Usage in reproduction:** `Neat.reproduce()`, `RandomSelector.random()` (only with `SPECIES_SELECTION: 'legacy'`)
 
 ### Tuning Recommendations
 
@@ -120,6 +120,35 @@ for (let i = 0; i < this._clients.length; i += 1) {
     - Top 4 survive
     - Bottom 6 are replaced by offspring of the parent species
 - **Best genome protection:** The client with the best raw score (`client.bestScore`) is never killed regardless of SURVIVORS value
+
+---
+
+## SPECIES_SELECTION - Parent Species Selection
+
+**Default:** `'legacy'`  
+**Type:** `'legacy' | 'proportional'`  
+**Location:** `INeatParams.SPECIES_SELECTION`, `DEFAULT_PARAMS.SPECIES_SELECTION` (`src/neat/neat.ts`)
+
+### Purpose
+
+SPECIES_SELECTION sets how `Neat.reproduce()` picks the parent species for each new client.
+
+- **`'legacy'`** (default): the roulette covers only the first `SURVIVORS` part of the total species score (see [SURVIVORS](#survivors---selection-pressure)). Example: species scores `[0.5, 0.3, 0.2]` and `SURVIVORS: 0.4` → all picks go to the `0.5` species. Weaker species never get offspring.
+- **`'proportional'`**: the roulette covers the full total species score. Each pick selects a species with the probability `species score / total score` (the average normalized score of its clients). Example: `[0.5, 0.3, 0.2]` → about 50%, 30%, and 20% of the picks.
+
+Both modes make one `Math.random()` call per pick. The option does not change `Species.kill()`: `SURVIVORS` still sets how many clients of each species survive. The option sets the probability per pick only; it does not give each species a fixed offspring count.
+
+```typescript
+new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { SPECIES_SELECTION: 'proportional' });
+```
+
+Measured on a test workload (85 inputs, population 100, 1,200 generations, one seed): with `'legacy'`, on average 1.15 species got offspring per generation and CP fell to about `2e-27`; with `'proportional'`, about 8.9 species got offspring, the average species count was 8.9, and CP stayed at or above about `0.002`. The final best error of this one run was higher with `'proportional'` (0.049 vs 0.033); one seed does not show which mode searches better.
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Validation:** `Neat.validateConfiguration()` (throws if not `'legacy'` or `'proportional'`)
+- **Usage:** `Neat.reproduce()`, `RandomSelector.random()`
 
 ---
 

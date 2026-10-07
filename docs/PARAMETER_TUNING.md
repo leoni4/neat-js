@@ -31,6 +31,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `SPECIES_TARGET_MAX`               | `25`            | `CP` grows when there are more species than this                     |
 | `MUTATION_RATE`                    | `1`             | Multiplier for the link, node, and weight mutation probabilities     |
 | `SURVIVORS`                        | `0.4`           | Fraction of each species that survives selection (40%)               |
+| `SPECIES_SELECTION`                | `'legacy'`      | Parent species pick: `'legacy'` (top part) or `'proportional'`       |
 | `WEIGHT_SHIFT_STRENGTH`            | `0.2`           | Magnitude of weight adjustments                                      |
 | `BIAS_SHIFT_STRENGTH`              | `0.15`          | Magnitude of bias adjustments                                        |
 | `WEIGHT_RANDOM_STRENGTH`           | `1`             | Range for random weights and new link weights                        |
@@ -229,7 +230,7 @@ Each `evolve()` call (`prepareRawScores()`, `normalizeScore()`, `kill()`, `repro
 3. Normalize the adjusted scores to [0, 1] (all scores are `1` if the adjusted span is ≤ `EPS`)
 4. Sort by normalized score; if two scores differ by not more than `EPS` → the simpler client comes first
 5. In each species, keep the best `ceil(SURVIVORS × size)` clients by raw score (the best raw client is never removed)
-6. Breed to fill the population. Parent species are picked by average normalized score from the top part of the ranking (see [SURVIVORS](./params/03_mutation_strength.md#survivors---selection-pressure)). Children keep the output-node biases of the fitter parent
+6. Breed to fill the population. Parent species are picked by average normalized score from the top part of the ranking (see [SURVIVORS](./params/03_mutation_strength.md#survivors---selection-pressure)), or in proportion to it with `SPECIES_SELECTION: 'proportional'` (see [SPECIES_SELECTION](./params/03_mutation_strength.md#species_selection---parent-species-selection)). Children keep the output-node biases of the fitter parent
 
 ### Champion and Elites
 
@@ -253,6 +254,7 @@ It **throws an error** when:
 
 - Distance coefficients (C1, C2, C3) are negative
 - SURVIVORS is not between 0 and 1
+- SPECIES_SELECTION is not `'legacy'` or `'proportional'`
 - MUTATION_RATE is negative
 - The number of inputs, outputs, or clients is not positive
 - WEIGHT_RANDOM_STRENGTH or BIAS_RANDOM_STRENGTH = 0 while random weight mutation is on (`PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`), because the mutation would never end. Use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` to turn random weight mutation off

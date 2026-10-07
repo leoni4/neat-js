@@ -486,6 +486,56 @@ describe('Neat', () => {
             });
         });
 
+        describe('SPECIES_SELECTION', () => {
+            const PICKS = 10_000;
+            const SCORES = [0.5, 0.3, 0.2];
+
+            const pickShares = (params: { SPECIES_SELECTION?: 'legacy' | 'proportional' }) => {
+                const selNeat = new Neat(2, 1, 5, EActivation.tanh, EActivation.tanh, { SURVIVORS: 0.4, ...params });
+                const picks = SCORES.map(() => 0);
+                const species = SCORES.map((score, i) => ({
+                    score,
+                    breed: () => null,
+                    put: () => {
+                        picks[i]++;
+                    },
+                }));
+                const clients = Array.from({ length: PICKS }, () => ({ species: null, genome: null }));
+                const internal = selNeat as unknown as { _species: unknown[]; _clients: unknown[]; reproduce(): void };
+                internal._species = species;
+                internal._clients = clients;
+                const run = withSeededRandom(18, () => internal.reproduce());
+
+                return { picks, calls: run.calls };
+            };
+
+            it('should throw for an unknown SPECIES_SELECTION', () => {
+                expect(
+                    () =>
+                        new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, {
+                            SPECIES_SELECTION: 'uniform' as 'legacy',
+                        }),
+                ).toThrow(/SPECIES_SELECTION/);
+            });
+
+            it.each([{}, { SPECIES_SELECTION: 'legacy' as const }])(
+                'should give all picks to the top species in legacy mode (%o)',
+                params => {
+                    const { picks, calls } = pickShares(params);
+                    expect(picks).toEqual([PICKS, 0, 0]);
+                    expect(calls).toBe(PICKS);
+                },
+            );
+
+            it('should pick species in proportion to their scores in proportional mode', () => {
+                const { picks, calls } = pickShares({ SPECIES_SELECTION: 'proportional' });
+                picks.forEach((count, i) => {
+                    expect(Math.abs(count / PICKS - SCORES[i])).toBeLessThan(0.02);
+                });
+                expect(calls).toBe(PICKS);
+            });
+        });
+
         describe('zero mutation strengths', () => {
             it.each(['WEIGHT_RANDOM_STRENGTH', 'BIAS_RANDOM_STRENGTH'] as const)(
                 'should throw when %s is 0 and random weight mutation can run',
