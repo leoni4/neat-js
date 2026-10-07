@@ -540,7 +540,7 @@ export class Neat {
         if (!data.genome) {
             throw new Error('Invalid load data: "genome" property is required');
         }
-        if (!data.evolveCounts) {
+        if (data.evolveCounts === undefined || data.evolveCounts === null || Number.isNaN(data.evolveCounts)) {
             console.warn('Load data missing "evolveCounts", defaulting to 0');
             this._evolveCounts = 0;
         } else {

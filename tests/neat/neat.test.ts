@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
 import { withSeededRandom } from '../helpers/seededRandom.js';
@@ -110,6 +110,53 @@ describe('Neat', () => {
             });
 
             expect(neat2.clients).toHaveLength(10);
+        });
+
+        describe('evolveCounts warning', () => {
+            const loadWithWarnSpy = (evolveCounts: number | undefined) => {
+                const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+                try {
+                    const loaded = new Neat(3, 2, 10, EActivation.sigmoid, EActivation.sigmoid, undefined, {
+                        genome: neat.model(),
+                        evolveCounts,
+                    });
+                    const evolveCountsWarnings = warn.mock.calls.filter(args =>
+                        String(args[0]).includes('evolveCounts'),
+                    );
+
+                    return { loaded, evolveCountsWarnings };
+                } finally {
+                    warn.mockRestore();
+                }
+            };
+
+            it('should load evolveCounts 0 without a warning', () => {
+                const { loaded, evolveCountsWarnings } = loadWithWarnSpy(0);
+
+                expect(evolveCountsWarnings).toHaveLength(0);
+                expect(loaded.evolveCounts).toBe(0);
+            });
+
+            it('should warn and default to 0 when evolveCounts is missing', () => {
+                const { loaded, evolveCountsWarnings } = loadWithWarnSpy(undefined);
+
+                expect(evolveCountsWarnings).toHaveLength(1);
+                expect(loaded.evolveCounts).toBe(0);
+            });
+
+            it('should warn and default to 0 when evolveCounts is NaN', () => {
+                const { loaded, evolveCountsWarnings } = loadWithWarnSpy(NaN);
+
+                expect(evolveCountsWarnings).toHaveLength(1);
+                expect(loaded.evolveCounts).toBe(0);
+            });
+
+            it('should load a non-zero evolveCounts without a warning', () => {
+                const { loaded, evolveCountsWarnings } = loadWithWarnSpy(3);
+
+                expect(evolveCountsWarnings).toHaveLength(0);
+                expect(loaded.evolveCounts).toBe(3);
+            });
         });
 
         it('should give each loaded client its own genome copy', () => {
