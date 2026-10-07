@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
+import { NodeGene } from '../../src/genome/nodeGene.js';
+import { NETWORK_CONSTANTS } from '../../src/neat/constants.js';
 
 describe('Genome - crossOver', () => {
     let neat: Neat;
@@ -212,6 +214,64 @@ describe('Genome - crossOver', () => {
             const offspring = Genome.crossOver(genome1, emptyGenome);
 
             expect(offspring).toBeInstanceOf(Genome);
+        });
+    });
+
+    describe('output node biases', () => {
+        const outputNodes = (genome: Genome): NodeGene[] =>
+            genome.nodes.data.filter(
+                (n): n is NodeGene => n instanceof NodeGene && n.x === NETWORK_CONSTANTS.OUTPUT_NODE_X,
+            );
+
+        it('should keep the output biases of the parent', () => {
+            outputNodes(genome1).forEach((n, i) => (n.bias = 0.7 + i * 0.1));
+
+            const offspring = Genome.crossOver(genome1, genome1);
+
+            expect(outputNodes(offspring).map(n => [n.innovationNumber, n.bias])).toEqual(
+                outputNodes(genome1).map(n => [n.innovationNumber, n.bias]),
+            );
+        });
+
+        it('should keep the output biases of the fitter parent g1', () => {
+            const parent2 = neat.emptyGenome();
+            outputNodes(genome1).forEach(n => (n.bias = 0.7));
+            outputNodes(parent2).forEach(n => (n.bias = -0.3));
+
+            const offspring = Genome.crossOver(genome1, parent2);
+
+            expect(outputNodes(offspring).map(n => n.bias)).toEqual([0.7, 0.7]);
+        });
+
+        it('should keep the output biases when the parents have no connections', () => {
+            const parent = neat.emptyGenome();
+            outputNodes(parent).forEach(n => (n.bias = 0.7));
+
+            const offspring = Genome.crossOver(parent, neat.emptyGenome());
+
+            expect(outputNodes(offspring).map(n => n.bias)).toEqual([0.7, 0.7]);
+        });
+
+        it('should not share output nodes with the parent', () => {
+            outputNodes(genome1).forEach(n => (n.bias = 0.7));
+
+            const offspring = Genome.crossOver(genome1, genome1);
+            outputNodes(genome1).forEach(n => (n.bias = 0.1));
+
+            expect(outputNodes(offspring).map(n => n.bias)).toEqual([0.7, 0.7]);
+        });
+
+        it('should not copy input biases', () => {
+            genome1.nodes.data.forEach(n => {
+                if (n instanceof NodeGene && n.x === NETWORK_CONSTANTS.INPUT_NODE_X) n.bias = 0.5;
+            });
+
+            const offspring = Genome.crossOver(genome1, genome1);
+
+            const inputBiases = offspring.nodes.data
+                .filter((n): n is NodeGene => n instanceof NodeGene && n.x === NETWORK_CONSTANTS.INPUT_NODE_X)
+                .map(n => n.bias);
+            expect(inputBiases).toEqual([0, 0, 0]);
         });
     });
 

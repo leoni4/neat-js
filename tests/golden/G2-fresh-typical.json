@@ -1,19 +1,19 @@
 {
-    "rngCalls": 87063,
-    "rngChecksum": 2347340422,
+    "rngCalls": 87747,
+    "rngChecksum": 908062596,
     "evolveCounts": 30,
     "pressure": "NORMAL",
-    "speciesCount": 2,
+    "speciesCount": 4,
     "cpBits": "3fcceb74afc897eb",
-    "championOutputs": "bfbf6361a5713a71bfb4c4e0d72e0958bfbc42b3a9a47f8cbfc4e208c2379dfdbfbbdb8653f15ffebfb8f45e840bbababfb3ff640e4b766ebfb65da75ebea82dbfb3b96c0ba31794bfb0984f95f5588bbfc47ea631562e15bfb52d11b221bbdabfba85be30d52f61bfc101b85213e6fcbfb857708156a31dbfbdbd7b61faccbe",
+    "championOutputs": "bfa1a22919159910bf8566d0aa29209ebf8327ee9f8198c8bfc39d48ad83eb0b3f8da66278d68575bfabd854ce5501ffbf9bbe95c1a5d0fdbfbf0c1d2e7b9344bfc09277d979a43bbfb17661b246fd1abfbd7793baed2db6bf9637d2045e94e4bfb927f0ae4f4d41bf9aaeb055447c35bfa6bd12a3a98302bfa8c21e4ce02607",
     "clientOutputs": [
-        "bfc43bfbc3f71555bfaf99ad39c2d7d63fb26756f7b20f78bfbf303414bd37f3bfb8bea14bcbe3b93fc5d6f6e68ea0713fc8c3e14c4e7e793fac805672a98adf3fb57f62c38b7f1ebfbe2bdc5257b3b2bfcc97a2613a88303fb6bc0a5e7844083fc4700cf33be1bebfc4ebf4a2f9d4763f68b013d40c937bbfaa93ac006152eb",
-        "bfa65855a1139fb23fa137fb56cc0b00bf7e2281520ff412bfcbbfecb80e75b43fa4e5d50fcc92c43fb4e5494ddf74693fb5e01e546193a93fab86d23a680fec3fbb662caa120e4d3fbdcb03471af327bfceb36451825eba3faff9cd6a2780433fa3a60298b30728bfbc232ab0af972c3f9c1ac952ecb8f0bfac25df56e99dbe",
-        "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "3fa012a49acb4546bfad84879a887707bf8e3a92ee8afbebbfa774bcbc27584b3fb3a6e90b5488083fb453705985ec8c3fa4516a2db775183fa252fd4a5f4d2a3f76a0fe45928d53bf99bac5eae96f93bfb0de0f9dab2da13f83fefdd695b8e73fae78503fb2431abfa064f72586b20bbfa4db320cbc848bbf82b6cf658dd495",
-        "3fc19c27b00f3687bf9aab0c7ce20f963fbca722ea1667f83f9b423d9b049f623f6eee958aea1083bfba3df5e27934ac3fa6853d7cf11f98bfc360e91b5dbe5abfc1c939e4812fca3f8f14d35edffd15bfad5ccb5af809f2bfb780625b800803bfb3feb2229680323fc1d51d28972a8a3fb44ef99943f52b3fbe5fb4e8095ae1"
+        "bfdc089cbb28b12ebfdef0ea6446844abfc537b79fa4d8503fddbde27bbb1eb9bfc2ed0f00b80a773fbf258d97175ffabfd50b22d62e1d02bfdb270c1fb751c83fa09c0a313682e3bfc355c21882fce6bfd4bb4e21c5ee57bfae91c347093c423fd5ca12c4a52ebabfe170adba04c906bfccd3a4011327aabfdc6518ed2625e0",
+        "bfd3b806a7c972e4bfda98fb0a291e13bf87aa0526035aaf3fdb932cdf643814bfc509a769a825963f85b841aa4dbed8bfcd96d1371df52fbfe19793734755d4bfad6cf59b7ef9bebf7a13e2cb01f49dbfdacb67b27216cebfb6a6616b6da81f3fd1091cd32ffeccbfda899ca3b2725bbfb271b5d1ceda6bbfd4370f911cecba",
+        "bfd464e8c9f8d971bfd05014575e4bfcbfd4a91f1f8fb225bfc022c579074b8bbfc37d84d3e0a38cbfab97f3c2af1d7abfd19ee8b92117d73f623e963c99704cbfb399b5a8e2ebc0bfd4100a62a3998cbfac777e33ad14bcbfc1e8a9a6397063bfb5c54d1e82f119bfd584348f366e19bfd4bbcd63d6a8e7bfd44c6bfab256c2",
+        "bfce2525fe8d2154bfca8cd3bc2411f7bfce62253f4bb994bfc38190f94b299bbfc4ec5d3c89cdaebfbf3eb5e488f159bfcbb11fb0e6d443bfb935b764b76571bfc0d73cbe6846ecbfcdd96dc0efc846bfbf6da08aada2a1bfc441260bf65464bfc14bed5cf98ce1bfcf26ebad7745b9bfce72df446625cebfce0f480309b99c",
+        "bfdcbde562114c043fd2c482ad436fa5bfdae4fa53a4ff983fdbd5a0c1f466c9bfdc0b2d8c80b6743fe1b3fb18250938bfe50a339d61ad0a3fd35c3213a8a709bfc3c5a73ac1d8553fb15106758c10783fccc579f85504603fd15910920ecfb3bf8fbc54746db188bfe29d8bbe5b824ebfcc210401c5d416bfe6a9c0282e9fe5"
     ],
-    "populationSha256": "5b1f8e3d2776770943a061d0cf706719b9c425c07bd01ce16aa05c9a16f2dd2f",
+    "populationSha256": "3a01d06b25d652925819fd8e896b1c26a30990324ec416610f3ad425d860b84e",
     "model": {
         "nodes": [
             {
@@ -528,38 +528,32 @@
             },
             {
                 "innovationNumber": 86,
-                "bias": -0.11354458678979426,
+                "bias": -0.07278261675931036,
                 "x": 0.99,
                 "y": 0.5
-            },
-            {
-                "innovationNumber": 87,
-                "bias": 0.05038764376658946,
-                "x": 0.5,
-                "y": 0.5946936688245121
             }
         ],
         "connections": [
             {
                 "replaceIndex": 0,
                 "enabled": false,
-                "weight": 0.9087368871085346,
-                "from": 66,
-                "to": 87
-            },
-            {
-                "replaceIndex": 0,
-                "enabled": true,
-                "weight": -0.11616720845922826,
-                "from": 87,
+                "weight": -0.0004431213252246158,
+                "from": 79,
                 "to": 86
             },
             {
                 "replaceIndex": 0,
                 "enabled": true,
-                "weight": 0.5676959080513708,
-                "from": 3,
-                "to": 87
+                "weight": 0.09720566956393628,
+                "from": 26,
+                "to": 86
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": false,
+                "weight": 0.4724927917671071,
+                "from": 14,
+                "to": 86
             }
         ]
     }

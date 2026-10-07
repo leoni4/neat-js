@@ -172,6 +172,19 @@ export class Genome {
     static crossOver(g1: Genome, g2: Genome): Genome {
         const genome: Genome = g1.neat.emptyGenome();
 
+        for (let i = 0; i < g1.nodes.size(); i += 1) {
+            const parentNode = g1.nodes.get(i);
+            if (!(parentNode instanceof NodeGene) || parentNode.x !== NETWORK_CONSTANTS.OUTPUT_NODE_X) {
+                continue;
+            }
+            const childNode = genome.nodes.data.find(
+                n => n instanceof NodeGene && n.innovationNumber === parentNode.innovationNumber,
+            );
+            if (childNode instanceof NodeGene) {
+                childNode.bias = parentNode.bias;
+            }
+        }
+
         const cloneConnectionIntoChild = (src: ConnectionGene): ConnectionGene => {
             const fromId = src.from.innovationNumber;
             const toId = src.to.innovationNumber;
