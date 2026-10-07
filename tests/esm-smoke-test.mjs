@@ -18,6 +18,7 @@ import {
     RandomHashSet,
     RandomSelector,
     EActivation,
+    EMutationPressure,
 } from '../dist/index.js';
 
 console.log('✓ ESM imports successful');
@@ -36,6 +37,7 @@ const exports = {
     RandomHashSet,
     RandomSelector,
     EActivation,
+    EMutationPressure,
 };
 
 for (const [name, value] of Object.entries(exports)) {
@@ -114,6 +116,17 @@ try {
     console.log('✓ EActivation enum is accessible');
 } catch (error) {
     console.error('✗ EActivation enum test failed:', error.message);
+    process.exit(1);
+}
+
+// Test 6: Test EMutationPressure enum
+try {
+    if (EMutationPressure.NORMAL !== 'NORMAL') {
+        throw new Error('EMutationPressure.NORMAL should equal "NORMAL"');
+    }
+    console.log('✓ EMutationPressure enum is accessible');
+} catch (error) {
+    console.error('✗ EMutationPressure enum test failed:', error.message);
     process.exit(1);
 }
 

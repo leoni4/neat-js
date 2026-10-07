@@ -119,7 +119,7 @@ export enum EMutationPressure {
     PANIC = 'PANIC',
 }
 
-interface LoadData {
+export interface LoadData {
     genome: GenomeSaveData;
     evolveCounts?: number;
 }

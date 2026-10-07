@@ -8,6 +8,7 @@ export { Genome } from './genome/genome.js';
 export { NodeGene } from './genome/nodeGene.js';
 export { ConnectionGene } from './genome/connectionGene.js';
 export type { Gene } from './genome/gene.js';
+export type { GenomeSaveData, NodeSaveData, ConnectionSaveData } from './genome/genome.js';
 
 // Calculator exports
 export { Calculator } from './calculations/Calculator.js';
@@ -19,4 +20,5 @@ export { RandomHashSet } from './dataStructures/randomHashSet.js';
 export { RandomSelector } from './dataStructures/randomSelector.js';
 
 // Enums and types
-export { EActivation } from './neat/neat.js';
+export { EActivation, EMutationPressure } from './neat/neat.js';
+export type { INeatParams, IFitOptions, IFitHistory, LoadData } from './neat/neat.js';
