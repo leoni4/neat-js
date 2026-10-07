@@ -186,6 +186,26 @@ describe('Neat', () => {
             expect(best.bestScore).toBe(true);
             expect(best.genome.save()).toEqual(saved);
         });
+
+        it('should load no client when LOAD_PERCENT is 0', () => {
+            const genome = JSON.parse(
+                readFileSync(new URL('../golden/fixtures/load-genome.json', import.meta.url), 'utf8'),
+            ) as GenomeSaveData;
+            expect(genome.connections.length).toBeGreaterThan(0);
+
+            const neat2 = new Neat(
+                4,
+                1,
+                8,
+                EActivation.sigmoid,
+                EActivation.tanh,
+                { LOAD_PERCENT: 0 },
+                { genome, evolveCounts: 5 },
+            );
+
+            expect(neat2.clients).toHaveLength(8);
+            neat2.clients.forEach(client => expect(client.genome.connections.size()).toBe(0));
+        });
     });
 
     describe('MAX_NODES', () => {
@@ -211,6 +231,18 @@ describe('Neat', () => {
             expect(neat.C1).toBe(1);
             expect(neat.C2).toBe(1);
             expect(neat.C3).toBe(0.2);
+        });
+
+        it.each([
+            [true, true],
+            [false, false],
+            [undefined, false],
+        ])('should set PERMANENT_MAIN_CONNECTIONS %s to %s', (value, expected) => {
+            const customNeat = new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, {
+                PERMANENT_MAIN_CONNECTIONS: value,
+            });
+
+            expect(customNeat.PERMANENT_MAIN_CONNECTIONS).toBe(expected);
         });
     });
 

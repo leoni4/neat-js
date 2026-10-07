@@ -258,7 +258,7 @@ export class Neat {
         this.CT = params?.CT ?? DEFAULT_PARAMS.CT;
         this._CP = params?.CP ?? DEFAULT_PARAMS.CP;
         this._PERMANENT_MAIN_CONNECTIONS =
-            params?.PERMANENT_MAIN_CONNECTIONS || DEFAULT_PARAMS.PERMANENT_MAIN_CONNECTIONS;
+            params?.PERMANENT_MAIN_CONNECTIONS ?? DEFAULT_PARAMS.PERMANENT_MAIN_CONNECTIONS;
 
         this._MUTATION_RATE = params?.MUTATION_RATE ?? DEFAULT_PARAMS.MUTATION_RATE;
 
@@ -292,7 +292,7 @@ export class Neat {
         this.validateConfiguration();
 
         if (loadData) {
-            this.load(loadData, params?.LOAD_PERCENT || DEFAULT_PARAMS.LOAD_PERCENT);
+            this.load(loadData, params?.LOAD_PERCENT ?? DEFAULT_PARAMS.LOAD_PERCENT);
         } else {
             this.reset(inputNodes, outputNodes);
         }
