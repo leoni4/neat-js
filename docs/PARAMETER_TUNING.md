@@ -26,6 +26,9 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `C3`                               | `0.2`           | Weight of weight and bias differences in distance                    |
 | `CT`                               | `1`             | Minimum value of the distance divisor `N`; minimum connection count  |
 | `CP`                               | `1`             | Start value of the species distance threshold (adapts each `evolve`) |
+| `CP_MIN`                           | `0`             | Lower limit of the adapted `CP` (`0` = no limit)                     |
+| `SPECIES_TARGET_MIN`               | `8`             | `CP` falls when there are fewer species than this                    |
+| `SPECIES_TARGET_MAX`               | `25`            | `CP` grows when there are more species than this                     |
 | `MUTATION_RATE`                    | `1`             | Multiplier for the link, node, and weight mutation probabilities     |
 | `SURVIVORS`                        | `0.4`           | Fraction of each species that survives selection (40%)               |
 | `WEIGHT_SHIFT_STRENGTH`            | `0.2`           | Magnitude of weight adjustments                                      |
@@ -167,7 +170,7 @@ N = max(connections of genome 1, connections of genome 2, CT)
 - If `distance < CP` → same species (`Species.put()`).
 - Each generation, each species takes a random member as its representative (`Species.reset()`). A client goes into the first species that matches, or it starts a new species.
 
-**CP adapts.** After reproduction, `CP` is multiplied by `0.95` when there are fewer than 8 species, and by `1.05` when there are more than 25 species. The `CP` parameter is only the start value. There is no lower limit, so in long runs `CP` can fall close to `0`.
+**CP adapts.** After reproduction, `CP` is multiplied by `0.95` when there are fewer than `SPECIES_TARGET_MIN` (default 8) species, and by `1.05` when there are more than `SPECIES_TARGET_MAX` (default 25) species. The `CP` parameter is only the start value. With the default `CP_MIN: 0` there is no lower limit, so in long runs `CP` can fall close to `0`. Set `CP_MIN > 0` to keep `CP` at or above that value (see [02_compatibility_thresholds.md](./params/02_compatibility_thresholds.md)).
 
 ### Mutation Process
 
@@ -237,7 +240,7 @@ Each `evolve()` call (`prepareRawScores()`, `normalizeScore()`, `kill()`, `repro
 
 ### Automatic Adaptations
 
-- `CP` changes after each `evolve()` call to keep the species count between 8 and 25
+- `CP` changes after each `evolve()` call to keep the species count between `SPECIES_TARGET_MIN` and `SPECIES_TARGET_MAX` (default 8 and 25); it does not fall below `CP_MIN` when `CP_MIN > 0`
 - The pressure level increases the mutation probabilities when the champion does not improve (see [Mutation Pressure](#mutation-pressure)). `MUTATION_RATE` itself does not change
 - Optimization mode activates every `OPTIMIZATION_PERIOD` (default 100) `evolve()` calls regardless of error
 - Small networks (< CT connections) still add connections during optimization
@@ -254,6 +257,8 @@ It **throws an error** when:
 - The number of inputs, outputs, or clients is not positive
 - WEIGHT_RANDOM_STRENGTH or BIAS_RANDOM_STRENGTH = 0 while random weight mutation is on (`PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`), because the mutation would never end. Use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` to turn random weight mutation off
 - LAMBDA_HIGH or LAMBDA_LOW is negative
+- CP_MIN is negative or not finite, or CP_MIN > 0 and CP < CP_MIN
+- SPECIES_TARGET_MIN or SPECIES_TARGET_MAX is not an integer, SPECIES_TARGET_MIN is negative, or SPECIES_TARGET_MIN > SPECIES_TARGET_MAX
 
 It **warns** (console) when:
 

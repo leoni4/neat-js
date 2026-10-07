@@ -14,6 +14,9 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `C3`                               | `0.2`           | number  | Weight/bias difference coefficient     |
 | `CT`                               | `1`             | number  | Minimum distance divisor and links     |
 | `CP`                               | `1`             | number  | Start species threshold (adapts)       |
+| `CP_MIN`                           | `0`             | number  | Lower limit of adapted CP (0 = none)   |
+| `SPECIES_TARGET_MIN`               | `8`             | number  | CP falls below this species count      |
+| `SPECIES_TARGET_MAX`               | `25`            | number  | CP grows above this species count      |
 | **Evolution Control**              |                 |         |                                        |
 | `MUTATION_RATE`                    | `1`             | number  | Mutation probability multiplier        |
 | `SURVIVORS`                        | `0.4`           | number  | Survival rate (selection pressure)     |
@@ -196,7 +199,7 @@ N = max(connections A, connections B, CT)
 If distance < CP: Same species
 Else: Different species
 
-After reproduction: CP × 0.95 if species < 8, CP × 1.05 if species > 25
+After reproduction: CP × 0.95 if species < SPECIES_TARGET_MIN (8), CP × 1.05 if species > SPECIES_TARGET_MAX (25); CP >= CP_MIN if CP_MIN > 0
 ```
 
 ### Optimization Trigger

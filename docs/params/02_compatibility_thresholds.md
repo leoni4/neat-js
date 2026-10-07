@@ -102,21 +102,22 @@ put(client: Client, force = false): boolean {
 **Adaptation** (end of `Neat.reproduce()`):
 
 ```typescript
-if (this._species.length < 8) this._CP *= 0.95;
-else if (this._species.length > 25) this._CP *= 1.05;
+if (this._species.length < this._SPECIES_TARGET_MIN) this._CP *= 0.95;
+else if (this._species.length > this._SPECIES_TARGET_MAX) this._CP *= 1.05;
+if (this._CP_MIN > 0 && this._CP < this._CP_MIN) this._CP = this._CP_MIN;
 ```
 
-The `CP` parameter is only the start value. After each `evolve()` call, CP falls by 5% when there are fewer than 8 species, and grows by 5% when there are more than 25 species. There is no lower or upper limit. `CONFIG_CONSTANTS.DEFAULT_CP_RATIO` and `CONFIG_CONSTANTS.MIN_CP` (`src/neat/constants.ts`) are not used by this logic.
+The `CP` parameter is only the start value. After each `evolve()` call, CP falls by 5% when there are fewer than `SPECIES_TARGET_MIN` (default 8) species, and grows by 5% when there are more than `SPECIES_TARGET_MAX` (default 25) species. CP does not fall below `CP_MIN` when `CP_MIN > 0`. With the default `CP_MIN: 0` there is no lower limit. There is no upper limit. `CONFIG_CONSTANTS.DEFAULT_CP_RATIO` and `CONFIG_CONSTANTS.MIN_CP` (`src/neat/constants.ts`) are not used by this logic.
 
-Species with only one client are removed before reproduction (unless they hold the best client or are the last species, `Neat.removeExtinct()`), and the orphan clients are bred into the remaining species. So the species count after reproduction can stay below 8, and CP can fall close to `0` in long runs. Read the current value with `neat.CP`.
+Species with only one client are removed before reproduction (unless they hold the best client or are the last species, `Neat.removeExtinct()`), and the orphan clients are bred into the remaining species. So the species count after reproduction can stay below `SPECIES_TARGET_MIN`, and with the default `CP_MIN: 0` CP can fall close to `0` in long runs. Read the current value with `neat.CP`.
 
 ### Code References
 
 - **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
 - **Getter:** `Neat.CP`
 - **Usage:** `Species.put()` (speciation decision), `Neat.genSpecies()`
-- **Adaptation:** `Neat.reproduce()`
-- **Validation:** `Neat.validateConfiguration()` (warns if > 10)
+- **Adaptation:** `Neat.reproduce()` (with `CP_MIN`, `SPECIES_TARGET_MIN`, `SPECIES_TARGET_MAX`)
+- **Validation:** `Neat.validateConfiguration()` (warns if > 10; throws if `CP_MIN > 0` and `CP < CP_MIN`)
 
 ### Relationship with Distance Coefficients
 
@@ -136,8 +137,32 @@ if (distance < CP) {
 
 - **Higher start values:** Fewer, larger species at the start; less diversity; faster convergence within species
 - **Lower start values:** Many small species at the start; high diversity; slower convergence
-- **Default (1):** Start value; the adaptation then moves CP toward 8-25 species
+- **Default (1):** Start value; the adaptation then moves CP toward `SPECIES_TARGET_MIN`-`SPECIES_TARGET_MAX` (default 8-25) species
 - **Warning:** Values > 10 are considered unusually high and will trigger a console warning
+
+## CP_MIN - Lower Limit of the Adapted CP
+
+**Default:** `0` (no limit)  
+**Type:** `number` (finite, `>= 0`)  
+**Location:** `INeatParams.CP_MIN`, `DEFAULT_PARAMS.CP_MIN` (`src/neat/neat.ts`)
+
+When `CP_MIN > 0`, the adaptation in `Neat.reproduce()` does not let CP fall below `CP_MIN`. The start value `CP` must not be less than `CP_MIN`: else the constructor throws. With `CP_MIN: 0` the adaptation is the same as in older versions.
+
+Use it when CP falls close to `0` in long runs. With a CP close to `0`, only exact copies join a species, and `Neat.genSpecies()` calls `Genome.distance()` about n²/2 times per generation (n = population size).
+
+```typescript
+new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { CP: 1, CP_MIN: 0.3 });
+```
+
+Note: `CP_MIN` does not by itself keep more species. Species with one client are still removed (`Neat.removeExtinct()`). On a test workload (85 inputs, population 100, 1,200 generations) the average species count stayed between 1 and 2 with and without `CP_MIN`, and the `distance()` calls per generation fell from about 3,700 to about 100-200.
+
+## SPECIES_TARGET_MIN / SPECIES_TARGET_MAX - Target Species Range
+
+**Defaults:** `8` / `25`  
+**Type:** `number` (integers, `0 <= SPECIES_TARGET_MIN <= SPECIES_TARGET_MAX`)  
+**Location:** `INeatParams`, `DEFAULT_PARAMS` (`src/neat/neat.ts`)
+
+The adaptation multiplies CP by `0.95` when the species count is less than `SPECIES_TARGET_MIN`, and by `1.05` when it is more than `SPECIES_TARGET_MAX`. In the range, CP does not change. Example: `SPECIES_TARGET_MIN: 0` and a large `SPECIES_TARGET_MAX` keep CP at its start value. The constructor throws for values that are not integers, for a negative `SPECIES_TARGET_MIN`, and for `SPECIES_TARGET_MIN > SPECIES_TARGET_MAX`.
 
 ### Interaction with Other Parameters
 

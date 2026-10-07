@@ -401,6 +401,91 @@ describe('Neat', () => {
             expect(customNeat.PERMANENT_MAIN_CONNECTIONS).toBe(expected);
         });
 
+        describe('CP adaptation', () => {
+            const speciesCount = (n: Neat) => (n as unknown as { _species: Species[] })._species.length;
+            const evolveOnce = (n: Neat) => {
+                n.clients.forEach((c, i) => {
+                    c.score = i;
+                });
+                n.evolve();
+            };
+
+            it.each([{ CP_MIN: -1 }, { CP_MIN: NaN }, { CP_MIN: Infinity }, { CP: 0.5, CP_MIN: 1 }])(
+                'should throw for an invalid CP_MIN (%o)',
+                params => {
+                    expect(() => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, params)).toThrow(/CP_MIN/);
+                },
+            );
+
+            it.each([
+                { SPECIES_TARGET_MIN: 10, SPECIES_TARGET_MAX: 5 },
+                { SPECIES_TARGET_MIN: -1 },
+                { SPECIES_TARGET_MIN: 2.5 },
+                { SPECIES_TARGET_MAX: NaN },
+            ])('should throw for an invalid species target range (%o)', params => {
+                expect(() => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, params)).toThrow(
+                    /SPECIES_TARGET_MIN/,
+                );
+            });
+
+            it('should accept CP equal to CP_MIN', () => {
+                expect(
+                    () => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, { CP: 0.5, CP_MIN: 0.5 }),
+                ).not.toThrow();
+            });
+
+            it('should decrease CP below SPECIES_TARGET_MIN with the default range', () => {
+                withSeededRandom(17, () => {
+                    const cpNeat = new Neat(2, 1, 10, EActivation.tanh, EActivation.tanh);
+                    evolveOnce(cpNeat);
+                    expect(speciesCount(cpNeat)).toBeLessThan(8);
+                    expect(cpNeat.CP).toBe(0.95);
+                });
+            });
+
+            it('should increase CP above SPECIES_TARGET_MAX', () => {
+                withSeededRandom(17, () => {
+                    const cpNeat = new Neat(2, 1, 10, EActivation.tanh, EActivation.tanh, {
+                        SPECIES_TARGET_MIN: 0,
+                        SPECIES_TARGET_MAX: 0,
+                    });
+                    evolveOnce(cpNeat);
+                    expect(cpNeat.CP).toBe(1.05);
+                });
+            });
+
+            it('should keep CP when the species count is in the target range', () => {
+                withSeededRandom(17, () => {
+                    const cpNeat = new Neat(2, 1, 10, EActivation.tanh, EActivation.tanh, {
+                        SPECIES_TARGET_MIN: 0,
+                        SPECIES_TARGET_MAX: 1000,
+                    });
+                    for (let gen = 0; gen < 20; gen++) evolveOnce(cpNeat);
+                    expect(cpNeat.CP).toBe(1);
+                });
+            });
+
+            it('should keep CP at or above CP_MIN in a long run', () => {
+                const run = (params: { CP_MIN?: number }) =>
+                    withSeededRandom(1717, () => {
+                        const cpNeat = new Neat(6, 1, 40, EActivation.tanh, EActivation.tanh, { CP: 1, ...params });
+                        let minCp = Infinity;
+                        for (let gen = 0; gen < 300; gen++) {
+                            cpNeat.clients.forEach(c => {
+                                c.score = 1 - Math.abs(c.calculate([1, 0, 1, 0, 1, 0])[0] - 0.5);
+                            });
+                            cpNeat.evolve();
+                            minCp = Math.min(minCp, cpNeat.CP);
+                        }
+
+                        return minCp;
+                    }).result;
+
+                expect(run({ CP_MIN: 0.5 })).toBe(0.5);
+                expect(run({})).toBeLessThan(0.5);
+            });
+        });
+
         describe('zero mutation strengths', () => {
             it.each(['WEIGHT_RANDOM_STRENGTH', 'BIAS_RANDOM_STRENGTH'] as const)(
                 'should throw when %s is 0 and random weight mutation can run',

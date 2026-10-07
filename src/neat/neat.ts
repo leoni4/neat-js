@@ -27,6 +27,9 @@ export interface INeatParams {
     C3?: number;
     CT?: number;
     CP?: number;
+    CP_MIN?: number;
+    SPECIES_TARGET_MIN?: number;
+    SPECIES_TARGET_MAX?: number;
     MUTATION_RATE?: number;
     SURVIVORS?: number;
     WEIGHT_SHIFT_STRENGTH?: number;
@@ -58,6 +61,9 @@ const DEFAULT_PARAMS = {
     C2: 1,
     C3: 0.2,
     CP: 1,
+    CP_MIN: 0,
+    SPECIES_TARGET_MIN: 8,
+    SPECIES_TARGET_MAX: 25,
 
     CT: 1,
     PERMANENT_MAIN_CONNECTIONS: false,
@@ -184,6 +190,9 @@ export class Neat {
     private _C3: number;
 
     private _CP: number;
+    private _CP_MIN: number;
+    private _SPECIES_TARGET_MIN: number;
+    private _SPECIES_TARGET_MAX: number;
     CT: number;
     private _PERMANENT_MAIN_CONNECTIONS: boolean;
 
@@ -257,6 +266,9 @@ export class Neat {
 
         this.CT = params?.CT ?? DEFAULT_PARAMS.CT;
         this._CP = params?.CP ?? DEFAULT_PARAMS.CP;
+        this._CP_MIN = params?.CP_MIN ?? DEFAULT_PARAMS.CP_MIN;
+        this._SPECIES_TARGET_MIN = params?.SPECIES_TARGET_MIN ?? DEFAULT_PARAMS.SPECIES_TARGET_MIN;
+        this._SPECIES_TARGET_MAX = params?.SPECIES_TARGET_MAX ?? DEFAULT_PARAMS.SPECIES_TARGET_MAX;
         this._PERMANENT_MAIN_CONNECTIONS =
             params?.PERMANENT_MAIN_CONNECTIONS ?? DEFAULT_PARAMS.PERMANENT_MAIN_CONNECTIONS;
 
@@ -343,6 +355,26 @@ export class Neat {
 
         if (this._CP > 10) {
             console.warn(`CP threshold is unusually high: ${this._CP}`);
+        }
+
+        if (!(this._CP_MIN >= 0) || !Number.isFinite(this._CP_MIN)) {
+            throw new Error('CP_MIN must be a finite non-negative number');
+        }
+
+        if (this._CP_MIN > 0 && !(this._CP >= this._CP_MIN)) {
+            throw new Error(`CP (${this._CP}) must not be less than CP_MIN (${this._CP_MIN})`);
+        }
+
+        if (
+            !Number.isInteger(this._SPECIES_TARGET_MIN) ||
+            !Number.isInteger(this._SPECIES_TARGET_MAX) ||
+            this._SPECIES_TARGET_MIN < 0 ||
+            this._SPECIES_TARGET_MIN > this._SPECIES_TARGET_MAX
+        ) {
+            throw new Error(
+                'SPECIES_TARGET_MIN and SPECIES_TARGET_MAX must be non-negative integers with ' +
+                    'SPECIES_TARGET_MIN <= SPECIES_TARGET_MAX',
+            );
         }
 
         if (this._MUTATION_RATE > 10) {
@@ -1023,8 +1055,9 @@ export class Neat {
         }
         selector.reset();
 
-        if (this._species.length < 8) this._CP *= 0.95;
-        else if (this._species.length > 25) this._CP *= 1.05;
+        if (this._species.length < this._SPECIES_TARGET_MIN) this._CP *= 0.95;
+        else if (this._species.length > this._SPECIES_TARGET_MAX) this._CP *= 1.05;
+        if (this._CP_MIN > 0 && this._CP < this._CP_MIN) this._CP = this._CP_MIN;
     }
 
     private removeExtinct() {
