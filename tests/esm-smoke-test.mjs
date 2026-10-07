@@ -82,12 +82,17 @@ try {
 
 // Test 4: Test RandomSelector
 try {
-    const selector = new RandomSelector();
-    selector.add({ id: 1 }, 1.0);
-    selector.add({ id: 2 }, 2.0);
+    const selector = new RandomSelector(1);
+    const first = { id: 1, score: 1 };
+    const second = { id: 2, score: 2 };
+    selector.add(first);
+    selector.add(second);
+    if (selector.totalScore !== 3) {
+        throw new Error(`Expected totalScore 3, got ${selector.totalScore}`);
+    }
     const selected = selector.random();
-    if (!selected) {
-        throw new Error('RandomSelector.random() returned undefined');
+    if (selected !== first && selected !== second) {
+        throw new Error('RandomSelector.random() did not return an added object');
     }
     console.log('✓ RandomSelector works correctly');
 } catch (error) {
