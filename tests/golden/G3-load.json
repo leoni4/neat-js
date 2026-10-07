@@ -1,0 +1,101 @@
+{
+    "rngCalls": 7086,
+    "rngChecksum": 3672034597,
+    "evolveCounts": 27,
+    "pressure": "NORMAL",
+    "speciesCount": 1,
+    "cpBits": "3fd6f16ef0348c95",
+    "championOutputs": "3fe56a77951781593fd8d0015ad3f5b03fd681e4d09b91ba3fe164d43aa651ad3fd9aec6e6c0a4ba3fdebf3def9739393fdfc4f6890e23193fddbf247d5c1b6c3fe1ce59d16cc1a63fdf6fa2f12159c13fda2e39a000849f3fe3c635fc519a643fe309bbca7468573fcf5ebb963631813fe332df3d1ebe573fd649f18154df13",
+    "clientOutputs": [
+        "3fe56a77951781593fd8d0015ad3f5b03fd681e4d09b91ba3fe164d43aa651ad3fd9aec6e6c0a4ba3fdebf3def9739393fdfc4f6890e23193fddbf247d5c1b6c3fe1ce59d16cc1a63fdf6fa2f12159c13fda2e39a000849f3fe3c635fc519a643fe309bbca7468573fcf5ebb963631813fe332df3d1ebe573fd649f18154df13",
+        "3fe550465d9863e53fd984915db8285c3fd6dc91bf3ad02e3fe20e2a61fe31533fda4a7f7e9711c23fdf4f7037828ab83fe03bd7551000103fdd3d108830664f3fe1ecd3dfddd6dd3fdfcc004d0b921c3fdbe71ba519d7333fe368bbe20bb70d3fe2340baf360b743fd11c1265dd2d9b3fe3c59380f82e733fd4c51c7b4c062f",
+        "3fe55f8f14cbf0843fd92b6c2317e7413fd6410a127200b63fe12e996e0d24583fd9c499eb580b783fde86101bacf5fe3fdf91f7b70a2edf3fdd57ab465e7de73fe1b470d894aeb33fdf5b7998c4af4d3fda606eba3aee4b3fe3d1c3fea4c1e93fe30269b9a0b3463fd0109de99bba923fe318430741180b3fd6035d0e399821",
+        "3fe079a07bc1e9053fe12ab45f96410d3fd797388bb4522a3fdf9abef90dcc3c3fdd65a566a3d43a3fe0a3a27be569f73fda5217dab415613fdae6074c7e20e93fdc0000ed743cd13fdb65273dafea963fdc2f17cbf32fd53fe2f80f8a21ebd53fe16296435904f73fd9bfe657bedcea3fe058e327ead1503fda6667b24c2f64",
+        "3fe4bb8979a9c90f3fd7c4846bc57ad53fd6b308ac6889903fe11e8b29386a733fd96b0f7deefe7e3fdda78b72a558a63fdf86ccdc60da123fdd3f15a10b1dd83fe17c832edad3183fdee09f884c36cd3fda187ce007f0553fe28d62b758885e3fe22cbde84ceb403fcfa657f681e3063fe2febbface5a863fd59fd62d9eeb42"
+    ],
+    "populationSha256": "f051e9c8d33d35ca5b35a17231633e5d3fc58d366891831b7c16f12161626d33",
+    "model": {
+        "nodes": [
+            {
+                "innovationNumber": 1,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.2
+            },
+            {
+                "innovationNumber": 2,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4
+            },
+            {
+                "innovationNumber": 3,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6
+            },
+            {
+                "innovationNumber": 4,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8
+            },
+            {
+                "innovationNumber": 5,
+                "bias": 0.03000460846815258,
+                "x": 0.99,
+                "y": 0.5
+            },
+            {
+                "innovationNumber": 6,
+                "bias": 0.1787748183796446,
+                "x": 0.5,
+                "y": 0.6340602572541685
+            }
+        ],
+        "connections": [
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": -0.4834480560399727,
+                "from": 2,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.2633161976933479,
+                "from": 3,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.7761504618450998,
+                "from": 1,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 1.2913721013814214,
+                "from": 4,
+                "to": 6
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": -0.19391168532176792,
+                "from": 6,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": false,
+                "weight": 0.2141222828999162,
+                "from": 1,
+                "to": 6
+            }
+        ]
+    }
+}

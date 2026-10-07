@@ -149,7 +149,7 @@ describe('Genome - distance', () => {
         });
 
         it('should handle CT threshold correctly', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
                 CT: 10,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -167,7 +167,7 @@ describe('Genome - distance', () => {
 
     describe('distance coefficients', () => {
         it('should use C1 coefficient for excess genes', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
                 C1: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -186,7 +186,7 @@ describe('Genome - distance', () => {
         });
 
         it('should use C2 coefficient for disjoint genes', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
                 C2: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;
@@ -200,7 +200,7 @@ describe('Genome - distance', () => {
         });
 
         it('should use C3 coefficient for weight differences', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, {
+            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
                 C3: 2.0,
             });
             const testGenome1 = testNeat.clients[0].genome;

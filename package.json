@@ -26,7 +26,7 @@
         "test:watch": "vitest",
         "test:esm": "node tests/esm-smoke-test.mjs",
         "lint": "eslint src tests",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc -p tsconfig.test.json",
         "prepack": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:esm",
         "prepublishOnly": "npm run build"
     },
@@ -71,6 +71,7 @@
         }
     },
     "devDependencies": {
+        "@types/node": "^20.19.43",
         "@typescript-eslint/eslint-plugin": "^8.54.0",
         "@typescript-eslint/parser": "^8.54.0",
         "@vitest/coverage-v8": "^4.0.18",

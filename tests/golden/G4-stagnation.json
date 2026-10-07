@@ -1,0 +1,54 @@
+{
+    "rngCalls": 67674,
+    "rngChecksum": 1994245335,
+    "evolveCounts": 430,
+    "pressure": "ESCAPE",
+    "speciesCount": 1,
+    "cpBits": "3df21f7d00ee9f9c",
+    "championOutputs": "3fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe00000000000003fe0000000000000",
+    "clientOutputs": [
+        "3fdf000c6c6da0fd3fe030240e40e4ef3fded3df5ccd6d4d3fde7d5bb96037613fdf7e6a1245a5653fdf49c2b80d00e23fde9870677c63ae3fdf290fd5ab46dc3fdead5bd825e0f23fdecf91b0b317153fdef519e22690f23fe0545357c409923fe0617893726c633fdf8c4082d45d273fdedbe8e4110f5b3fe05359028f1c58",
+        "3fddda44e5280ed03fe0ac833e95e1ad3fde14bdd43ca9603fdd3a4cd75c36623fdec15cd46cac2a3fdf7ac3267046de3fdd12f425b929e43fdf0b37c8af37573fdd3b74db27077d3fdd99fe945c87d93fdd8b76f8fb622a3fe1887b6d5275083fe153c29380a7513fdf53f73c85f7f23fdcec83263c51f63fe1eb4192be5ec7",
+        "3fde3fc1185e3e543fdfe5807b5c91343fde270540abed9b3fdda4c2b620cc4f3fde80e79192b2fc3fdef765ad9330533fdd958d4804f0513fdeeb54433ea6293fddbaa38b8fd4983fddee607dbe61ea3fddca224111a91b3fe0867a0290c8ef3fe06da19fe39f9c3fdea514b332c05c3fdd7a991b0356583fe0b291418e9280",
+        "3fe018913e16cacd3fdfe76c13aeddbe3fe009252614605d3fe00e8627a25d6d3fe0028ad4d779da3fe001bdb7d0f0e63fe01420d81c98a83fe00f35c60fe2bd3fe01683b2c5abf13fe0116200c1de2b3fe0069df57d21113fe007f2f06ef5273fe00dd5e77b24623fdfe6c2204376cc3fe013caa82803ff3fe000235eb80480",
+        "3fddee03c2f9118e3fe06efd5949dc5f3fde1f9cd1f046543fdd4412575795fb3fdebb0356a55d523fdf63fa0b6fa2083fdd27ea13bb2b2c3fdf008b5b7067f13fdd5838e729addc3fddb27942ed78fc3fdd824c60071ced3fe0e6cc19598aed3fe0b8e6c34fe9b93fdf05f53c5cbf4b3fdcfb4ceef7c16d3fe12fd30071b529"
+    ],
+    "populationSha256": "b2d50c60645f8e86b3523f8f34c42de0c06aa7b635b4614354ea029274a8e7a1",
+    "model": {
+        "nodes": [
+            {
+                "innovationNumber": 1,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.2
+            },
+            {
+                "innovationNumber": 2,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4
+            },
+            {
+                "innovationNumber": 3,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6
+            },
+            {
+                "innovationNumber": 4,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8
+            },
+            {
+                "innovationNumber": 5,
+                "bias": 0,
+                "x": 0.99,
+                "y": 0.5
+            }
+        ],
+        "connections": []
+    },
+    "pressuresSeen": ["NORMAL", "COMPACT", "BOOST", "ESCAPE", "PANIC"],
+    "eliteReinsertions": 4
+}

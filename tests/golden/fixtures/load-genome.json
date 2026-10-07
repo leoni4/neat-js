@@ -1,0 +1,84 @@
+{
+    "nodes": [
+        {
+            "innovationNumber": 1,
+            "bias": 0,
+            "x": 0.01,
+            "y": 0.2
+        },
+        {
+            "innovationNumber": 2,
+            "bias": 0,
+            "x": 0.01,
+            "y": 0.4
+        },
+        {
+            "innovationNumber": 3,
+            "bias": 0,
+            "x": 0.01,
+            "y": 0.6
+        },
+        {
+            "innovationNumber": 4,
+            "bias": 0,
+            "x": 0.01,
+            "y": 0.8
+        },
+        {
+            "innovationNumber": 5,
+            "bias": 0,
+            "x": 0.99,
+            "y": 0.5
+        },
+        {
+            "innovationNumber": 6,
+            "bias": -0.021994793464217045,
+            "x": 0.5,
+            "y": 0.6340602572541685
+        }
+    ],
+    "connections": [
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": -0.4834480560399727,
+            "from": 2,
+            "to": 5
+        },
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": 0.24947763560339806,
+            "from": 3,
+            "to": 5
+        },
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": 0.7761504618450998,
+            "from": 1,
+            "to": 5
+        },
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": 1.2913721013814214,
+            "from": 4,
+            "to": 6
+        },
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": -0.19391168532176792,
+            "from": 6,
+            "to": 5
+        },
+        {
+            "replaceIndex": 0,
+            "enabled": true,
+            "weight": 0.12997885355725886,
+            "from": 1,
+            "to": 6
+        }
+    ]
+}

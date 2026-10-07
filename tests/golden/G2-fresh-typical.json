@@ -1,0 +1,566 @@
+{
+    "rngCalls": 87063,
+    "rngChecksum": 2347340422,
+    "evolveCounts": 30,
+    "pressure": "NORMAL",
+    "speciesCount": 2,
+    "cpBits": "3fcceb74afc897eb",
+    "championOutputs": "bfbf6361a5713a71bfb4c4e0d72e0958bfbc42b3a9a47f8cbfc4e208c2379dfdbfbbdb8653f15ffebfb8f45e840bbababfb3ff640e4b766ebfb65da75ebea82dbfb3b96c0ba31794bfb0984f95f5588bbfc47ea631562e15bfb52d11b221bbdabfba85be30d52f61bfc101b85213e6fcbfb857708156a31dbfbdbd7b61faccbe",
+    "clientOutputs": [
+        "bfc43bfbc3f71555bfaf99ad39c2d7d63fb26756f7b20f78bfbf303414bd37f3bfb8bea14bcbe3b93fc5d6f6e68ea0713fc8c3e14c4e7e793fac805672a98adf3fb57f62c38b7f1ebfbe2bdc5257b3b2bfcc97a2613a88303fb6bc0a5e7844083fc4700cf33be1bebfc4ebf4a2f9d4763f68b013d40c937bbfaa93ac006152eb",
+        "bfa65855a1139fb23fa137fb56cc0b00bf7e2281520ff412bfcbbfecb80e75b43fa4e5d50fcc92c43fb4e5494ddf74693fb5e01e546193a93fab86d23a680fec3fbb662caa120e4d3fbdcb03471af327bfceb36451825eba3faff9cd6a2780433fa3a60298b30728bfbc232ab0af972c3f9c1ac952ecb8f0bfac25df56e99dbe",
+        "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "3fa012a49acb4546bfad84879a887707bf8e3a92ee8afbebbfa774bcbc27584b3fb3a6e90b5488083fb453705985ec8c3fa4516a2db775183fa252fd4a5f4d2a3f76a0fe45928d53bf99bac5eae96f93bfb0de0f9dab2da13f83fefdd695b8e73fae78503fb2431abfa064f72586b20bbfa4db320cbc848bbf82b6cf658dd495",
+        "3fc19c27b00f3687bf9aab0c7ce20f963fbca722ea1667f83f9b423d9b049f623f6eee958aea1083bfba3df5e27934ac3fa6853d7cf11f98bfc360e91b5dbe5abfc1c939e4812fca3f8f14d35edffd15bfad5ccb5af809f2bfb780625b800803bfb3feb2229680323fc1d51d28972a8a3fb44ef99943f52b3fbe5fb4e8095ae1"
+    ],
+    "populationSha256": "5b1f8e3d2776770943a061d0cf706719b9c425c07bd01ce16aa05c9a16f2dd2f",
+    "model": {
+        "nodes": [
+            {
+                "innovationNumber": 1,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.011627906976744186
+            },
+            {
+                "innovationNumber": 2,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.023255813953488372
+            },
+            {
+                "innovationNumber": 3,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.03488372093023256
+            },
+            {
+                "innovationNumber": 4,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.046511627906976744
+            },
+            {
+                "innovationNumber": 5,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.05813953488372093
+            },
+            {
+                "innovationNumber": 6,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.06976744186046512
+            },
+            {
+                "innovationNumber": 7,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.08139534883720931
+            },
+            {
+                "innovationNumber": 8,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.09302325581395349
+            },
+            {
+                "innovationNumber": 9,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.10465116279069768
+            },
+            {
+                "innovationNumber": 10,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.11627906976744186
+            },
+            {
+                "innovationNumber": 11,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.12790697674418605
+            },
+            {
+                "innovationNumber": 12,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.13953488372093023
+            },
+            {
+                "innovationNumber": 13,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.1511627906976744
+            },
+            {
+                "innovationNumber": 14,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.16279069767441862
+            },
+            {
+                "innovationNumber": 15,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.1744186046511628
+            },
+            {
+                "innovationNumber": 16,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.18604651162790697
+            },
+            {
+                "innovationNumber": 17,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.19767441860465115
+            },
+            {
+                "innovationNumber": 18,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.20930232558139536
+            },
+            {
+                "innovationNumber": 19,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.22093023255813954
+            },
+            {
+                "innovationNumber": 20,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.23255813953488372
+            },
+            {
+                "innovationNumber": 21,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.2441860465116279
+            },
+            {
+                "innovationNumber": 22,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.2558139534883721
+            },
+            {
+                "innovationNumber": 23,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.26744186046511625
+            },
+            {
+                "innovationNumber": 24,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.27906976744186046
+            },
+            {
+                "innovationNumber": 25,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.29069767441860467
+            },
+            {
+                "innovationNumber": 26,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.3023255813953488
+            },
+            {
+                "innovationNumber": 27,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.313953488372093
+            },
+            {
+                "innovationNumber": 28,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.32558139534883723
+            },
+            {
+                "innovationNumber": 29,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.3372093023255814
+            },
+            {
+                "innovationNumber": 30,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.3488372093023256
+            },
+            {
+                "innovationNumber": 31,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.36046511627906974
+            },
+            {
+                "innovationNumber": 32,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.37209302325581395
+            },
+            {
+                "innovationNumber": 33,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.38372093023255816
+            },
+            {
+                "innovationNumber": 34,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.3953488372093023
+            },
+            {
+                "innovationNumber": 35,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4069767441860465
+            },
+            {
+                "innovationNumber": 36,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4186046511627907
+            },
+            {
+                "innovationNumber": 37,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.43023255813953487
+            },
+            {
+                "innovationNumber": 38,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4418604651162791
+            },
+            {
+                "innovationNumber": 39,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.45348837209302323
+            },
+            {
+                "innovationNumber": 40,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.46511627906976744
+            },
+            {
+                "innovationNumber": 41,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.47674418604651164
+            },
+            {
+                "innovationNumber": 42,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4883720930232558
+            },
+            {
+                "innovationNumber": 43,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5
+            },
+            {
+                "innovationNumber": 44,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5116279069767442
+            },
+            {
+                "innovationNumber": 45,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5232558139534884
+            },
+            {
+                "innovationNumber": 46,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5348837209302325
+            },
+            {
+                "innovationNumber": 47,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5465116279069767
+            },
+            {
+                "innovationNumber": 48,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5581395348837209
+            },
+            {
+                "innovationNumber": 49,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5697674418604651
+            },
+            {
+                "innovationNumber": 50,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5813953488372093
+            },
+            {
+                "innovationNumber": 51,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.5930232558139535
+            },
+            {
+                "innovationNumber": 52,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6046511627906976
+            },
+            {
+                "innovationNumber": 53,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6162790697674418
+            },
+            {
+                "innovationNumber": 54,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.627906976744186
+            },
+            {
+                "innovationNumber": 55,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6395348837209303
+            },
+            {
+                "innovationNumber": 56,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6511627906976745
+            },
+            {
+                "innovationNumber": 57,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6627906976744186
+            },
+            {
+                "innovationNumber": 58,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6744186046511628
+            },
+            {
+                "innovationNumber": 59,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.686046511627907
+            },
+            {
+                "innovationNumber": 60,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6976744186046512
+            },
+            {
+                "innovationNumber": 61,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7093023255813954
+            },
+            {
+                "innovationNumber": 62,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7209302325581395
+            },
+            {
+                "innovationNumber": 63,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7325581395348837
+            },
+            {
+                "innovationNumber": 64,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7441860465116279
+            },
+            {
+                "innovationNumber": 65,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7558139534883721
+            },
+            {
+                "innovationNumber": 66,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7674418604651163
+            },
+            {
+                "innovationNumber": 67,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7790697674418605
+            },
+            {
+                "innovationNumber": 68,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.7906976744186046
+            },
+            {
+                "innovationNumber": 69,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8023255813953488
+            },
+            {
+                "innovationNumber": 70,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.813953488372093
+            },
+            {
+                "innovationNumber": 71,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8255813953488372
+            },
+            {
+                "innovationNumber": 72,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8372093023255814
+            },
+            {
+                "innovationNumber": 73,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8488372093023255
+            },
+            {
+                "innovationNumber": 74,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8604651162790697
+            },
+            {
+                "innovationNumber": 75,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.872093023255814
+            },
+            {
+                "innovationNumber": 76,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8837209302325582
+            },
+            {
+                "innovationNumber": 77,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8953488372093024
+            },
+            {
+                "innovationNumber": 78,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9069767441860465
+            },
+            {
+                "innovationNumber": 79,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9186046511627907
+            },
+            {
+                "innovationNumber": 80,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9302325581395349
+            },
+            {
+                "innovationNumber": 81,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9418604651162791
+            },
+            {
+                "innovationNumber": 82,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9534883720930233
+            },
+            {
+                "innovationNumber": 83,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9651162790697675
+            },
+            {
+                "innovationNumber": 84,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9767441860465116
+            },
+            {
+                "innovationNumber": 85,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.9883720930232558
+            },
+            {
+                "innovationNumber": 86,
+                "bias": -0.11354458678979426,
+                "x": 0.99,
+                "y": 0.5
+            },
+            {
+                "innovationNumber": 87,
+                "bias": 0.05038764376658946,
+                "x": 0.5,
+                "y": 0.5946936688245121
+            }
+        ],
+        "connections": [
+            {
+                "replaceIndex": 0,
+                "enabled": false,
+                "weight": 0.9087368871085346,
+                "from": 66,
+                "to": 87
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": -0.11616720845922826,
+                "from": 87,
+                "to": 86
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.5676959080513708,
+                "from": 3,
+                "to": 87
+            }
+        ]
+    }
+}

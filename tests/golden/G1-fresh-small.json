@@ -1,0 +1,101 @@
+{
+    "rngCalls": 31503,
+    "rngChecksum": 418624993,
+    "evolveCounts": 60,
+    "pressure": "NORMAL",
+    "speciesCount": 2,
+    "cpBits": "3fa79675eff6e9cc",
+    "championOutputs": "3fe556f3f24253733fd8e45cb12c988b3fd682007c5f03233fe15f707f9c157d3fd9a58400eab3ac3fdeb65ef00c472e3fdfcd819fc35fde3fdd8e74b95b00e93fe1c6f49a65990b3fdf7f0b079e660d3fda69d03a4f37d73fe3c6db92b7dd413fe2dedb4ca8db4c3fd004d183d473823fe327c4f2d21e623fd5ea73e2ee9a48",
+    "clientOutputs": [
+        "3fe556f3f24253733fd8e45cb12c988b3fd682007c5f03233fe15f707f9c157d3fd9a58400eab3ac3fdeb65ef00c472e3fdfcd819fc35fde3fdd8e74b95b00e93fe1c6f49a65990b3fdf7f0b079e660d3fda69d03a4f37d73fe3c6db92b7dd413fe2dedb4ca8db4c3fd004d183d473823fe327c4f2d21e623fd5ea73e2ee9a48",
+        "3fe43c7677a73aa13fd797db9285cb723fd672751eaeaba33fe00a23d5d670663fd9375dacd2c8c13fdc5dc14dc2d20f3fdeb1ff262593f53fdcc87638993bcb3fe11345f829b9433fde5ce41e1a726d3fd935ffff0922cd3fe262dbf50989a53fe239f5990eb52b3fcfce7cd231c21a3fe221ee5618f6f73fd5e33b7004e337",
+        "3fe521b5871dfa433fd839f3b4b6fab93fd5714bf621beb53fe1dee5c989f4f43fd81e8f6c0e72ad3fdfa34cb5f6eee33fdee26f8223fa213fdceee088132dd93fe1638e7a6275f53fde795cf86e85663fd91487330887163fe3fe5622919a233fe24c15a2578e8a3fcd09fd62452b603fe2e33058a06e163fd515bafaf17ed0",
+        "3fe68e9ba19924c83fd975f3bfb9daa33fdaeec56257e7413fe33554a6aabf733fdb33fd968b05c73fe104cb65bd0f7a3fe1e8a74e8f8fcd3fe11cb6b8eda0c13fe3ac0074ffc90f3fe193b04da99ebe3fdc2f33faa4cef53fe4ceda90c7b0d63fe3b2144015d6ce3fd1364ae92a808a3fe3e4e14532d3023fda7cf8261321ab",
+        "3fe057173cc92a903fe0a6dacf2a7f3a3fd7b2348dc1b9343fdef2e238d87f413fdc72f247bfbdc13fe07e2c696c44223fda31f6eca5106f3fdb353552a468f13fdbf8a907521fe33fdb5cefbd606b2e3fdafde01a5c73f33fe31bca846693b73fe14a82fd4a30923fd8bf8c3e21cb3c3fdf3d6dda2ce0433fdaf61019670a28"
+    ],
+    "populationSha256": "1112938de707c87af63a424eb783b7c8c9f4d9328d0407b21a5de284dede8f3b",
+    "model": {
+        "nodes": [
+            {
+                "innovationNumber": 1,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.2
+            },
+            {
+                "innovationNumber": 2,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.4
+            },
+            {
+                "innovationNumber": 3,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.6
+            },
+            {
+                "innovationNumber": 4,
+                "bias": 0,
+                "x": 0.01,
+                "y": 0.8
+            },
+            {
+                "innovationNumber": 5,
+                "bias": 0,
+                "x": 0.99,
+                "y": 0.5
+            },
+            {
+                "innovationNumber": 6,
+                "bias": -0.021994793464217045,
+                "x": 0.5,
+                "y": 0.6340602572541685
+            }
+        ],
+        "connections": [
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": -0.4834480560399727,
+                "from": 2,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.24947763560339806,
+                "from": 3,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.7761504618450998,
+                "from": 1,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 1.2913721013814214,
+                "from": 4,
+                "to": 6
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": -0.19391168532176792,
+                "from": 6,
+                "to": 5
+            },
+            {
+                "replaceIndex": 0,
+                "enabled": true,
+                "weight": 0.12997885355725886,
+                "from": 1,
+                "to": 6
+            }
+        ]
+    }
+}
