@@ -595,6 +595,61 @@ describe('Neat', () => {
             });
         });
 
+        describe('CHAMPION_MAX_AGE', () => {
+            it.each([0, 0.5, 1.5, -1, NaN])('should throw for CHAMPION_MAX_AGE %s', value => {
+                expect(
+                    () => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, { CHAMPION_MAX_AGE: value }),
+                ).toThrow('CHAMPION_MAX_AGE must be an integer >= 1 or Infinity');
+            });
+
+            it.each([1, 5, Infinity])('should accept CHAMPION_MAX_AGE %s', value => {
+                expect(
+                    () => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, { CHAMPION_MAX_AGE: value }),
+                ).not.toThrow();
+            });
+
+            const luckyRun = (params: { CHAMPION_MAX_AGE?: number }, gens: number) => {
+                const championScores: number[] = [];
+                const pressures = new Set<string>();
+                withSeededRandom(2020, () => {
+                    const pNeat = new Neat(4, 1, 8, EActivation.sigmoid, EActivation.tanh, params);
+                    for (let g = 0; g < gens; g++) {
+                        pNeat.clients.forEach((client, i) => {
+                            client.score = g === 0 && i === 0 ? 1 : 0.5;
+                            client.error = 0.5;
+                        });
+                        pNeat.evolve();
+                        championScores.push(pNeat.champion!.scoreRaw);
+                        pressures.add(pNeat.PRESSURE);
+                    }
+                });
+
+                return { championScores, pressures: [...pressures].sort() };
+            };
+
+            const firstReplacedGen = (championScores: number[]) => championScores.findIndex(score => score < 0.9);
+
+            it('should keep the lucky champion with the defaults', () => {
+                const { championScores, pressures } = luckyRun({}, 430);
+
+                expect(firstReplacedGen(championScores)).toBe(-1);
+                expect(pressures).toContain('PANIC');
+            });
+
+            it('should replace the lucky champion after CHAMPION_MAX_AGE generations and keep NORMAL pressure', () => {
+                const { championScores, pressures } = luckyRun({ CHAMPION_MAX_AGE: 10 }, 430);
+
+                expect(firstReplacedGen(championScores)).toBe(10);
+                expect(pressures).toEqual(['NORMAL']);
+            });
+
+            it('should count the age through elite reinsertion', () => {
+                const { championScores } = luckyRun({ CHAMPION_MAX_AGE: 150 }, 200);
+
+                expect(firstReplacedGen(championScores)).toBe(150);
+            });
+        });
+
         describe('zero mutation strengths', () => {
             it.each(['WEIGHT_RANDOM_STRENGTH', 'BIAS_RANDOM_STRENGTH'] as const)(
                 'should throw when %s is 0 and random weight mutation can run',

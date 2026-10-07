@@ -121,7 +121,7 @@ Optimization mode is on:
 
 `evolveCounts` continues from the loaded value when you load a model, so a loaded model keeps the same optimization schedule.
 
-**Elite reinsertion** (`Neat.reinsertElitesIfStagnant()`): when the champion did not change for `OPTIMIZATION_PERIOD` `evolve()` calls, copies of the champion and the runner-up replace the two lowest-ranked clients, and the champion age goes back to 0.
+**Elite reinsertion** (`Neat.reinsertElitesIfStagnant()`): when the champion did not change for `OPTIMIZATION_PERIOD` `evolve()` calls, copies of the champion and the runner-up replace the two lowest-ranked clients, and the champion's `epoch` counter goes back to 0. (`CHAMPION_MAX_AGE` uses a separate age counter, which elite reinsertion does not reset.)
 
 ### Code References
 
@@ -164,6 +164,45 @@ new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { PRESSURE_BOOST: false
 - **Default (`true`, `true`):** The same behaviour as older versions
 - **`PRESSURE_BOOST: false`:** Noisy or changing fitness data (for example a new data window in each generation). There, the champion seldom gains more than `OPT_ERR_THRESHOLD`, so the stagnation count grows and the higher levels can run for long periods. On a test workload (85 inputs, population 100, a new data window in each generation, 1,200 generations), the defaults gave `BOOST` or `ESCAPE` in 444 of 1,200 generations; with `PRESSURE_BOOST: false` all 1,200 were `NORMAL`.
 - **`PRESSURE_COMPACT: false`:** When the complexity penalty and `OPTIMIZATION_PERIOD` are enough to control the network size, and you do not want extra global optimization phases
+
+---
+
+## CHAMPION_MAX_AGE - Champion Age Limit
+
+**Default:** `Infinity` (no limit)  
+**Type:** `number` (integer >= 1, or `Infinity`)  
+**Location:** `INeatParams.CHAMPION_MAX_AGE`, `DEFAULT_PARAMS.CHAMPION_MAX_AGE` (`src/neat/neat.ts`)
+
+### Purpose
+
+The champion (`neat.champion`) is a copy of the client with the highest raw score so far. With the default, it changes only when a new raw score is strictly higher. When the fitness is measured on data that changes in each generation, an old lucky score can stay the champion for a long time. Then the stagnation count grows, the pressure level stays high, elite reinsertion puts the old champion back, and `neat.model()` and `neat.calculate()` use the old champion.
+
+`CHAMPION_MAX_AGE` limits how long one champion is kept:
+
+- The champion age is the number of generations since the champion was set. Elite reinsertion does not reset it (it resets only the champion's `epoch` counter).
+- One champion is kept for not more than `CHAMPION_MAX_AGE` generations; the generation in which it became the champion counts as 1. In the next generation, the best client of that generation (by raw score) becomes the champion, also when its raw score is lower.
+- When the champion is replaced only because of its age (the new raw score is not strictly higher), the stagnation baseline starts again from the new champion's score, and the stagnation count goes back to 0. So the pressure level goes back to `NORMAL` (see [Mutation Pressure](../PARAMETER_TUNING.md#mutation-pressure)).
+- A strictly higher raw score replaces the champion as before, and the age goes back to 0.
+- With `1`, the champion is always the best client of the current generation.
+
+`neat.model()` saves the current champion. With a limit, this can be a client with a lower historic score but a more recent one. The saved-model format does not change.
+
+The constructor throws when the value is not an integer >= 1 and not `Infinity`.
+
+```typescript
+new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { CHAMPION_MAX_AGE: 50 });
+```
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor, `Neat.validateConfiguration()`
+- **Usage:** `Neat.updateChampion()`, `Neat.updateStagnationAndPressure()`
+
+### Tuning Recommendations
+
+- **Default (`Infinity`):** The same behaviour as older versions. Use it when the fitness data is the same in each generation.
+- **Finite value:** Fitness data that changes in each generation (for example a new data window). A small value makes the champion follow recent performance more closely.
+- **Elite reinsertion:** it needs a champion that is kept for `OPTIMIZATION_PERIOD` generations. With `CHAMPION_MAX_AGE <= OPTIMIZATION_PERIOD`, the champion is replaced before that, so elite reinsertion never runs. Use `CHAMPION_MAX_AGE > OPTIMIZATION_PERIOD` to keep it.
 
 ---
 

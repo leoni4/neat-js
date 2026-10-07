@@ -45,6 +45,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `OPTIMIZATION_PERIOD`              | `100`           | Period (in `evolve()` calls) of the global optimization phase        |
 | `PRESSURE_BOOST`                   | `true`          | Allow the `BOOST`, `ESCAPE`, and `PANIC` pressure levels             |
 | `PRESSURE_COMPACT`                 | `true`          | Allow the `COMPACT` pressure level                                   |
+| `CHAMPION_MAX_AGE`                 | `Infinity`      | Maximum number of generations one champion is kept                   |
 | `PERMANENT_MAIN_CONNECTIONS`       | `false`         | Whether to protect input→output connections                          |
 | `LAMBDA_HIGH`                      | `0.3`           | Complexity penalty during optimization                               |
 | `LAMBDA_LOW`                       | `0.1`           | Complexity penalty during exploration                                |
@@ -244,6 +245,7 @@ Each `evolve()` call (`prepareRawScores()`, `normalizeScore()`, `kill()`, `repro
 ### Champion and Elites
 
 - **Champion** (`neat.champion`): a copy of the client with the highest raw score of all generations so far. It changes only when a new raw score is strictly higher. `neat.model()` and `neat.calculate()` use the champion.
+- **Champion age limit** (`CHAMPION_MAX_AGE`, default `Infinity` = no limit): one champion is kept for not more than `CHAMPION_MAX_AGE` generations (the generation in which it became the champion counts as 1). Then the best client of the current generation becomes the champion, also when its raw score is lower, and the stagnation count goes back to 0. Use it when the fitness data changes in each generation, so that an old lucky score does not stay the champion. With `1`, the champion is always the best client of the current generation. See [CHAMPION_MAX_AGE](./params/05_optimization_and_scoring.md#champion_max_age---champion-age-limit).
 - **Elite reinsertion**: when the champion did not change for `OPTIMIZATION_PERIOD` generations, copies of the champion and the runner-up (the best client of the current generation) replace the two lowest-ranked clients.
 
 ## ⚠️ Important Notes

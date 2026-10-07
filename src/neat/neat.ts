@@ -46,6 +46,7 @@ export interface INeatParams {
     OPTIMIZATION_PERIOD?: number;
     PRESSURE_BOOST?: boolean;
     PRESSURE_COMPACT?: boolean;
+    CHAMPION_MAX_AGE?: number;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
     LAMBDA_HIGH?: number;
     LAMBDA_LOW?: number;
@@ -92,6 +93,8 @@ const DEFAULT_PARAMS = {
 
     PRESSURE_BOOST: true,
     PRESSURE_COMPACT: true,
+
+    CHAMPION_MAX_AGE: Infinity,
 
     LAMBDA_HIGH: 0.3,
     LAMBDA_LOW: 0.1,
@@ -230,6 +233,8 @@ export class Neat {
     private _PRESSURE_BOOST: boolean;
     private _PRESSURE_COMPACT: boolean;
 
+    private _CHAMPION_MAX_AGE: number;
+
     private _inputNodes = 0;
     private _outputNodes = 0;
     private _maxClients = 0;
@@ -247,6 +252,7 @@ export class Neat {
         complexity: number;
         complexityHistory: number[];
         epoch: number;
+        age: number;
     } | null = null;
 
     private _runnerUp: Client | null = null;
@@ -304,6 +310,7 @@ export class Neat {
         this._OPTIMIZATION_PERIOD = params?.OPTIMIZATION_PERIOD ?? DEFAULT_PARAMS.OPTIMIZATION_PERIOD;
         this._PRESSURE_BOOST = params?.PRESSURE_BOOST ?? DEFAULT_PARAMS.PRESSURE_BOOST;
         this._PRESSURE_COMPACT = params?.PRESSURE_COMPACT ?? DEFAULT_PARAMS.PRESSURE_COMPACT;
+        this._CHAMPION_MAX_AGE = params?.CHAMPION_MAX_AGE ?? DEFAULT_PARAMS.CHAMPION_MAX_AGE;
 
         this._LAMBDA_HIGH = params?.LAMBDA_HIGH ?? DEFAULT_PARAMS.LAMBDA_HIGH;
         this._LAMBDA_LOW = params?.LAMBDA_LOW ?? DEFAULT_PARAMS.LAMBDA_LOW;
@@ -393,6 +400,13 @@ export class Neat {
                 'SPECIES_TARGET_MIN and SPECIES_TARGET_MAX must be non-negative integers with ' +
                     'SPECIES_TARGET_MIN <= SPECIES_TARGET_MAX',
             );
+        }
+
+        if (
+            !(this._CHAMPION_MAX_AGE >= 1) ||
+            (this._CHAMPION_MAX_AGE !== Infinity && !Number.isInteger(this._CHAMPION_MAX_AGE))
+        ) {
+            throw new Error('CHAMPION_MAX_AGE must be an integer >= 1 or Infinity');
         }
 
         if (this._MUTATION_RATE > 10) {
@@ -1176,12 +1190,12 @@ export class Neat {
         });
     }
 
-    private updateStagnationAndPressure(currentBestComplexity: number): void {
+    private updateStagnationAndPressure(currentBestComplexity: number, resetBaseline: boolean): void {
         if (!this._champion) {
             return;
         }
 
-        if (!Number.isFinite(this._networkScoreRaw)) {
+        if (resetBaseline || !Number.isFinite(this._networkScoreRaw)) {
             this._networkScoreRaw = this._champion.scoreRaw;
 
             this._stagnationCount = 0;
@@ -1337,9 +1351,11 @@ export class Neat {
     }
 
     private updateChampion(currentBest: Client): void {
-        const shouldReplace = this._champion === null || currentBest.scoreRaw > this._champion.scoreRaw;
+        const isHigher = this._champion === null || currentBest.scoreRaw > this._champion.scoreRaw;
 
-        if (shouldReplace) {
+        const isExpired = this._champion !== null && this._champion.age + 1 >= this._CHAMPION_MAX_AGE;
+
+        if (isHigher || isExpired) {
             const scoreHistory = this._champion?.scoreHistory ?? [];
 
             const complexityHistory = this._champion?.complexityHistory ?? [];
@@ -1351,11 +1367,13 @@ export class Neat {
                 scoreHistory,
                 complexityHistory,
                 epoch: 0,
+                age: 0,
             };
         } else {
             this._champion!.epoch++;
+            this._champion!.age++;
         }
 
-        this.updateStagnationAndPressure(currentBest.complexity);
+        this.updateStagnationAndPressure(currentBest.complexity, isExpired && !isHigher);
     }
 }

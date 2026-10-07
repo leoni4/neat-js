@@ -150,7 +150,7 @@ const json = JSON.stringify(saved);
 const restored = new Neat(2, 1, 100, EActivation.sigmoid, EActivation.tanh, { LOAD_PERCENT: 0.5 }, JSON.parse(json));
 ```
 
-- `neat.model()` returns the genome of the champion (a copy of the client with the highest raw score of all generations so far). Before the first `evolve()`, it returns the genome of the best or first client.
+- `neat.model()` returns the genome of the champion (a copy of the client with the highest raw score of all generations so far; with `CHAMPION_MAX_AGE`, one champion is kept for not more than that number of generations, see [CHAMPION_MAX_AGE](./docs/params/05_optimization_and_scoring.md#champion_max_age---champion-age-limit)). Before the first `evolve()`, it returns the genome of the best or first client.
 - The model contains the genome only. It does not contain the number of inputs and outputs, the activations, or the parameters. Use the same values when you load it.
 - `LOAD_PERCENT` (default `0.5`) is the fraction of clients that get their own copy of the loaded genome. The other clients start with empty genomes. `LOAD_PERCENT: 0` loads no client.
 - `evolveCounts` continues the generation counter. If it is missing, `null`, or `NaN`, the constructor prints a warning and uses `0`. With `0`, the first `evolve()` call mutates all clients, also the best one (the same as for a new population). With a value that is not `0`, the best client is not mutated. The counter also sets when the next global optimization phase comes (`evolveCounts % OPTIMIZATION_PERIOD === 0`).
