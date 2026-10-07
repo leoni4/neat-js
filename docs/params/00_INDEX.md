@@ -26,6 +26,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `BIAS_SHIFT_STRENGTH`              | `0.15`          | number  | Bias shift magnitude                   |
 | `WEIGHT_RANDOM_STRENGTH`           | `1`             | number  | Random and new-link weight range       |
 | `BIAS_RANDOM_STRENGTH`             | `1`             | number  | Random bias range                      |
+| `BIAS_NODE_SAMPLING`               | `'legacy'`      | string  | Bias mutation node pick (or nonInput)  |
 | **Mutation Probabilities**         |                 |         |                                        |
 | `PROBABILITY_MUTATE_WEIGHT_SHIFT`  | `0.8`           | number  | Weight shift frequency                 |
 | `PROBABILITY_MUTATE_TOGGLE_LINK`   | `0.08`          | number  | Connection toggle frequency            |
@@ -83,6 +84,7 @@ new Neat(inputNodes, outputNodes, clients, EActivation.sigmoid, EActivation.tanh
 - **BIAS_SHIFT_STRENGTH:** How much to adjust biases by
 - **WEIGHT_RANDOM_STRENGTH:** Range for weight randomization and new link weights
 - **BIAS_RANDOM_STRENGTH:** Range for bias randomization
+- **BIAS_NODE_SAMPLING:** `'legacy'` (up to 10 random picks from all nodes; some bias mutations do nothing) or `'nonInput'` (one pick from the output and hidden nodes)
 
 ### [04 - Mutation Probabilities](./04_mutation_probabilities.md)
 

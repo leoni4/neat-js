@@ -244,19 +244,11 @@ Controls the magnitude of small adjustments to node biases. Biases affect when n
 
 ```typescript
 private mutateWeightShiftNode(): NodeGene | null {
+    const node = this.randomBiasNode();
+    if (!node) {
+        return null;
+    }
     let counter = 0;
-    let node;
-    while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
-        counter++;
-        node = this._nodes.randomElement();
-    }
-    if (counter >= 10) {
-        return null;
-    }
-    counter = 0;
-    if (!(node instanceof NodeGene)) {
-        return null;
-    }
     let newWeight = node.bias;
     while (newWeight === node.bias && counter < 10) {
         counter++;
@@ -274,7 +266,7 @@ private mutateWeightShiftNode(): NodeGene | null {
 **Key behaviors:**
 
 - Only affects output and hidden nodes (NOT input nodes)
-- The node is picked from all nodes; if 10 random picks give only input nodes, there is no bias mutation in this call
+- The node is picked by `Genome.randomBiasNode()` (see [BIAS_NODE_SAMPLING](#bias_node_sampling---bias-mutation-node-pick)). With the default `'legacy'`, if 10 random picks from all nodes give no output or hidden node, there is no bias mutation in this call
 - Formula: `newBias = oldBias + random(-1, 1) * BIAS_SHIFT_STRENGTH`
 - Tries up to 10 times to generate a different value, else sets `0`
 
@@ -370,7 +362,7 @@ while (newWeight === node.bias) {
 node.bias = newWeight;
 ```
 
-- The node is picked like in the bias shift mutation (output and hidden nodes only; up to 10 random picks)
+- The node is picked like in the bias shift mutation (output and hidden nodes only; see [BIAS_NODE_SAMPLING](#bias_node_sampling---bias-mutation-node-pick))
 - The new bias is `random(-|base|, |base|) × BIAS_RANDOM_STRENGTH`, where `base` is the current bias, or `BIAS_RANDOM_STRENGTH` when the current bias is `0`
 
 ### Code References
@@ -385,3 +377,32 @@ node.bias = newWeight;
 
 - Use a value close to WEIGHT_RANDOM_STRENGTH unless biases need a different range
 - To turn random weight and bias mutation off, use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` (not a strength of `0`)
+
+---
+
+## BIAS_NODE_SAMPLING - Bias Mutation Node Pick
+
+**Default:** `'legacy'`  
+**Type:** `'legacy' | 'nonInput'`  
+**Location:** `INeatParams.BIAS_NODE_SAMPLING`, `DEFAULT_PARAMS.BIAS_NODE_SAMPLING` (`src/neat/neat.ts`)
+
+### Purpose
+
+BIAS_NODE_SAMPLING sets how the bias shift and the random bias mutations (`Genome.mutateWeightShiftNode()`, `Genome.mutateWeightRandomNode()`) pick the node. Input node biases never change in either mode.
+
+- **`'legacy'`** (default): pick a random node from all nodes, up to 10 times, until the pick is not an input node. If the 10 tries fail, the call does nothing. A valid node on the 10th try also gives no mutation (this behaviour is kept for compatibility). Each failed call uses 10 `Math.random()` calls.
+- **`'nonInput'`**: pick one of the output and hidden nodes directly, with one `Math.random()` call. The call does nothing only when the genome has no output or hidden node.
+
+```typescript
+new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { BIAS_NODE_SAMPLING: 'nonInput' });
+```
+
+With many inputs, `'legacy'` often does nothing. Measured (85 inputs, 1 output, 8 hidden nodes, 20,000 calls of the bias shift mutation, one seed): `'legacy'` did nothing in 40.1% of the calls and used 7.2 `Math.random()` calls per call; `'nonInput'` did nothing in 0% of the calls and used 2 `Math.random()` calls per call. So with `'nonInput'`, biases change about 1.7× as often in this shape. The sequence of `Math.random()` calls changes, so a seeded run gives different results than with `'legacy'`.
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.BIAS_NODE_SAMPLING`
+- **Validation:** `Neat.validateConfiguration()` (throws if not `'legacy'` or `'nonInput'`)
+- **Usage:** `Genome.randomBiasNode()` (called by `Genome.mutateWeightShiftNode()` and `Genome.mutateWeightRandomNode()`)
+- **Tests:** `tests/genome/genome.mutate-weights.test.ts`

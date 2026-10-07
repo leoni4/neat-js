@@ -37,6 +37,7 @@ export interface INeatParams {
     BIAS_SHIFT_STRENGTH?: number;
     WEIGHT_RANDOM_STRENGTH?: number;
     BIAS_RANDOM_STRENGTH?: number;
+    BIAS_NODE_SAMPLING?: 'legacy' | 'nonInput';
     PROBABILITY_MUTATE_WEIGHT_SHIFT?: number;
     PROBABILITY_MUTATE_TOGGLE_LINK?: number;
     PROBABILITY_MUTATE_WEIGHT_RANDOM?: number;
@@ -81,6 +82,7 @@ const DEFAULT_PARAMS = {
     BIAS_SHIFT_STRENGTH: 0.15,
     WEIGHT_RANDOM_STRENGTH: 1,
     BIAS_RANDOM_STRENGTH: 1,
+    BIAS_NODE_SAMPLING: 'legacy' as const,
 
     PROBABILITY_MUTATE_WEIGHT_SHIFT: 0.8,
     PROBABILITY_MUTATE_WEIGHT_RANDOM: 0.05,
@@ -215,6 +217,7 @@ export class Neat {
     private _BIAS_SHIFT_STRENGTH: number;
     private _WEIGHT_RANDOM_STRENGTH: number;
     private _BIAS_RANDOM_STRENGTH: number;
+    private _BIAS_NODE_SAMPLING: 'legacy' | 'nonInput';
 
     private _PROBABILITY_MUTATE_WEIGHT_SHIFT: number;
     private _PROBABILITY_MUTATE_TOGGLE_LINK: number;
@@ -298,6 +301,7 @@ export class Neat {
         this._BIAS_SHIFT_STRENGTH = params?.BIAS_SHIFT_STRENGTH ?? DEFAULT_PARAMS.BIAS_SHIFT_STRENGTH;
         this._WEIGHT_RANDOM_STRENGTH = params?.WEIGHT_RANDOM_STRENGTH ?? DEFAULT_PARAMS.WEIGHT_RANDOM_STRENGTH;
         this._BIAS_RANDOM_STRENGTH = params?.BIAS_RANDOM_STRENGTH ?? DEFAULT_PARAMS.BIAS_RANDOM_STRENGTH;
+        this._BIAS_NODE_SAMPLING = params?.BIAS_NODE_SAMPLING ?? DEFAULT_PARAMS.BIAS_NODE_SAMPLING;
         this._PROBABILITY_MUTATE_WEIGHT_SHIFT =
             params?.PROBABILITY_MUTATE_WEIGHT_SHIFT ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_WEIGHT_SHIFT;
         this._PROBABILITY_MUTATE_TOGGLE_LINK =
@@ -342,6 +346,10 @@ export class Neat {
 
         if (this._SPECIES_SELECTION !== 'legacy' && this._SPECIES_SELECTION !== 'proportional') {
             throw new Error(`SPECIES_SELECTION must be 'legacy' or 'proportional' (got ${this._SPECIES_SELECTION})`);
+        }
+
+        if (this._BIAS_NODE_SAMPLING !== 'legacy' && this._BIAS_NODE_SAMPLING !== 'nonInput') {
+            throw new Error(`BIAS_NODE_SAMPLING must be 'legacy' or 'nonInput' (got ${this._BIAS_NODE_SAMPLING})`);
         }
 
         if (this._MUTATION_RATE < 0) {
@@ -541,6 +549,10 @@ export class Neat {
 
     get BIAS_RANDOM_STRENGTH(): number {
         return this._BIAS_RANDOM_STRENGTH;
+    }
+
+    get BIAS_NODE_SAMPLING(): 'legacy' | 'nonInput' {
+        return this._BIAS_NODE_SAMPLING;
     }
 
     get PROBABILITY_MUTATE_LINK(): number {

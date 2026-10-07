@@ -36,6 +36,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `BIAS_SHIFT_STRENGTH`              | `0.15`          | Magnitude of bias adjustments                                        |
 | `WEIGHT_RANDOM_STRENGTH`           | `1`             | Range for random weights and new link weights                        |
 | `BIAS_RANDOM_STRENGTH`             | `1`             | Range for random biases                                              |
+| `BIAS_NODE_SAMPLING`               | `'legacy'`      | Bias mutation node pick: `'legacy'` (10 tries) or `'nonInput'`       |
 | `PROBABILITY_MUTATE_WEIGHT_SHIFT`  | `0.8`           | How often to adjust weights and biases                               |
 | `PROBABILITY_MUTATE_TOGGLE_LINK`   | `0.08`          | How often to enable/disable connections                              |
 | `PROBABILITY_MUTATE_WEIGHT_RANDOM` | `0.05`          | How often to randomize weights and biases                            |
@@ -266,6 +267,7 @@ It **throws an error** when:
 - Distance coefficients (C1, C2, C3) are negative
 - SURVIVORS is not between 0 and 1
 - SPECIES_SELECTION is not `'legacy'` or `'proportional'`
+- BIAS_NODE_SAMPLING is not `'legacy'` or `'nonInput'`
 - MUTATION_RATE is negative
 - The number of inputs, outputs, or clients is not positive
 - WEIGHT_RANDOM_STRENGTH or BIAS_RANDOM_STRENGTH = 0 while random weight mutation is on (`PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`), because the mutation would never end. Use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` to turn random weight mutation off

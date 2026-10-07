@@ -3,6 +3,7 @@ import { Neat, EActivation } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
 import { NodeGene } from '../../src/genome/nodeGene.js';
+import { withRandomValues, withSeededRandom } from '../helpers/seededRandom.js';
 
 describe('Genome - Weight Mutations', () => {
     let neat: Neat;
@@ -11,7 +12,6 @@ describe('Genome - Weight Mutations', () => {
     beforeEach(() => {
         neat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.sigmoid);
         genome = neat.clients[0].genome;
-        // Ensure genome has at least one connection for weight mutation tests
         while (genome.connections.size() === 0) {
             genome.mutateLink();
         }
@@ -24,7 +24,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightShift();
 
-            // At least one weight should have changed
             let someWeightChanged = false;
             for (let i = 0; i < genome.connections.size(); i++) {
                 const conn = genome.connections.get(i);
@@ -34,8 +33,6 @@ describe('Genome - Weight Mutations', () => {
                 }
             }
 
-            // Note: Due to randomness, weights might not always change
-            // The test verifies the method executes without error
             expect(someWeightChanged || true).toBe(true);
         });
 
@@ -54,14 +51,12 @@ describe('Genome - Weight Mutations', () => {
                 const conn = genome.connections.get(i);
                 if (conn instanceof ConnectionGene) {
                     const weightDiff = Math.abs(conn.weight - originalWeights[i]);
-                    // Weight shift should be within 2 * WEIGHT_SHIFT_STRENGTH range
                     expect(weightDiff).toBeLessThanOrEqual(2 * neat.WEIGHT_SHIFT_STRENGTH);
                 }
             }
         });
 
         it('should shift node bias for hidden nodes only', () => {
-            // Add a hidden node first
             genome.mutateNode();
 
             const originalBiases = new Map<number, number>();
@@ -74,7 +69,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightShift();
 
-            // Verify bias changes are within bounds
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
@@ -91,7 +85,6 @@ describe('Genome - Weight Mutations', () => {
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    // Only save input node biases (x === 0.01)
                     if (node.x === 0.01) {
                         inputBiases.push(node.bias);
                     }
@@ -100,7 +93,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightShift();
 
-            // Verify input nodes didn't change
             let index = 0;
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
@@ -109,7 +101,6 @@ describe('Genome - Weight Mutations', () => {
                         expect(node.bias).toBe(inputBiases[index]);
                         index++;
                     }
-                    // Output nodes (x === 0.99) CAN have their bias mutated now
                 }
             }
         });
@@ -119,7 +110,6 @@ describe('Genome - Weight Mutations', () => {
         it('should randomize both connection and node weights', () => {
             genome.mutateWeightRandom();
 
-            // Method should execute without error - connections already added in beforeEach
             expect(genome.connections.size()).toBeGreaterThanOrEqual(1);
         });
 
@@ -134,7 +124,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightRandom();
 
-            // At least some weights should have changed
             let changedCount = 0;
             for (let i = 0; i < genome.connections.size(); i++) {
                 const conn = genome.connections.get(i);
@@ -143,12 +132,10 @@ describe('Genome - Weight Mutations', () => {
                 }
             }
 
-            // Due to randomness, we just verify execution
             expect(changedCount).toBeGreaterThanOrEqual(0);
         });
 
         it('should set random node biases for hidden nodes', () => {
-            // Add hidden nodes
             genome.mutateNode();
             genome.mutateNode();
 
@@ -162,7 +149,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightRandom();
 
-            // Verify method executed and nodes were added
             expect(genome.nodes.size()).toBeGreaterThanOrEqual(5);
         });
 
@@ -172,7 +158,6 @@ describe('Genome - Weight Mutations', () => {
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
                 if (node instanceof NodeGene) {
-                    // Only save input node biases (x === 0.01)
                     if (node.x === 0.01) {
                         inputBiases.push(node.bias);
                     }
@@ -181,7 +166,6 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutateWeightRandom();
 
-            // Verify input nodes didn't change
             let index = 0;
             for (let i = 0; i < genome.nodes.size(); i++) {
                 const node = genome.nodes.get(i);
@@ -190,7 +174,6 @@ describe('Genome - Weight Mutations', () => {
                         expect(node.bias).toBe(inputBiases[index]);
                         index++;
                     }
-                    // Output nodes (x === 0.99) CAN have their bias mutated now
                 }
             }
         });
@@ -219,15 +202,12 @@ describe('Genome - Weight Mutations', () => {
         });
 
         it('should handle selfOpt mode correctly', () => {
-            // First disable a connection
             const connection = genome.connections.get(0);
             if (connection instanceof ConnectionGene) {
                 connection.enabled = false;
 
-                // In selfOpt mode, disabled connections should not be re-enabled
                 genome.mutate(true);
 
-                // Just verify the method doesn't crash in selfOpt mode
                 expect(connection.enabled).toBe(false);
             }
         });
@@ -238,7 +218,6 @@ describe('Genome - Weight Mutations', () => {
                 connection.enabled = true;
                 genome.mutateLinkToggle();
 
-                // At least one connection should exist
                 expect(genome.connections.size()).toBeGreaterThan(0);
             }
         });
@@ -253,12 +232,10 @@ describe('Genome - Weight Mutations', () => {
 
             genome.mutate();
 
-            // The genome should still be valid after mutation
             expect(genome.nodes.size()).toBeGreaterThanOrEqual(initialState.nodes);
         });
 
         it('should respect PROBABILITY_MUTATE_WEIGHT_SHIFT', () => {
-            // This test verifies the mutation runs without error
             for (let i = 0; i < 10; i++) {
                 const testGenome = neat.clients[0].genome;
                 testGenome.mutate();
@@ -267,7 +244,6 @@ describe('Genome - Weight Mutations', () => {
         });
 
         it('should respect PROBABILITY_MUTATE_WEIGHT_RANDOM', () => {
-            // This test verifies the mutation runs without error
             for (let i = 0; i < 10; i++) {
                 const testGenome = neat.clients[0].genome;
                 testGenome.mutate();
@@ -278,8 +254,122 @@ describe('Genome - Weight Mutations', () => {
         it('should handle selfOpt mode for weight mutations', () => {
             genome.mutate(true);
 
-            // Should complete without error in selfOpt mode
             expect(genome.connections.size()).toBeGreaterThan(0);
+        });
+    });
+
+    describe('BIAS_NODE_SAMPLING', () => {
+        type BiasInternals = {
+            mutateWeightShiftNode(): NodeGene | null;
+            mutateWeightRandomNode(): NodeGene | null;
+        };
+        const INPUT_X = 0.01;
+        const nonInputNodes = (g: Genome) => (g.nodes.data as NodeGene[]).filter(n => n.x !== INPUT_X);
+
+        const typicalGenome = (sampling?: 'legacy' | 'nonInput') =>
+            withSeededRandom(21, () => {
+                const tNeat = new Neat(85, 1, 1, EActivation.tanh, EActivation.tanh, { BIAS_NODE_SAMPLING: sampling });
+                const g = tNeat.clients[0].genome;
+                for (let i = 0; i < 1000 && nonInputNodes(g).length < 9; i++) {
+                    g.mutateLink();
+                    g.mutateNode();
+                }
+
+                return g;
+            }).result;
+
+        it('should throw for an unknown BIAS_NODE_SAMPLING', () => {
+            expect(
+                () =>
+                    new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, {
+                        BIAS_NODE_SAMPLING: 'all' as 'legacy',
+                    }),
+            ).toThrow(/BIAS_NODE_SAMPLING/);
+        });
+
+        it("should default to 'legacy'", () => {
+            expect(neat.BIAS_NODE_SAMPLING).toBe('legacy');
+        });
+
+        it.each(['mutateWeightShiftNode', 'mutateWeightRandomNode'] as const)(
+            'should keep the legacy null on a valid 10th draw in %s',
+            method => {
+                const g = new Neat(85, 1, 1, EActivation.tanh, EActivation.tanh).clients[0].genome;
+                const output = g.nodes.get(85) as NodeGene;
+                const biasBefore = output.bias;
+                const run = withRandomValues([0, 0, 0, 0, 0, 0, 0, 0, 0, 0.999], () =>
+                    (g as unknown as BiasInternals)[method](),
+                );
+                expect(run.result).toBeNull();
+                expect(run.calls).toBe(10);
+                expect(output.bias).toBe(biasBefore);
+            },
+        );
+
+        it('should pick a non-input node with one Math.random call in nonInput mode', () => {
+            const sNeat = new Neat(85, 1, 1, EActivation.tanh, EActivation.tanh, { BIAS_NODE_SAMPLING: 'nonInput' });
+            const g = sNeat.clients[0].genome;
+            const output = g.nodes.get(85) as NodeGene;
+            const biasBefore = output.bias;
+
+            const shift = withRandomValues([0, 0.75], () => (g as unknown as BiasInternals).mutateWeightShiftNode());
+            expect(shift.result).toBe(output);
+            expect(shift.calls).toBe(2);
+            expect(output.bias).toBe(biasBefore + (0.75 * 2 - 1) * sNeat.BIAS_SHIFT_STRENGTH);
+
+            const random = withRandomValues([0.999, 0.75], () =>
+                (g as unknown as BiasInternals).mutateWeightRandomNode(),
+            );
+            expect(random.result).toBe(output);
+            expect(random.calls).toBe(2);
+        });
+
+        it('should map the draw to the non-input nodes in list order in nonInput mode', () => {
+            const g = typicalGenome('nonInput');
+            const candidates = nonInputNodes(g);
+            expect(candidates).toHaveLength(9);
+            candidates.forEach((node, k) => {
+                const run = withRandomValues([(k + 0.5) / candidates.length, 0.75], () =>
+                    (g as unknown as BiasInternals).mutateWeightShiftNode(),
+                );
+                expect(run.result).toBe(node);
+            });
+        });
+
+        it.each(['mutateWeightShiftNode', 'mutateWeightRandomNode'] as const)(
+            'should have no no-op calls of %s in nonInput mode (legacy has some)',
+            method => {
+                const count = (sampling: 'legacy' | 'nonInput') => {
+                    const g = typicalGenome(sampling);
+                    let nulls = 0;
+                    withSeededRandom(2121, () => {
+                        for (let i = 0; i < 2000; i++) {
+                            const node = (g as unknown as BiasInternals)[method]();
+                            if (node === null) {
+                                nulls++;
+                            } else {
+                                expect(node.x).not.toBe(INPUT_X);
+                            }
+                        }
+                    });
+
+                    return nulls;
+                };
+
+                expect(count('nonInput')).toBe(0);
+                expect(count('legacy')).toBeGreaterThan(0);
+            },
+        );
+
+        it('should return null without Math.random calls when no non-input node exists', () => {
+            const g = new Neat(3, 1, 1, EActivation.tanh, EActivation.tanh, { BIAS_NODE_SAMPLING: 'nonInput' })
+                .clients[0].genome;
+            const data = g.nodes.data as NodeGene[];
+            data.splice(0, data.length, ...data.filter(n => n.x === INPUT_X));
+
+            const run = withRandomValues([], () => (g as unknown as BiasInternals).mutateWeightShiftNode());
+            expect(run.result).toBeNull();
+            expect(run.calls).toBe(0);
         });
     });
 });

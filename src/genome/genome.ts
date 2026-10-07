@@ -496,7 +496,28 @@ export class Genome {
         return middle;
     }
 
-    private mutateWeightShiftNode(): NodeGene | null {
+    private randomBiasNode(): NodeGene | null {
+        if (this._neat.BIAS_NODE_SAMPLING === 'nonInput') {
+            const nodes = this._nodes.data as NodeGene[];
+            let count = 0;
+            for (const node of nodes) {
+                if (node.x !== NETWORK_CONSTANTS.INPUT_NODE_X) {
+                    count++;
+                }
+            }
+            if (!count) {
+                return null;
+            }
+            let index = Math.floor(count * Math.random());
+            for (const node of nodes) {
+                if (node.x !== NETWORK_CONSTANTS.INPUT_NODE_X && index-- === 0) {
+                    return node;
+                }
+            }
+
+            return null;
+        }
+
         let counter = 0;
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
@@ -506,10 +527,19 @@ export class Genome {
         if (counter >= 10) {
             return null;
         }
-        counter = 0;
         if (!(node instanceof NodeGene)) {
             return null;
         }
+
+        return node;
+    }
+
+    private mutateWeightShiftNode(): NodeGene | null {
+        const node = this.randomBiasNode();
+        if (!node) {
+            return null;
+        }
+        let counter = 0;
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
@@ -548,17 +578,8 @@ export class Genome {
     }
 
     private mutateWeightRandomNode(): NodeGene | null {
-        let counter = 0;
-        let node;
-        while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
-            counter++;
-            node = this._nodes.randomElement();
-        }
-        if (counter >= 10) {
-            return null;
-        }
-        counter = 0;
-        if (!(node instanceof NodeGene)) {
+        const node = this.randomBiasNode();
+        if (!node) {
             return null;
         }
 
