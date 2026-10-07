@@ -63,7 +63,8 @@ export class Client {
                 if (!globalReplaceNode || !(globalReplaceNode instanceof NodeGene)) {
                     throw new Error('Not found node with replaceIndex, while saving');
                 }
-                con.replaceIndex = globalReplaceNode.innovationNumber;
+
+                con.replaceIndex = 0;
             }
         });
         genome.nodes.forEach((node, index) => {

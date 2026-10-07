@@ -577,11 +577,12 @@ export class Neat {
             node.y = item.y;
         });
 
-        let genome: Genome | null = this.loadGenome(data.genome);
+        const genomeData = this.withValidReplaceIndexes(data.genome);
+        let genome: Genome | null = this.loadGenome(genomeData);
 
         const getGenome = (ptc: number): Genome => {
             if (data && loadPercent && ptc < loadPercent) {
-                const loaded = genome ?? this.loadGenome(data.genome);
+                const loaded = genome ?? this.loadGenome(genomeData);
                 genome = null;
 
                 return loaded;
@@ -598,6 +599,35 @@ export class Neat {
             );
             this._clients.push(c);
         }
+    }
+
+    private withValidReplaceIndexes(data: GenomeSaveData): GenomeSaveData {
+        const nodeById = new Map<number, NodeSaveData>();
+        data.nodes.forEach(node => nodeById.set(node.innovationNumber, node));
+        const links = new Set<string>();
+        data.connections.forEach(con => links.add(`${con.from}-${con.to}`));
+
+        const isValid = (con: ConnectionSaveData): boolean => {
+            const middle = nodeById.get(con.replaceIndex);
+            const from = nodeById.get(con.from);
+            const to = nodeById.get(con.to);
+
+            return (
+                !!middle &&
+                !!from &&
+                !!to &&
+                middle.x === (from.x + to.x) / 2 &&
+                links.has(`${con.from}-${con.replaceIndex}`) &&
+                links.has(`${con.replaceIndex}-${con.to}`)
+            );
+        };
+
+        return {
+            ...data,
+            connections: data.connections.map(con =>
+                con.replaceIndex === 0 || isValid(con) ? con : { ...con, replaceIndex: 0 },
+            ),
+        };
     }
 
     loadGenome(data: GenomeSaveData) {

@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
+import { NodeGene } from '../../src/genome/nodeGene.js';
+import { Genome } from '../../src/genome/genome.js';
 import { Species } from '../../src/neat/species.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
 import { withSeededRandom } from '../helpers/seededRandom.js';
@@ -265,6 +267,100 @@ describe('Neat', () => {
 
             expect(neat2.clients).toHaveLength(8);
             neat2.clients.forEach(client => expect(client.genome.connections.size()).toBe(0));
+        });
+
+        describe('foreign replaceIndex', () => {
+            it('should save replaceIndex 0 when the replace node is not in the genome', () => {
+                const T = EActivation.tanh;
+                const run = withSeededRandom(7, () => {
+                    const neat2 = new Neat(3, 1, 1, T, T);
+                    const C = neat2.clients[0].genome;
+                    while (C.connections.size() < 3) C.mutateLink();
+                    const R = C.connections.get(0) as ConnectionGene;
+                    const D = Genome.crossOver(C, C);
+                    D.connections.data.forEach(c => {
+                        (c as ConnectionGene).enabled = (c as ConnectionGene).innovationNumber === R.innovationNumber;
+                    });
+                    let mid = null;
+                    while (!mid) mid = D.mutateNode();
+                    R.enabled = false;
+                    for (let i = 0; i < 30 && C.nodes.size() < 7; i++) C.mutateNode();
+                    R.enabled = true;
+                    neat2.clients[0].genome = C;
+
+                    return { neat2, C, R };
+                });
+                const { neat2, C, R } = run.result;
+                const localIds = C.nodes.data.map(n => (n as NodeGene).innovationNumber).sort((a, b) => a - b);
+                expect(R.replaceIndex).not.toBe(0);
+                expect(localIds).not.toContain(R.replaceIndex);
+                expect(localIds[localIds.length - 1]).toBeGreaterThan(R.replaceIndex);
+
+                const m = neat2.clients[0].model();
+                const savedR = m.connections.find(
+                    c =>
+                        c.from === localIds.indexOf(R.from.innovationNumber) + 1 &&
+                        c.to === localIds.indexOf(R.to.innovationNumber) + 1,
+                );
+                expect(savedR?.replaceIndex).toBe(0);
+                m.connections.forEach(c => {
+                    if (c.replaceIndex !== 0) {
+                        expect(m.nodes.map(n => n.innovationNumber)).toContain(c.replaceIndex);
+                    }
+                });
+
+                const split = withSeededRandom(8, () => {
+                    const loaded = new Neat(3, 1, 1, T, T, {}, { genome: m, evolveCounts: 1 });
+                    const LG = loaded.clients[0].genome;
+                    LG.connections.data.forEach(c => {
+                        const con = c as ConnectionGene;
+                        con.enabled =
+                            con.from.innovationNumber === savedR?.from && con.to.innovationNumber === savedR?.to;
+                    });
+
+                    return LG.mutateNode();
+                });
+                expect(split.result).not.toBeNull();
+                expect(split.result?.innovationNumber).toBeGreaterThan(m.nodes.length);
+            });
+
+            it('should keep only replaceIndex values that match a split of the link at load', () => {
+                const genome: GenomeSaveData = {
+                    nodes: [
+                        { innovationNumber: 1, bias: 0, x: 0.01, y: 0.25 },
+                        { innovationNumber: 2, bias: 0, x: 0.01, y: 0.5 },
+                        { innovationNumber: 3, bias: 0, x: 0.01, y: 0.75 },
+                        { innovationNumber: 4, bias: 0, x: 0.99, y: 0.5 },
+                        { innovationNumber: 5, bias: 0, x: 0.5, y: 0.3 },
+                        { innovationNumber: 6, bias: 0, x: 0.7, y: 0.4 },
+                    ],
+                    connections: [
+                        { from: 1, to: 5, replaceIndex: 0, enabled: true, weight: 0.1 },
+                        { from: 5, to: 4, replaceIndex: 0, enabled: true, weight: 0.2 },
+                        { from: 3, to: 6, replaceIndex: 0, enabled: true, weight: 0.3 },
+                        { from: 6, to: 4, replaceIndex: 0, enabled: true, weight: 0.4 },
+                        // valid: node 5 is at the midpoint and the links 1→5 and 5→4 exist
+                        { from: 1, to: 4, replaceIndex: 5, enabled: true, weight: 0.5 },
+                        // alias: x matches the midpoint, but there is no link 2→5
+                        { from: 2, to: 4, replaceIndex: 5, enabled: true, weight: 0.6 },
+                        // links exist, but node 6 is not at the midpoint of 3→4
+                        { from: 3, to: 4, replaceIndex: 6, enabled: false, weight: 0.7 },
+                        // unknown node id
+                        { from: 2, to: 6, replaceIndex: 9, enabled: true, weight: 0.8 },
+                    ],
+                };
+                const snapshot = structuredClone(genome);
+
+                const loaded = new Neat(3, 1, 2, EActivation.tanh, EActivation.tanh, {}, { genome, evolveCounts: 1 });
+
+                expect(genome).toEqual(snapshot);
+                const nodeById = (id: number) =>
+                    loaded.clients[0].genome.nodes.data.find(n => (n as NodeGene).innovationNumber === id) as NodeGene;
+                expect(loaded.getReplaceIndex(nodeById(1), nodeById(4))).toBe(5);
+                expect(loaded.getReplaceIndex(nodeById(2), nodeById(4))).toBe(0);
+                expect(loaded.getReplaceIndex(nodeById(3), nodeById(4))).toBe(0);
+                expect(loaded.getReplaceIndex(nodeById(2), nodeById(6))).toBe(0);
+            });
         });
     });
 
