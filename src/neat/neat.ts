@@ -44,6 +44,8 @@ export interface INeatParams {
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_THRESHOLD?: number;
     OPTIMIZATION_PERIOD?: number;
+    PRESSURE_BOOST?: boolean;
+    PRESSURE_COMPACT?: boolean;
     PERMANENT_MAIN_CONNECTIONS?: boolean;
     LAMBDA_HIGH?: number;
     LAMBDA_LOW?: number;
@@ -87,6 +89,9 @@ const DEFAULT_PARAMS = {
 
     OPT_ERR_THRESHOLD: 0.005,
     OPTIMIZATION_PERIOD: 100,
+
+    PRESSURE_BOOST: true,
+    PRESSURE_COMPACT: true,
 
     LAMBDA_HIGH: 0.3,
     LAMBDA_LOW: 0.1,
@@ -222,6 +227,9 @@ export class Neat {
 
     private _OPTIMIZATION_PERIOD: number;
 
+    private _PRESSURE_BOOST: boolean;
+    private _PRESSURE_COMPACT: boolean;
+
     private _inputNodes = 0;
     private _outputNodes = 0;
     private _maxClients = 0;
@@ -294,6 +302,8 @@ export class Neat {
         this._PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_NODES;
         this._OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? DEFAULT_PARAMS.OPT_ERR_THRESHOLD;
         this._OPTIMIZATION_PERIOD = params?.OPTIMIZATION_PERIOD ?? DEFAULT_PARAMS.OPTIMIZATION_PERIOD;
+        this._PRESSURE_BOOST = params?.PRESSURE_BOOST ?? DEFAULT_PARAMS.PRESSURE_BOOST;
+        this._PRESSURE_COMPACT = params?.PRESSURE_COMPACT ?? DEFAULT_PARAMS.PRESSURE_COMPACT;
 
         this._LAMBDA_HIGH = params?.LAMBDA_HIGH ?? DEFAULT_PARAMS.LAMBDA_HIGH;
         this._LAMBDA_LOW = params?.LAMBDA_LOW ?? DEFAULT_PARAMS.LAMBDA_LOW;
@@ -1200,6 +1210,7 @@ export class Neat {
         }
 
         const canCompact =
+            this._PRESSURE_COMPACT &&
             this._stagnationCount > HISTORY_WINDOW &&
             this._champion.scoreHistory.length >= 2 &&
             this._champion.complexityHistory.length >= 2;
@@ -1235,6 +1246,13 @@ export class Neat {
 
                 return;
             }
+        }
+
+        if (!this._PRESSURE_BOOST) {
+            if (this._stagnationCount > 405) this._stagnationCount = 200;
+            this._PRESSURE = EMutationPressure.NORMAL;
+
+            return;
         }
 
         if (this._stagnationCount > 405) {

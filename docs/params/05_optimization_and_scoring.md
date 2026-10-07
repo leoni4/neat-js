@@ -117,7 +117,7 @@ Optimization mode is on:
 
 - Every 100 `evolve()` calls with the default (`evolveCounts` 100, 200, 300, ...)
 - When explicitly requested via `evolve(true)`
-- When the pressure level becomes `COMPACT` (set in `Neat.updateStagnationAndPressure()`)
+- When the pressure level becomes `COMPACT` (set in `Neat.updateStagnationAndPressure()`; never with `PRESSURE_COMPACT: false`)
 
 `evolveCounts` continues from the loaded value when you load a model, so a loaded model keeps the same optimization schedule.
 
@@ -132,6 +132,38 @@ Optimization mode is on:
 
 - **Lower values:** More frequent clean-up phases and elite reinsertion, smaller networks
 - **Higher values:** Rarer clean-up, more time for exploration
+
+---
+
+## PRESSURE_BOOST and PRESSURE_COMPACT - Pressure Level Switches
+
+**Default:** `true` (both)  
+**Type:** `boolean`  
+**Location:** `INeatParams.PRESSURE_BOOST`, `INeatParams.PRESSURE_COMPACT`, `DEFAULT_PARAMS` (`src/neat/neat.ts`)
+
+### Purpose
+
+The stagnation count (see [OPT_ERR_THRESHOLD](#opt_err_threshold---optimization-error-threshold)) sets the pressure level `neat.PRESSURE` (see [Mutation Pressure](../PARAMETER_TUNING.md#mutation-pressure)). These switches turn off parts of this automatic adaptation.
+
+- `PRESSURE_BOOST: false`: the level is never `BOOST`, `ESCAPE`, or `PANIC`, so the mutation multipliers stay at the `NORMAL` values and new children are never made from empty genomes (`PANIC` path in `Neat.reproduce()`). The stagnation count and its reset (count > 405 → 200) still run, because the `COMPACT` check uses them.
+- `PRESSURE_COMPACT: false`: the `COMPACT` check is skipped. The level is never `COMPACT`, and the check does not turn on global optimization mode. `evolve(true)` and `OPTIMIZATION_PERIOD` still turn it on.
+
+With both switches `false`, `neat.PRESSURE` is always `NORMAL`.
+
+```typescript
+new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { PRESSURE_BOOST: false });
+```
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.updateStagnationAndPressure()`
+
+### Tuning Recommendations
+
+- **Default (`true`, `true`):** The same behaviour as older versions
+- **`PRESSURE_BOOST: false`:** Noisy or changing fitness data (for example a new data window in each generation). There, the champion seldom gains more than `OPT_ERR_THRESHOLD`, so the stagnation count grows and the higher levels can run for long periods. On a test workload (85 inputs, population 100, a new data window in each generation, 1,200 generations), the defaults gave `BOOST` or `ESCAPE` in 444 of 1,200 generations; with `PRESSURE_BOOST: false` all 1,200 were `NORMAL`.
+- **`PRESSURE_COMPACT: false`:** When the complexity penalty and `OPTIMIZATION_PERIOD` are enough to control the network size, and you do not want extra global optimization phases
 
 ---
 

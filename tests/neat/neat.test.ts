@@ -536,6 +536,65 @@ describe('Neat', () => {
             });
         });
 
+        describe('pressure switches', () => {
+            const pressuresSeen = (params: { PRESSURE_BOOST?: boolean; PRESSURE_COMPACT?: boolean }) => {
+                const seen = new Set<string>();
+                withSeededRandom(104, () => {
+                    const pNeat = new Neat(4, 1, 8, EActivation.sigmoid, EActivation.tanh, params);
+                    for (let g = 0; g < 430; g++) {
+                        pNeat.clients.forEach((client, i) => {
+                            client.score = g === 0 && i === 0 ? 1 : 0.5;
+                            client.error = 0.5;
+                        });
+                        pNeat.evolve();
+                        seen.add(pNeat.PRESSURE);
+                    }
+                });
+
+                return [...seen].sort();
+            };
+
+            it('should reach all pressure levels with the defaults', () => {
+                expect(pressuresSeen({})).toEqual(['BOOST', 'COMPACT', 'ESCAPE', 'NORMAL', 'PANIC']);
+            });
+
+            it('should never set BOOST, ESCAPE, or PANIC with PRESSURE_BOOST: false', () => {
+                expect(pressuresSeen({ PRESSURE_BOOST: false })).toEqual(['COMPACT', 'NORMAL']);
+            });
+
+            it('should never set COMPACT with PRESSURE_COMPACT: false', () => {
+                expect(pressuresSeen({ PRESSURE_COMPACT: false })).toEqual(['BOOST', 'ESCAPE', 'NORMAL', 'PANIC']);
+            });
+
+            it('should keep NORMAL with both switches off', () => {
+                expect(pressuresSeen({ PRESSURE_BOOST: false, PRESSURE_COMPACT: false })).toEqual(['NORMAL']);
+            });
+
+            it('should not turn on global optimization mode with PRESSURE_COMPACT: false', () => {
+                const optimizationGens = (compact: boolean) => {
+                    const gens: number[] = [];
+                    withSeededRandom(104, () => {
+                        const pNeat = new Neat(4, 1, 8, EActivation.sigmoid, EActivation.tanh, {
+                            PRESSURE_COMPACT: compact,
+                            OPTIMIZATION_PERIOD: 1000,
+                        });
+                        for (let g = 0; g < 430; g++) {
+                            pNeat.clients.forEach((client, i) => {
+                                client.score = g === 0 && i === 0 ? 1 : 0.5;
+                                client.error = 0.5;
+                            });
+                            pNeat.evolve();
+                            if (pNeat.optimization) gens.push(g);
+                        }
+                    });
+
+                    return gens;
+                };
+                expect(optimizationGens(true).length).toBeGreaterThan(0);
+                expect(optimizationGens(false)).toEqual([]);
+            });
+        });
+
         describe('zero mutation strengths', () => {
             it.each(['WEIGHT_RANDOM_STRENGTH', 'BIAS_RANDOM_STRENGTH'] as const)(
                 'should throw when %s is 0 and random weight mutation can run',

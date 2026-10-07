@@ -43,6 +43,8 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `PROBABILITY_MUTATE_NODES`         | `0.03`          | How often to add new nodes                                           |
 | `OPT_ERR_THRESHOLD`                | `0.005`         | `client.error` limit for self-optimization; stagnation gain limit    |
 | `OPTIMIZATION_PERIOD`              | `100`           | Period (in `evolve()` calls) of the global optimization phase        |
+| `PRESSURE_BOOST`                   | `true`          | Allow the `BOOST`, `ESCAPE`, and `PANIC` pressure levels             |
+| `PRESSURE_COMPACT`                 | `true`          | Allow the `COMPACT` pressure level                                   |
 | `PERMANENT_MAIN_CONNECTIONS`       | `false`         | Whether to protect input→output connections                          |
 | `LAMBDA_HIGH`                      | `0.3`           | Complexity penalty during optimization                               |
 | `LAMBDA_LOW`                       | `0.1`           | Complexity penalty during exploration                                |
@@ -218,6 +220,13 @@ Effects:
 (\*) In the last 80 generations, the complexity of the best client grew by at least 30 or by at least 10%, and the champion score grew by not more than `0.001`. `COMPACT` is checked first.
 
 When the count becomes larger than 405, it goes back to 200.
+
+Two switches turn the levels off (both are `true` by default):
+
+- `PRESSURE_BOOST: false`: the level is never `BOOST`, `ESCAPE`, or `PANIC`. It is `NORMAL` unless `COMPACT` applies. The stagnation count and its reset to 200 still run, because the `COMPACT` check uses the count. Without `PANIC`, new children are never made from empty genomes.
+- `PRESSURE_COMPACT: false`: the level is never `COMPACT`, and the `COMPACT` check does not turn on global optimization mode.
+
+With both switches `false`, the level is always `NORMAL`. Use them when the fitness data is noisy or changes in each generation, so that the champion seldom improves by more than `OPT_ERR_THRESHOLD` and the stagnation count grows without a real stagnation.
 
 `TOPOLOGY ×` multiplies the link and node probabilities. `WEIGHTS ×` multiplies the random-weight and shift-weight probabilities.
 

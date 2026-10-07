@@ -35,6 +35,8 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | **Optimization & Scoring**         |                 |         |                                        |
 | `OPT_ERR_THRESHOLD`                | `0.005`         | number  | Self-optimization and stagnation limit |
 | `OPTIMIZATION_PERIOD`              | `100`           | number  | Period of global optimization          |
+| `PRESSURE_BOOST`                   | `true`          | boolean | Allow BOOST, ESCAPE, PANIC pressure    |
+| `PRESSURE_COMPACT`                 | `true`          | boolean | Allow COMPACT pressure                 |
 | `PERMANENT_MAIN_CONNECTIONS`       | `false`         | boolean | Protect input-output connections       |
 | `LAMBDA_HIGH`                      | `0.3`           | number  | Complexity penalty (optimization)      |
 | `LAMBDA_LOW`                       | `0.1`           | number  | Complexity penalty (exploration)       |
@@ -99,6 +101,8 @@ new Neat(inputNodes, outputNodes, clients, EActivation.sigmoid, EActivation.tanh
 
 - **OPT_ERR_THRESHOLD:** When a client enters self-optimization (`client.error` below it) and the minimum score gain that resets stagnation
 - **OPTIMIZATION_PERIOD:** Period of the global optimization phase and of elite reinsertion
+- **PRESSURE_BOOST:** Whether stagnation can raise the pressure level to `BOOST`, `ESCAPE`, and `PANIC`
+- **PRESSURE_COMPACT:** Whether stagnation with complexity growth can set the `COMPACT` pressure level
 - **PERMANENT_MAIN_CONNECTIONS:** Whether to protect input→output connections
 - **LAMBDA_HIGH:** Strong complexity penalty during optimization
 - **LAMBDA_LOW:** Light complexity penalty during exploration
