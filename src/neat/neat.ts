@@ -686,6 +686,7 @@ export class Neat {
 
     emptyGenome(): Genome {
         const genome: Genome = new Genome(this);
+        const nodes = genome.nodes.data;
 
         for (let i = 0; i < this._inputNodes + this._outputNodes; i += 1) {
             const global = this.getNode(i + 1);
@@ -695,7 +696,7 @@ export class Neat {
             node.y = global.y;
             node.bias = 0;
 
-            genome.nodes.add(node);
+            nodes.push(node);
         }
 
         return genome;
