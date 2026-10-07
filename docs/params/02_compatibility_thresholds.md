@@ -1,88 +1,77 @@
 # Compatibility Thresholds (CT, CP)
 
-## CT - Compatibility Threshold for Normalization
+## CT - Minimum Distance Divisor and Minimum Connection Count
 
-**Default:** `20`  
+**Default:** `1`  
 **Type:** `number` (positive)  
-**Location:** `src/neat/neat.ts:124`
+**Location:** `INeatParams.CT`, `DEFAULT_PARAMS.CT` (`src/neat/neat.ts`)
 
 ### Purpose
 
-CT is used to determine whether to normalize genetic distance calculations by the number of genes. When the number of connections is below CT, normalization is disabled (N=1), which prevents small genomes from appearing artificially distant.
+CT has three roles:
+
+1. It is the minimum value of the divisor `N` in the distance formula. This prevents genomes with few connections from appearing artificially distant.
+2. A genome with fewer than `CT` connections always gets link mutations, also in optimization mode.
+3. It limits the number of random-weight and shift-weight mutations.
 
 ### How It's Used
 
-**In distance calculation normalization** (`src/genome/genome.ts:171-172`):
+**In distance calculation normalization** (`Genome.distance()`):
 
 ```typescript
 let N = Math.max(g1.connections.size(), g2.connections.size());
-N = N < this.#neat.CT ? 1 : N; // If connections < CT, use N=1 (no normalization)
+N = N < this._neat.CT ? this._neat.CT : N;
 ```
 
-This affects the final distance formula:
+`N = max(connections of genome 1, connections of genome 2, CT)`. The excess and disjoint terms are always divided by `N`; when both genomes have fewer than `CT` connections, they are divided by `CT`.
 
-- **When connections >= CT:** Distance is normalized by N (number of connections)
-- **When connections < CT:** Distance is NOT normalized (N=1), preventing division by small numbers
-
-**In mutation probability calculations** (`src/genome/genome.ts:537-540`):
+**In structural mutations** (`Genome.mutate()`):
 
 ```typescript
-if (
-  (!selfOpt && !this.#neat.optimization) ||
-  this.#connections.size() < this.#neat.CT
-) {
-  prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE;
-  prob = this.#connections.size() < this.#neat.CT ? this.#neat.CT : prob;
-  // ... mutation logic
+if (protectingMain || (!selfOpt && !this._neat.optimization) || this._connections.size() < this._neat.CT) {
+    prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
+    prob = Math.max(prob, this._neat.CT - this._connections.size());
+    prob = protectingMain ? mainCons : prob;
+    while (prob > Math.random()) {
+        prob--;
+        this.mutateLink();
+    }
+    // ... node mutations
 }
 ```
 
-When genome has fewer connections than CT, it's encouraged to add more connections/nodes:
+When a genome has fewer than `CT` connections, the structural block runs also in optimization mode, and the link probability is at least `CT − connections`. So the genome tries to add the missing connections in the same generation.
+
+**In weight mutation limits** (`Genome.mutate()`):
 
 ```typescript
-if (optimize) {
-  prob = prob > 1 ? 1 : prob;
-}
-while (prob > Math.random()) {
-  prob--;
-  this.mutateLink();
-}
+const minWeight = Math.min(this._connections.size(), this._nodes.size() - this._neat.CT);
 ```
 
-**In weight mutation limits** (`src/genome/genome.ts:560`):
-
-```typescript
-const minWeight = Math.min(
-  this.#connections.size(),
-  this.#nodes.size() - this.#neat.CT
-);
-```
-
-This limits the number of weight mutations based on network size and CT.
+The random-weight and shift-weight probabilities are limited to `minWeight`. If `CT` is larger than the node count of a genome, `minWeight` is negative, and that genome gets **no** weight mutations.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:54` (interface), `src/neat/neat.ts:124` (initialization)
-- **Setter/Getter:** `src/neat/neat.ts:373-380`
-- **Usage in distance:** `src/genome/genome.ts:171-172`
-- **Usage in mutation:** `src/genome/genome.ts:537-560`
-- **Validation:** `src/neat/neat.ts:210-212` (warns if > 1000)
-- **Tests:** `tests/genome/genome.distance.test.ts:58-105`
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Field:** `Neat.CT` (a public field)
+- **Usage in distance:** `Genome.distance()`
+- **Usage in mutation:** `Genome.mutate()`
+- **Validation:** `Neat.validateConfiguration()` (warns if > 1000)
+- **Tests:** `tests/genome/genome.distance.test.ts`
 
 ### Tuning Recommendations
 
-- **Higher values (>30):** More aggressive normalization, small networks treated more leniently, slower initial growth
-- **Lower values (<10):** Earlier normalization, stricter distance calculation for small networks, faster structural evolution
-- **Default (20):** Balanced approach allowing initial exploration before strict normalization kicks in
+- **Higher values:** Smaller distances for small genomes, more connections forced at the start, and fewer weight mutations (none when `CT` > node count)
+- **Default (1):** Distance divided by the real connection count; only an empty genome is forced to add a connection
 - **Warning:** Values > 1000 are considered unusually high and will trigger a console warning
 
 ---
 
 ## CP - Compatibility Threshold for Speciation
 
-**Default:** `Math.max(clients / 20, 1)` (5 for 100 clients, minimum 1)  
+**Default:** `1` (start value; `evolve()` changes it)  
 **Type:** `number` (positive)  
-**Location:** `src/neat/neat.ts:125`
+**Location:** `INeatParams.CP`, `DEFAULT_PARAMS.CP` (`src/neat/neat.ts`)
 
 ### Purpose
 
@@ -90,57 +79,44 @@ CP defines the maximum genetic distance for two genomes to be considered part of
 
 ### How It's Used
 
-**In species assignment** (`src/neat/species.ts:23-28`):
+**In species assignment** (`Species.put()`):
 
 ```typescript
 put(client: Client, force = false): boolean {
-    if (force || client.distance(this.#representative) < this.#representative.genome.neat.CP) {
+    if (force || client.distance(this._representative) < this._representative.genome.neat.CP) {
         client.species = this;
-        this.#clients.push(client);
+        this._clients.push(client);
+
         return true;
     }
+
     return false;
 }
 ```
 
-**In speciation process** (`src/neat/neat.ts:672-687`):
+**In speciation process** (`Neat.genSpecies()`):
+
+1. Each existing species takes a random member as its new representative and removes all other members (`Species.reset()`).
+2. Each client without a species goes into the first species with `distance < CP`, or it starts a new species.
+
+**Adaptation** (end of `Neat.reproduce()`):
 
 ```typescript
-#genSpecies() {
-    // Reset all species
-    for (let i = 0; i < this.#species.length; i += 1) {
-        this.#species[i].reset();
-    }
-
-    // Try to place each client in existing species
-    for (let i = 0; i < this.#clients.length; i += 1) {
-        const c = this.#clients[i];
-        if (c.species !== null) continue;
-
-        let found = false;
-        for (let k = 0; k < this.#species.length; k += 1) {
-            const s = this.#species[k];
-            if (s.put(c)) {  // Uses CP internally via distance comparison
-                found = true;
-                break;
-            }
-        }
-
-        // Create new species if no match found
-        if (!found) {
-            this.#species.push(new Species(c));
-        }
-    }
-}
+if (this._species.length < 8) this._CP *= 0.95;
+else if (this._species.length > 25) this._CP *= 1.05;
 ```
+
+The `CP` parameter is only the start value. After each `evolve()` call, CP falls by 5% when there are fewer than 8 species, and grows by 5% when there are more than 25 species. There is no lower or upper limit. `CONFIG_CONSTANTS.DEFAULT_CP_RATIO` and `CONFIG_CONSTANTS.MIN_CP` (`src/neat/constants.ts`) are not used by this logic.
+
+Species with only one client are removed before reproduction (unless they hold the best client or are the last species, `Neat.removeExtinct()`), and the orphan clients are bred into the remaining species. So the species count after reproduction can stay below 8, and CP can fall close to `0` in long runs. Read the current value with `neat.CP`.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:55` (interface), `src/neat/neat.ts:125` (initialization)
-- **Constants:** `src/neat/constants.ts:51-54` (DEFAULT_CP_RATIO: 0.1, MIN_CP: 1)
-- **Getter:** `src/neat/neat.ts:377-379`
-- **Usage:** `src/neat/species.ts:23` (speciation decision)
-- **Validation:** `src/neat/neat.ts:214-216` (warns if > 10)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.CP`
+- **Usage:** `Species.put()` (speciation decision), `Neat.genSpecies()`
+- **Adaptation:** `Neat.reproduce()`
+- **Validation:** `Neat.validateConfiguration()` (warns if > 10)
 
 ### Relationship with Distance Coefficients
 
@@ -158,13 +134,9 @@ if (distance < CP) {
 
 ### Tuning Recommendations
 
-- **Higher values (>5):** Fewer, larger species; less diversity; faster convergence within species
-- **Lower values (<2):** Many small species; high diversity; slower convergence; risk of stagnation
-- **Default (clients/20):** Scales with population size
-  - 100 clients → CP = 5
-  - 50 clients → CP = 2.5
-  - 20 clients → CP = 1
-- **Minimum:** Always at least 1 to prevent over-speciation
+- **Higher start values:** Fewer, larger species at the start; less diversity; faster convergence within species
+- **Lower start values:** Many small species at the start; high diversity; slower convergence
+- **Default (1):** Start value; the adaptation then moves CP toward 8-25 species
 - **Warning:** Values > 10 are considered unusually high and will trigger a console warning
 
 ### Interaction with Other Parameters
@@ -174,8 +146,8 @@ CP works together with C1, C2, C3:
 - If C1, C2, C3 are high → distances are large → need higher CP to maintain reasonable species count
 - If C1, C2, C3 are low → distances are small → need lower CP to maintain speciation
 
-**Example scenarios:**
+**Example scenarios (start values):**
 
-- **High diversity:** C1=1, C2=1, C3=0.1, CP=2 → Many species, slow evolution
-- **Low diversity:** C1=0.5, C2=0.5, C3=0.05, CP=10 → Few species, fast evolution
-- **Balanced (default):** C1=1, C2=1, C3=0.1, CP=5 → Moderate speciation
+- **High diversity:** C1=1, C2=1, C3=0.2, CP=0.5 → Many species at the start
+- **Low diversity:** C1=0.5, C2=0.5, C3=0.05, CP=5 → Few species at the start
+- **Default:** C1=1, C2=1, C3=0.2, CP=1

@@ -1,27 +1,46 @@
 # Optimization and Scoring Parameters
 
+## Optimization modes
+
+There are two kinds of optimization. Both use the same clean-up in `Genome.mutate()`.
+
+| Mode                                      | When it is on                                                                                                       | Scope       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Global optimization (`neat.optimization`) | `evolve(true)`, or `evolveCounts % OPTIMIZATION_PERIOD === 0`, or pressure level `COMPACT`; for one `evolve()` call | All clients |
+| Self-optimization (`genome.selfOpt`)      | `client.error < OPT_ERR_THRESHOLD`, except in the forced first mutation                                             | One client  |
+
+Effects:
+
+- **Clean-up** (`Genome.optimization()`): remove all disabled connections (`removeDead()`), then remove the connections and hidden nodes that are not on an enabled input→output path (`pruneDeadGraph()`). A removed connection can also remove a hidden node that loses its last connection, together with the other connections of that node
+- **No new connections or nodes** - unless the genome has fewer than CT connections, or `PERMANENT_MAIN_CONNECTIONS` is on and the genome has fewer than `inputs × outputs` connections
+- **Toggle and weight mutations continue**
+- **Global mode only:** `LAMBDA_HIGH` instead of `LAMBDA_LOW` in the score normalization; crossover does not copy disabled excess genes of the fitter parent (and, when the fitter parent is also in self-optimization, no disabled disjoint genes)
+
 ## OPT_ERR_THRESHOLD - Optimization Error Threshold
 
-**Default:** `0.01`  
+**Default:** `0.005`  
 **Type:** `number` (typically 0.001-0.1)  
-**Location:** `src/neat/neat.ts:141`
+**Location:** `INeatParams.OPT_ERR_THRESHOLD`, `DEFAULT_PARAMS.OPT_ERR_THRESHOLD` (`src/neat/neat.ts`)
 
 ### Purpose
 
-OPT_ERR_THRESHOLD determines when a genome enters "self-optimization" mode. When a client's error drops below this threshold, it starts optimizing by removing disabled connections and being more conservative with structural mutations.
+OPT_ERR_THRESHOLD has two roles:
+
+1. A client with `client.error < OPT_ERR_THRESHOLD` enters self-optimization mode.
+2. The champion must improve its raw score by more than OPT_ERR_THRESHOLD to reset the stagnation count, which sets the pressure level.
 
 ### How It's Used
 
-**In genome initialization** (`src/genome/genome.ts:31-34`):
+**In genome initialization** (`Genome` constructor):
 
 ```typescript
 constructor(neat: Neat) {
-    this.#neat = neat;
-    this.#optErrThreshold = neat.OPT_ERR_THRESHOLD;
+    this._neat = neat;
+    this._optErrThreshold = neat.OPT_ERR_THRESHOLD;
 }
 ```
 
-**In client mutation decision** (`src/client/client.ts:96-101`):
+**In client mutation decision** (`Client.mutate()`):
 
 ```typescript
 mutate(force = false) {
@@ -32,64 +51,87 @@ mutate(force = false) {
 }
 ```
 
-**In genome mutation** (`src/genome/genome.ts:527-577`):
+`Neat.mutate()` passes `force = true` only in the first `evolve()` call of a population (when `evolveCounts` becomes `1`).
+
+**`client.error` must be set by you.** Its default value is `0`, and `evolve()` does not compute it (`Neat.fit()` does). If you set only `client.score`, every client has `error = 0 < OPT_ERR_THRESHOLD`, so all clients are in self-optimization from the second `evolve()` call, and the networks stop growing after the first connection. Set `client.error` to your error measure (0 = perfect), or to a value ≥ OPT_ERR_THRESHOLD while you want the topology to grow.
+
+**In stagnation tracking** (`Neat.updateStagnationAndPressure()`):
 
 ```typescript
-mutate(selfOpt = false) {
-    this.#selfOpt = selfOpt;
-    const optimize = this.#selfOpt || this.#neat.optimization;
-
-    if (optimize) {
-        this.#optimization();  // Remove disabled connections
-    }
-
-    // Structural mutations only allowed if NOT optimizing OR network is small
-    if ((!selfOpt && !this.#neat.optimization) || this.#connections.size() < this.#neat.CT) {
-        // Add connections and nodes
-    }
-
-    // Weight mutations still allowed during optimization
+const accumulatedGain = this._champion.scoreRaw - this._networkScoreRaw;
+if (accumulatedGain <= this._OPT_ERR_THRESHOLD) {
+    this._stagnationCount++;
+} else {
+    this._networkScoreRaw = this._champion.scoreRaw;
+    this._stagnationCount = 0;
 }
 ```
 
-**Optimization removes disabled connections** (`src/genome/genome.ts:489-497`):
-
-```typescript
-#optimization(start = 0) {
-    for (let i = start; i < this.#connections.size(); i += 1) {
-        const c = this.#connections.get(i);
-        if (!(c instanceof ConnectionGene)) continue;
-        if (!c.enabled) {
-            this.removeConnection(c);
-            return;
-        }
-    }
-}
-```
+The stagnation count sets `neat.PRESSURE` (see [Mutation Pressure](../PARAMETER_TUNING.md#mutation-pressure)). So OPT_ERR_THRESHOLD is also the minimum raw score gain that counts as progress. Choose it on the scale of your scores.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:66` (interface), `src/neat/neat.ts:141` (initialization)
-- **Getter:** `src/neat/neat.ts:325-327`
-- **Usage:** `src/genome/genome.ts:31-34` (stored per genome), `src/client/client.ts:96-101` (mutation decision), `src/genome/genome.ts:527-577` (optimization behavior)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.OPT_ERR_THRESHOLD`, `Genome.optErrThreshold`
+- **Usage:** `Client.mutate()` (self-optimization decision), `Genome.mutate()` (optimization behavior), `Neat.updateStagnationAndPressure()` (stagnation), `Neat.fit()` (default `errorThreshold` and `evolve(true)` trigger)
 
 ### Behavior When Error < OPT_ERR_THRESHOLD
 
-- **Disabled connections are removed** - Network is simplified
+- **Disabled and dead connections are removed** - Network is simplified
 - **No new connections or nodes added** - Topology is frozen (unless network is very small, < CT)
-- **Weight mutations continue** - Fine-tuning still happens
-- **Toggle mutations behave differently** - Can enable disabled connections but cannot disable enabled ones
+- **Weight and toggle mutations continue** - Fine-tuning still happens
 
 ### Tuning Recommendations
 
-- **Higher values (>0.05):** Earlier optimization, faster convergence, risk of premature simplification
-- **Lower values (<0.005):** Later optimization, more exploration, network may stay complex
-- **Default (0.01):** Balanced - optimize when performance is good
-- **Interpretation:** If your fitness metric produces errors in range [0, 1], optimize when error < 1%
+- **Higher values (>0.05):** Earlier optimization, faster convergence, risk of premature simplification; more generations count as stagnation
+- **Lower values (<0.001):** Later optimization, more exploration, network may stay complex
+- **Default (0.005):** Optimize when performance is very good
+- **Interpretation:** If your error is in range [0, 1], a client optimizes when error < 0.5%
 - **Problem-specific:** Adjust based on your error scale:
-  - For MSE on normalized data: 0.01-0.05 reasonable
-  - For classification accuracy: depends on encoding
-  - For game scores: scale accordingly
+    - For MSE on normalized data: 0.005-0.05 reasonable
+    - For classification accuracy: depends on encoding
+    - For game scores: scale accordingly
+
+---
+
+## OPTIMIZATION_PERIOD - Period of Global Optimization
+
+**Default:** `100`  
+**Type:** `number` (positive integer)  
+**Location:** `INeatParams.OPTIMIZATION_PERIOD`, `DEFAULT_PARAMS.OPTIMIZATION_PERIOD` (`src/neat/neat.ts`)
+
+### Purpose
+
+OPTIMIZATION_PERIOD sets how often the global optimization mode is on, and how long the champion can stay the same before the elites are put back into the population.
+
+### How It's Used
+
+**Global optimization mode** (`Neat.evolve()`):
+
+```typescript
+this._evolveCounts++;
+this._optimization = optimization || this._evolveCounts % this._OPTIMIZATION_PERIOD === 0;
+```
+
+Optimization mode is on:
+
+- Every 100 `evolve()` calls with the default (`evolveCounts` 100, 200, 300, ...)
+- When explicitly requested via `evolve(true)`
+- When the pressure level becomes `COMPACT` (set in `Neat.updateStagnationAndPressure()`)
+
+`evolveCounts` continues from the loaded value when you load a model, so a loaded model keeps the same optimization schedule.
+
+**Elite reinsertion** (`Neat.reinsertElitesIfStagnant()`): when the champion did not change for `OPTIMIZATION_PERIOD` `evolve()` calls, copies of the champion and the runner-up replace the two lowest-ranked clients, and the champion age goes back to 0.
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.evolve()`, `Neat.reinsertElitesIfStagnant()`
+
+### Tuning Recommendations
+
+- **Lower values:** More frequent clean-up phases and elite reinsertion, smaller networks
+- **Higher values:** Rarer clean-up, more time for exploration
 
 ---
 
@@ -97,78 +139,81 @@ mutate(selfOpt = false) {
 
 **Default:** `false`  
 **Type:** `boolean`  
-**Location:** `src/neat/neat.ts:126`
+**Location:** `INeatParams.PERMANENT_MAIN_CONNECTIONS`, `DEFAULT_PARAMS.PERMANENT_MAIN_CONNECTIONS` (`src/neat/neat.ts`)
 
 ### Purpose
 
-When enabled, prevents the removal of direct connections from input nodes to output nodes. This ensures the network always maintains at least basic connectivity from inputs to outputs.
+When enabled, prevents the removal of direct connections from input nodes to output nodes, and makes each genome add connections until it has `inputs × outputs` connections.
 
 ### How It's Used
 
-**In connection removal** (`src/genome/genome.ts:273-280`):
+**In connection removal** (`Genome.removeConnection()`):
 
 ```typescript
 removeConnection(con: ConnectionGene, replace = false, down = true, up = true) {
     if (
-        this.#neat.PERMANENT_MAIN_CONNECTIONS &&
+        this._neat.PERMANENT_MAIN_CONNECTIONS &&
         con.from.x === NETWORK_CONSTANTS.INPUT_NODE_X &&
         con.to.x === NETWORK_CONSTANTS.OUTPUT_NODE_X
     ) {
-        return;  // Skip removal, connection is protected
+        return false; // Skip removal, connection is protected
     }
-    this.#connections.remove(con);
     // ... rest of removal logic
 }
 ```
 
-**Constants used** (`src/neat/constants.ts:8-11`):
+**In structural mutations** (`Genome.mutate()`): while the genome has fewer than `inputs × outputs` connections, the structural block also runs in optimization mode, and the link probability is `inputs × outputs` (many link attempts in one generation).
+
+**Constants used** (`NETWORK_CONSTANTS` in `src/neat/constants.ts`):
 
 ```typescript
 export const NETWORK_CONSTANTS = {
-  INPUT_NODE_X: 0.01,
-  OUTPUT_NODE_X: 0.99,
-  // ...
+    INPUT_NODE_X: 0.01,
+    OUTPUT_NODE_X: 0.99,
+    // ...
 };
 ```
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:67` (interface), `src/neat/neat.ts:126` (initialization)
-- **Getter:** `src/neat/neat.ts:321-323`
-- **Usage:** `src/genome/genome.ts:273-280` (connection removal protection)
-- **Tests:** `tests/genome/genome.remove-connection.test.ts:93-154`
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.PERMANENT_MAIN_CONNECTIONS`
+- **Usage:** `Genome.removeConnection()` (connection removal protection), `Genome.mutate()` (link filling)
+- **Tests:** `tests/genome/genome.remove-connection.test.ts`
 
 ### When Connections Are Removed
 
 Connections can be removed in several scenarios:
 
-1. **During node mutation** - Original connection is disabled and potentially removed
-2. **During optimization** - Disabled connections are cleaned up
+1. **During node mutation** - Original connection is disabled and removed
+2. **During optimization** - Disabled and dead connections are cleaned up
 3. **When a node becomes isolated** - Cascade removal of orphaned connections
+
+A protected input→output connection is not removed in these cases. It can still be disabled (by node mutation or toggle).
 
 ### Tuning Recommendations
 
 - **true:**
-  - Guarantees minimum connectivity
-  - Good for problems requiring all inputs to directly influence outputs
-  - Prevents network from becoming disconnected during evolution
-  - May limit exploration of complex topologies
+    - Guarantees minimum connectivity
+    - Good for problems requiring all inputs to directly influence outputs
+    - Prevents network from becoming disconnected during evolution
+    - May limit exploration of complex topologies; with many inputs and outputs, genomes become large
 - **false (default):**
-  - Allows full topology evolution
-  - Network can evolve to use only relevant inputs
-  - Hidden layers can completely mediate input-output relationship
-  - Risk of losing important connections temporarily
+    - Allows full topology evolution
+    - Network can evolve to use only relevant inputs
+    - Hidden layers can completely mediate input-output relationship
+    - Risk of losing important connections temporarily
 
 ### Use Cases
 
 - **Enable (true)** when:
-  - You have few inputs/outputs and want guaranteed connectivity
-  - Problem requires direct input-output relationships
-  - You're experiencing network disconnection issues
+    - You have few inputs/outputs and want guaranteed connectivity
+    - Problem requires direct input-output relationships
+    - You're experiencing network disconnection issues
 - **Disable (false)** when:
-  - You want maximum evolutionary freedom
-  - Problem may benefit from complex hidden layer processing
-  - Using regularization/complexity penalties to manage topology
+    - You want maximum evolutionary freedom
+    - Problem may benefit from complex hidden layer processing
+    - Using regularization/complexity penalties to manage topology
 
 ---
 
@@ -176,85 +221,47 @@ Connections can be removed in several scenarios:
 
 **Default:** `0.3`  
 **Type:** `number` (typically 0.1-0.5)  
-**Location:** `src/neat/neat.ts:143`
+**Location:** `INeatParams.LAMBDA_HIGH`, `DEFAULT_PARAMS.LAMBDA_HIGH` (`src/neat/neat.ts`)
 
 ### Purpose
 
-LAMBDA_HIGH controls how strongly network complexity is penalized when selecting the best genomes during optimization phases. Higher values favor simpler networks.
+LAMBDA_HIGH controls how strongly network complexity is penalized when selecting the best genomes during the global optimization mode. Higher values favor simpler networks.
 
 ### How It's Used
 
-**In score normalization** (`src/neat/neat.ts:689-722`):
+**In score normalization** (`Neat.normalizeScore()`):
 
 ```typescript
-#normalizeScore() {
-    // Calculate raw score range and complexity range
-    let rawMax = -Infinity, rawMin = Infinity;
-    let cMax = -Infinity, cMin = Infinity;
+const rawSpan = rawMax - rawMin;
+const effectiveSpan = Math.max(rawSpan, 0.05);
+const lambda = this._optimization ? this._LAMBDA_HIGH : this._LAMBDA_LOW;
 
-    for (const cl of this.#clients) {
-        cl.scoreRaw = cl.score;
-        rawMax = Math.max(rawMax, cl.scoreRaw);
-        rawMin = Math.min(rawMin, cl.scoreRaw);
-
-        const c = cl.genome.connections.size() + cl.genome.nodes.size();
-        cl.complexity = c;
-        cMax = Math.max(cMax, c);
-        cMin = Math.min(cMin, c);
-    }
-
-    const span = rawMax - rawMin || 1;
-    const cSpan = cMax - cMin || 1;
-
-    // Choose lambda based on optimization mode
-    const lambda = this.#optimization ? this.#LAMBDA_HIGH : this.#LAMBDA_LOW;
-
-    // Apply complexity penalty
-    for (const cl of this.#clients) {
-        const cNorm = (cl.complexity - cMin) / cSpan;
-        const penalty = lambda * cNorm * span;
-        cl.adjustedScore = cl.scoreRaw - penalty;
-    }
-
-    // Normalize adjusted scores to [0, 1]
-    let adjMax = -Infinity, adjMin = Infinity;
-    for (const cl of this.#clients) {
-        adjMax = Math.max(adjMax, cl.adjustedScore);
-        adjMin = Math.min(adjMin, cl.adjustedScore);
-    }
-    const adjSpan = adjMax - adjMin || 1;
-
-    for (const cl of this.#clients) {
-        cl.score = (cl.adjustedScore - adjMin) / adjSpan;
-    }
+for (const client of this._clients) {
+    const complexityNorm = maxComplexity > 0 ? Math.log1p(client.complexity) / Math.log1p(maxComplexity) : 0;
+    const complexityPenalty = lambda * complexityNorm * effectiveSpan;
+    client.adjustedScore = client.scoreRaw - complexityPenalty;
 }
 ```
+
+Then the adjusted scores are normalized to [0, 1] (`(adjusted − min) / (max − min)`; all scores are `1` when `max − min ≤ EPS`), and the clients are sorted.
 
 **The penalty formula:**
 
 ```
-complexity_normalized = (complexity - min_complexity) / (max_complexity - min_complexity)
-penalty = lambda * complexity_normalized * score_span
-adjusted_score = raw_score - penalty
+complexity            = connections + nodes          (Neat.prepareRawScores())
+complexity_normalized = ln(1 + complexity) / ln(1 + max_complexity)
+score_span            = max(raw_max − raw_min, 0.05)
+penalty               = lambda × complexity_normalized × score_span
+adjusted_score        = raw_score − penalty
 ```
 
-**When optimization mode is active** (`src/neat/neat.ts:627-629`):
-
-```typescript
-this.#optimization =
-  optimization || this.#evolveCounts % this.#OPTIMIZATION_PERIOD === 0;
-```
-
-Optimization mode activates:
-
-- Every 10 generations (OPTIMIZATION_PERIOD = 10)
-- When explicitly requested via `evolve(true)`
+`lambda` is LAMBDA_HIGH when the global optimization mode is on (see [Optimization modes](#optimization-modes)); self-optimization of a client does not change it.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:68` (interface), `src/neat/neat.ts:143` (initialization)
-- **Usage:** `src/neat/neat.ts:707` (score adjustment)
-- **Validation:** `src/neat/neat.ts:257-266` (warns if > 0.8 or < 0)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.normalizeScore()` (score adjustment)
+- **Validation:** `Neat.validateConfiguration()` (throws if < 0, warns if > 0.8)
 
 ### Tuning Recommendations
 
@@ -265,19 +272,19 @@ Optimization mode activates:
 
 ### Example Impact
 
-With rawMax=100, rawMin=80 (span=20), cMax=50, cMin=10 (cSpan=40):
+With rawMax=100, rawMin=80 (score_span=20), max_complexity=50:
 
-**Client A:** rawScore=95, complexity=15
+**Client A:** rawScore=94, complexity=15
 
-- cNorm = (15-10)/40 = 0.125
-- penalty = 0.3 _ 0.125 _ 20 = 0.75
-- adjusted = 95 - 0.75 = 94.25
+- complexity_normalized = ln(16)/ln(51) = 0.7052
+- penalty = 0.3 × 0.7052 × 20 = 4.231
+- adjusted = 94 − 4.231 = 89.769
 
-**Client B:** rawScore=93, complexity=45
+**Client B:** rawScore=95, complexity=45
 
-- cNorm = (45-10)/40 = 0.875
-- penalty = 0.3 _ 0.875 _ 20 = 5.25
-- adjusted = 93 - 5.25 = 87.75
+- complexity_normalized = ln(46)/ln(51) = 0.9738
+- penalty = 0.3 × 0.9738 × 20 = 5.843
+- adjusted = 95 − 5.843 = 89.157
 
 Client A wins despite lower raw score due to simplicity.
 
@@ -287,7 +294,7 @@ Client A wins despite lower raw score due to simplicity.
 
 **Default:** `0.1`  
 **Type:** `number` (typically 0.05-0.3)  
-**Location:** `src/neat/neat.ts:144`
+**Location:** `INeatParams.LAMBDA_LOW`, `DEFAULT_PARAMS.LAMBDA_LOW` (`src/neat/neat.ts`)
 
 ### Purpose
 
@@ -295,22 +302,22 @@ LAMBDA_LOW controls complexity penalties during normal evolution (exploration ph
 
 ### How It's Used
 
-Uses the same formula as LAMBDA_HIGH but applied during non-optimization phases:
+Uses the same formula as LAMBDA_HIGH but applied when the global optimization mode is off:
 
 ```typescript
-const lambda = this.#optimization ? this.#LAMBDA_HIGH : this.#LAMBDA_LOW;
+const lambda = this._optimization ? this._LAMBDA_HIGH : this._LAMBDA_LOW;
 ```
 
-**Phases:**
+**Phases (default `OPTIMIZATION_PERIOD` = 100, no `evolve(true)`, no `COMPACT`):**
 
-- **Optimization (uses LAMBDA_HIGH):** Generations 10, 20, 30, ...
-- **Exploration (uses LAMBDA_LOW):** Generations 1-9, 11-19, 21-29, ...
+- **Optimization (uses LAMBDA_HIGH):** `evolveCounts` 100, 200, 300, ...
+- **Exploration (uses LAMBDA_LOW):** all other `evolve()` calls
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:69` (interface), `src/neat/neat.ts:144` (initialization)
-- **Usage:** `src/neat/neat.ts:707` (score adjustment)
-- **Validation:** `src/neat/neat.ts:268-274` (warns if > 0.5 or < 0)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.normalizeScore()` (score adjustment)
+- **Validation:** `Neat.validateConfiguration()` (throws if < 0, warns if > 0.5)
 
 ### Tuning Recommendations
 
@@ -324,13 +331,10 @@ const lambda = this.#optimization ? this.#LAMBDA_HIGH : this.#LAMBDA_LOW;
 
 Same scenario as LAMBDA_HIGH example but with LAMBDA_LOW=0.1:
 
-**Client B:** rawScore=93, complexity=45
+- **Client A:** penalty = 0.1 × 0.7052 × 20 = 1.410 → adjusted = 92.590
+- **Client B:** penalty = 0.1 × 0.9738 × 20 = 1.948 → adjusted = 93.052 (was 89.157 with LAMBDA_HIGH)
 
-- cNorm = (45-10)/40 = 0.875
-- penalty = 0.1 _ 0.875 _ 20 = 1.75 (was 5.25 with LAMBDA_HIGH)
-- adjusted = 93 - 1.75 = 91.25
-
-Client B has a better chance during exploration phases.
+Client B wins during exploration phases.
 
 ---
 
@@ -338,60 +342,60 @@ Client B has a better chance during exploration phases.
 
 **Default:** `1e-4` (0.0001)  
 **Type:** `number` (typically 1e-6 to 1e-3)  
-**Location:** `src/neat/neat.ts:145`
+**Location:** `INeatParams.EPS`, `DEFAULT_PARAMS.EPS` (`src/neat/neat.ts`)
 
 ### Purpose
 
-EPS defines how close two scores must be to be considered "tied". When multiple genomes have nearly identical scores (within EPS), the simplest one is chosen as the best.
+EPS defines how close two normalized scores must be to be considered "tied". When two clients have scores within EPS, the simpler one is sorted first.
 
 ### How It's Used
 
-**In best score selection** (`src/neat/neat.ts:724-737`):
+**In score normalization** (`Neat.normalizeScore()`):
 
 ```typescript
-this.#clients.sort((a, b) => b.score - a.score);
-
-const maxScore = Math.max(...this.#clients.map((c) => c.score));
-const ties = this.#clients
-  .map((c, i) => ({ c, i }))
-  .filter(({ c }) => maxScore - c.score <= this.#EPS);
-
-if (ties.length === 0) {
-  this.#clients[0].bestScore = true;
-} else if (ties.length === 1) {
-  ties[0].c.bestScore = true;
-} else {
-  // Multiple tied genomes - choose simplest
-  ties.sort((a, b) => a.c.complexity - b.c.complexity);
-  ties[0].c.bestScore = true;
+for (const client of this._clients) {
+    client.score = adjustedSpan <= this._EPS ? 1 : (client.adjustedScore - adjustedMin) / adjustedSpan;
 }
+
+this._clients.sort((a, b) => {
+    const scoreDifference = b.score - a.score;
+    if (Math.abs(scoreDifference) > this._EPS) {
+        return scoreDifference;
+    }
+    return a.complexity - b.complexity;
+});
 ```
+
+- If the span of the adjusted scores is ≤ EPS, all clients get the normalized score `1`.
+- The clients are sorted by normalized score; when two scores differ by not more than EPS, the client with the lower complexity comes first.
+
+The sort order selects the runner-up (the first client), the clients that elite reinsertion replaces (the last two), and the order of species assignment. `client.bestScore` (the client that is not mutated and not killed) is the client with the highest **raw** score (`Neat.markBestRawClient()`); EPS does not change it.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:70` (interface), `src/neat/neat.ts:145` (initialization)
-- **Usage:** `src/neat/neat.ts:726` (tie detection)
-- **Validation:** `src/neat/neat.ts:276-281` (warns if outside 1e-6 to 1e-2)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.normalizeScore()` (normalization and tie detection)
+- **Validation:** `Neat.validateConfiguration()` (warns if outside 1e-6 to 1e-2)
 
 ### Tuning Recommendations
 
 - **Higher values (>1e-3):** More genomes considered tied, stronger simplicity bias in selection
 - **Lower values (<1e-6):** Fewer ties, score differences matter more, less simplicity bias
-- **Default (1e-4):** After normalization to [0, 1], differences < 0.01% trigger tie-breaking
+- **Default (1e-4):** After normalization to [0, 1], differences ≤ 0.01% trigger tie-breaking
 - **Historical note:** Was 1e-9 (too small, rarely triggered), increased to 1e-4 for meaningful tie-breaking
 
 ### Example Impact
 
 **Scenario 1: EPS = 1e-4**
 
-- Client A: score = 0.9500, complexity = 20
-- Client B: score = 0.9499, complexity = 15
-- Difference: 0.0001 = EPS → **TIE** → Choose B (simpler)
+- Client A: score = 0.95000, complexity = 20
+- Client B: score = 0.94995, complexity = 15
+- Difference: 0.00005 ≤ EPS → **TIE** → B first (simpler)
 
 **Scenario 2: EPS = 1e-6**
 
 - Same clients
-- Difference: 0.0001 > 1e-6 → **NOT A TIE** → Choose A (higher score)
+- Difference: 0.00005 > 1e-6 → **NOT A TIE** → A first (higher score)
 
 ### Interaction with Normalization
 
@@ -406,6 +410,39 @@ Scores are normalized to [0, 1] before tie-breaking:
 - **Larger EPS (1e-3):** When you want simplicity to strongly influence selection
 - **Smaller EPS (1e-6):** When every performance difference matters
 - **Default (1e-4):** Balanced - ties are meaningful but not overly common
+
+---
+
+## LOAD_PERCENT - Fraction of Clients That Get the Loaded Genome
+
+**Default:** `0.5`  
+**Type:** `number` (0 to 1; not validated)  
+**Location:** `INeatParams.LOAD_PERCENT`, `DEFAULT_PARAMS.LOAD_PERCENT` (`src/neat/neat.ts`)
+
+### Purpose
+
+LOAD_PERCENT is used only when you pass `loadData` (`{ genome, evolveCounts }`) to the constructor. It sets which fraction of the population starts from the loaded genome.
+
+### How It's Used
+
+**In loading** (`Neat.load()`, called by the constructor):
+
+- Client `i` gets its own copy of the loaded genome when `i / clients < LOAD_PERCENT`. The other clients start with empty genomes (inputs and outputs, no connections)
+- `LOAD_PERCENT: 0` loads no client. The population registry still gets the nodes and connections of the model
+- With a population of 1, the only client is loaded for each `LOAD_PERCENT > 0`
+
+See [Save and load a model](../../README.md#save-and-load-a-model) in the README.
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Usage:** `Neat.load()`
+
+### Tuning Recommendations
+
+- **High values (close to 1):** Continue the evolution of the saved model with little diversity
+- **Low values:** Use the model as a seed; most clients explore from empty genomes
+- **Default (0.5):** Half of the population starts from the model
 
 ---
 
@@ -425,13 +462,15 @@ Flow: Light penalty → Strong penalty → Final selection by simplicity if tied
 ### Optimization Trigger
 
 ```
-OPT_ERR_THRESHOLD → Self-optimization mode
-OPTIMIZATION_PERIOD (10) → Periodic optimization phases
+client.error < OPT_ERR_THRESHOLD (0.005)  → Self-optimization of that client
+OPTIMIZATION_PERIOD (100)                 → Periodic global optimization phases
 
-When error < 0.01 OR every 10 generations:
-- Use LAMBDA_HIGH for complexity penalty
-- Remove disabled connections
+When a client is optimizing:
+- Remove disabled and dead connections
 - Freeze topology (no new connections/nodes unless network is small)
+
+In the global phase also:
+- Use LAMBDA_HIGH for complexity penalty
 ```
 
 ### Protection

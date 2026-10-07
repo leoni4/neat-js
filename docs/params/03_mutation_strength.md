@@ -1,44 +1,47 @@
 # Mutation Strength Parameters
 
-## MUTATION_RATE - Global Mutation Rate Multiplier
+## MUTATION_RATE - Mutation Probability Multiplier
 
 **Default:** `1`  
 **Type:** `number` (non-negative)  
-**Location:** `src/neat/neat.ts:127`
+**Location:** `INeatParams.MUTATION_RATE`, `DEFAULT_PARAMS.MUTATION_RATE` (`src/neat/neat.ts`)
 
 ### Purpose
 
-MUTATION_RATE is a global multiplier applied to all mutation probabilities. It controls the overall intensity of evolution and has a dynamic component that increases when the population is stuck at the same error level.
+MUTATION_RATE is a multiplier for the link, node, random-weight, and shift-weight mutation probabilities. It controls the overall intensity of evolution. Its value does not change during evolution.
 
-**Used in mutation probability calculations** (`src/genome/genome.ts:537-576`):
+**Used in mutation probability calculations** (`Genome.mutate()`):
 
 ```typescript
 // Add new connections
-prob = this.#neat.PROBABILITY_MUTATE_LINK * this.#neat.MUTATION_RATE;
+prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
 
 // Add new nodes
-prob = this.#neat.PROBABILITY_MUTATE_NODES * this.#neat.MUTATION_RATE;
+prob = this._neat.PROBABILITY_MUTATE_NODES * this._neat.MUTATION_RATE * this._topologyPressure;
 
 // Random weight changes
-prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this.#neat.MUTATION_RATE;
+prob = this._neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this._neat.MUTATION_RATE * this._weightsPressure;
 
 // Weight shift mutations
-prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
+prob = this._neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this._neat.MUTATION_RATE * this._weightsPressure;
 ```
+
+`PROBABILITY_MUTATE_TOGGLE_LINK` is **not** multiplied by MUTATION_RATE or by the pressure.
+
+`_topologyPressure` and `_weightsPressure` come from the pressure level (`MUTATION_PRESSURE_CONST[neat.PRESSURE]`). When the champion does not improve, the level changes from `NORMAL` to `BOOST`, `ESCAPE`, and `PANIC`, and the multipliers grow (see [Mutation Pressure](../PARAMETER_TUNING.md#mutation-pressure)). This is the automatic adaptation; MUTATION_RATE itself stays the same.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:56` (interface), `src/neat/neat.ts:127` (initialization)
-- **Dynamic getter:** `src/neat/neat.ts:335-337`
-- **Usage:** `src/genome/genome.ts:537-576` (all probability-based mutations)
-- **Validation:** `src/neat/neat.ts:204-206` (warns if > 10)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.MUTATION_RATE`
+- **Usage:** `Genome.mutate()`
+- **Validation:** `Neat.validateConfiguration()` (throws if < 0, warns if > 10)
 
 ### Tuning Recommendations
 
 - **Higher values (>2):** Very aggressive evolution, high exploration, risk of instability
 - **Lower values (<0.5):** Conservative evolution, slow progress, good for fine-tuning
-- **Default (1):** Standard evolution speed with automatic adaptation
-- **Dynamic behavior:** Automatically increases by 0.1 per stuck epoch, helping escape plateaus
+- **Default (1):** Standard evolution speed
 - **Warning:** Values > 10 trigger a console warning as they can cause chaos
 
 ---
@@ -47,60 +50,61 @@ prob = this.#neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this.#neat.MUTATION_RATE;
 
 **Default:** `0.4` (40%)  
 **Type:** `number` (0 to 1)  
-**Location:** `src/neat/neat.ts:130`
+**Location:** `INeatParams.SURVIVORS`, `DEFAULT_PARAMS.SURVIVORS` (`src/neat/neat.ts`)
 
 ### Purpose
 
-SURVIVORS determines what fraction of each species survives the selection phase. Higher values mean weaker selection pressure (more survival), lower values mean stronger selection (only the best survive).
+SURVIVORS determines what fraction of each species survives the selection phase. Higher values mean weaker selection pressure (more survival), lower values mean stronger selection (only the best survive). It also limits which species can be parents.
 
 ### How It's Used
 
-**In species killing phase** (`src/neat/species.ts:65-75`):
+**In species killing phase** (`Species.kill()`):
 
 ```typescript
 kill(survivors = 0.5) {
-    this.#clients.sort((a, b) => {
-        return a.score > b.score ? -1 : 1;
+    this._clients.sort((a, b) => {
+        return a.scoreRaw > b.scoreRaw ? -1 : 1;
     });
 
-    const elems = survivors * this.#clients.length;
-    for (let i = this.#clients.length - 1; i > elems; i -= 1) {
-        if (this.#clients[i].bestScore) {
-            continue;  // Never kill the best genome
+    const keep = Math.ceil(survivors * this._clients.length);
+    for (let i = this._clients.length - 1; i >= keep; i--) {
+        if (this._clients[i].bestScore) {
+            continue;
         }
-        this.#clients[i].species = null;
-        this.#clients.splice(i, 1);
+        this._clients[i].species = null;
+        this._clients.splice(i, 1);
     }
 }
 ```
 
-**In reproduction** (`src/neat/neat.ts:641-652`):
+The clients are sorted by **raw** score. `Neat.kill()` passes `SURVIVORS` to each species.
+
+**In reproduction** (`Neat.reproduce()` and `RandomSelector.random()`):
 
 ```typescript
-#reproduce() {
-    const selector = new RandomSelector(this.#SURVIVORS);
-    for (let i = 0; i < this.#species.length; i += 1) {
-        selector.add(this.#species[i]);
+const selector = new RandomSelector(this._SURVIVORS);
+for (let i = 0; i < this._species.length; i += 1) {
+    selector.add(this._species[i]);
+}
+for (let i = 0; i < this._clients.length; i += 1) {
+    const c = this._clients[i];
+    if (c.species === null) {
+        const s = selector.random();
+        // PANIC pressure: c.genome is made from an empty genome (see PARAMETER_TUNING.md)
+        c.genome = s.breed();
+        s.put(c, true);
     }
-    for (let i = 0; i < this.#clients.length; i += 1) {
-        const c = this.#clients[i];
-        if (c.species === null) {
-            const s = selector.random();  // Select from top SURVIVORS%
-            c.genome = s.breed();
-            s.put(c, true);
-        }
-    }
-    selector.reset();
 }
 ```
+
+`RandomSelector` sorts the species by average normalized score (highest first). `random()` draws a value in `[0, SURVIVORS × total score)` and returns the first species whose cumulative score reaches that value. So only the top species that hold the first `SURVIVORS` part of the total species score are picked as parents. `Species.breed()` picks two random members (they can be the same client) and calls `Genome.crossOver()` with the member that has the higher normalized score first.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:57` (interface), `src/neat/neat.ts:130` (initialization)
-- **Validation:** `src/neat/neat.ts:192-194` (must be 0-1)
-- **Usage in killing:** `src/neat/species.ts:65`, called from `src/neat/neat.ts:669`
-- **Usage in reproduction:** `src/neat/neat.ts:641-652`
-- **Warning:** `src/neat/neat.ts:240-244` (warns if > 0.6)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Validation:** `Neat.validateConfiguration()` (throws if not in 0-1, warns if > 0.6)
+- **Usage in killing:** `Species.kill()`, called from `Neat.kill()`
+- **Usage in reproduction:** `Neat.reproduce()`, `RandomSelector.random()`
 
 ### Tuning Recommendations
 
@@ -111,11 +115,11 @@ kill(survivors = 0.5) {
 
 ### Impact on Evolution
 
-- **With 0.4 (40%):** Top 40% of each species survive, bottom 60% are replaced by offspring
+- **With 0.4 (40%):** Top 40% of each species survive (rounded up), the others are replaced by offspring
 - **Example with 10 individuals:**
     - Top 4 survive
-    - Bottom 6 are replaced by breeding the top 4
-- **Best genome protection:** The globally best genome is never killed regardless of SURVIVORS value
+    - Bottom 6 are replaced by offspring of the parent species
+- **Best genome protection:** The client with the best raw score (`client.bestScore`) is never killed regardless of SURVIVORS value
 
 ---
 
@@ -123,7 +127,7 @@ kill(survivors = 0.5) {
 
 **Default:** `0.2`  
 **Type:** `number` (typically 0.1-1.0)  
-**Location:** `src/neat/neat.ts:133`
+**Location:** `INeatParams.WEIGHT_SHIFT_STRENGTH`, `DEFAULT_PARAMS.WEIGHT_SHIFT_STRENGTH` (`src/neat/neat.ts`)
 
 ### Purpose
 
@@ -131,11 +135,11 @@ Controls the magnitude of small adjustments to existing connection weights. This
 
 ### How It's Used
 
-**In weight shift mutation** (`src/genome/genome.ts:422-434`):
+**In weight shift mutation** (`Genome.mutateWeightShiftConnection()`):
 
 ```typescript
-#mutateWeightShiftConnection(): ConnectionGene | null {
-    const con = this.#connections.randomElement();
+private mutateWeightShiftConnection(): ConnectionGene | null {
+    const con = this._connections.randomElement();
     if (!(con instanceof ConnectionGene)) {
         return null;
     }
@@ -143,12 +147,13 @@ Controls the magnitude of small adjustments to existing connection weights. This
     let counter = 0;
     while (newWeight === con.weight && counter < 10) {
         counter++;
-        newWeight = con.weight + (Math.random() * 2 - 1) * this.#neat.WEIGHT_SHIFT_STRENGTH;
+        newWeight = con.weight + (Math.random() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
     }
     if (counter >= 10) {
         newWeight = 0;
     }
     con.weight = newWeight;
+
     return con;
 }
 ```
@@ -159,22 +164,23 @@ The formula: `newWeight = oldWeight + random(-1, 1) * WEIGHT_SHIFT_STRENGTH`
 - Example with WEIGHT_SHIFT_STRENGTH = 0.2:
     - If current weight = 1.5
     - New weight could be anywhere from 1.3 to 1.7
+- If 10 tries give no different value (for example when the strength is `0`), the weight is set to `0`
 
 **Applied to both connections and nodes:**
 
 ```typescript
 mutateWeightShift(): void {
-    this.#mutateWeightShiftConnection();
-    this.#mutateWeightShiftNode();
+    this.mutateWeightShiftConnection();
+    this.mutateWeightShiftNode();
 }
 ```
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:58` (interface), `src/neat/neat.ts:133` (initialization)
-- **Getter:** `src/neat/neat.ts:339-341`
-- **Usage:** `src/genome/genome.ts:422-434` (connection shifts), `src/genome/genome.ts:406-420` (node bias shifts)
-- **Validation:** `src/neat/neat.ts:232-237` (warns if > 1)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.WEIGHT_SHIFT_STRENGTH`
+- **Usage:** `Genome.mutateWeightShiftConnection()` (connection shifts), `Genome.mutateWeightShiftNode()` (node bias shifts)
+- **Validation:** `Neat.validateConfiguration()` (warns if > 1, and if 0 while shift mutation is on)
 - **Tests:** `tests/genome/genome.mutate-weights.test.ts`
 
 ### Tuning Recommendations
@@ -197,25 +203,23 @@ mutateWeightShift(): void {
 
 **Default:** `0.15`  
 **Type:** `number` (typically 0.1-1.0)  
-**Location:** `src/neat/neat.ts:134`
+**Location:** `INeatParams.BIAS_SHIFT_STRENGTH`, `DEFAULT_PARAMS.BIAS_SHIFT_STRENGTH` (`src/neat/neat.ts`)
 
 ### Purpose
 
-Controls the magnitude of small adjustments to node biases (the activation threshold for each node). Biases affect when neurons activate and are crucial for network behavior.
+Controls the magnitude of small adjustments to node biases. Biases affect when neurons activate and are crucial for network behavior.
 
 ### How It's Used
 
-**In bias shift mutation** (`src/genome/genome.ts:406-420`):
+**In bias shift mutation** (`Genome.mutateWeightShiftNode()`):
 
 ```typescript
-#mutateWeightShiftNode(): NodeGene | null {
+private mutateWeightShiftNode(): NodeGene | null {
     let counter = 0;
     let node;
-    // Skip only input nodes (they receive direct input values, bias is not meaningful)
-    // Output and hidden nodes can have bias mutations
     while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
         counter++;
-        node = this.#nodes.randomElement();
+        node = this._nodes.randomElement();
     }
     if (counter >= 10) {
         return null;
@@ -227,12 +231,13 @@ Controls the magnitude of small adjustments to node biases (the activation thres
     let newWeight = node.bias;
     while (newWeight === node.bias && counter < 10) {
         counter++;
-        newWeight = node.bias + (Math.random() * 2 - 1) * this.#neat.BIAS_SHIFT_STRENGTH;
+        newWeight = node.bias + (Math.random() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
     }
     if (counter >= 10) {
         newWeight = 0;
     }
     node.bias = newWeight;
+
     return node;
 }
 ```
@@ -240,15 +245,16 @@ Controls the magnitude of small adjustments to node biases (the activation thres
 **Key behaviors:**
 
 - Only affects output and hidden nodes (NOT input nodes)
+- The node is picked from all nodes; if 10 random picks give only input nodes, there is no bias mutation in this call
 - Formula: `newBias = oldBias + random(-1, 1) * BIAS_SHIFT_STRENGTH`
-- Tries up to 10 times to generate a different value
+- Tries up to 10 times to generate a different value, else sets `0`
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:59` (interface), `src/neat/neat.ts:134` (initialization)
-- **Getter:** `src/neat/neat.ts:343-345`
-- **Usage:** `src/genome/genome.ts:406-420`
-- **Validation:** `src/neat/neat.ts:246-254` (warns if imbalanced with WEIGHT_SHIFT_STRENGTH)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.BIAS_SHIFT_STRENGTH`
+- **Usage:** `Genome.mutateWeightShiftNode()`
+- **Validation:** `Neat.validateConfiguration()` (warns if imbalanced with WEIGHT_SHIFT_STRENGTH, and if 0 while shift mutation is on)
 - **Tests:** `tests/genome/genome.mutate-weights.test.ts`
 
 ### Tuning Recommendations
@@ -256,7 +262,7 @@ Controls the magnitude of small adjustments to node biases (the activation thres
 - **Higher values (>0.3):** Large bias changes, can dramatically alter activation patterns
 - **Lower values (<0.1):** Subtle bias adjustments, stable evolution
 - **Default (0.15):** Slightly smaller than WEIGHT_SHIFT_STRENGTH (0.2) for balanced evolution
-- **Balance warning:** If difference with WEIGHT_SHIFT_STRENGTH > 80%, a warning is issued
+- **Balance warning:** If `|WEIGHT_SHIFT_STRENGTH − BIAS_SHIFT_STRENGTH| / WEIGHT_SHIFT_STRENGTH > 0.8`, a warning is issued
 - **Historical note:** Original default was 0.01 (500x smaller than weights), now balanced at 0.15
 
 ---
@@ -264,65 +270,41 @@ Controls the magnitude of small adjustments to node biases (the activation thres
 ## WEIGHT_RANDOM_STRENGTH - Random Weight Assignment Magnitude
 
 **Default:** `1`  
-**Type:** `number` (typically 0.5-2.0)  
-**Location:** `src/neat/neat.ts:135`
+**Type:** `number` (typically 0.5-2.0; must not be `0` while random weight mutation is on)  
+**Location:** `INeatParams.WEIGHT_RANDOM_STRENGTH`, `DEFAULT_PARAMS.WEIGHT_RANDOM_STRENGTH` (`src/neat/neat.ts`)
 
 ### Purpose
 
-Controls the range for completely randomizing weights (rather than shifting them). This provides larger exploration jumps and helps escape local optima.
+Controls the range for randomizing connection weights (rather than shifting them), and the range of the weight of a new connection.
 
 ### How It's Used
 
-**In random weight mutation for connections** (`src/genome/genome.ts:459-472`):
+**In random weight mutation for connections** (`Genome.mutateWeightRandomConnection()`):
 
 ```typescript
-#mutateWeightRandomConnection(): ConnectionGene | null {
-    const con = this.#connections.randomElement();
-    if (!(con instanceof ConnectionGene)) {
-        return null;
-    }
-
-    let newWeight = con.weight || this.#neat.WEIGHT_RANDOM_STRENGTH;
-    while (newWeight === con.weight) {
-        newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
-    }
-    con.weight = newWeight;
-    return con;
+let newWeight = con.weight || this._neat.WEIGHT_RANDOM_STRENGTH;
+while (newWeight === con.weight) {
+    newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
 }
+con.weight = newWeight;
 ```
 
-**In random weight mutation for nodes** (`src/genome/genome.ts:437-450`):
+The new weight is `random(-|base|, |base|) × WEIGHT_RANDOM_STRENGTH`, where `base` is the current weight, or `WEIGHT_RANDOM_STRENGTH` when the current weight is `0`. So the range scales with the current weight. The loop draws again until the value is different.
+
+**For new connections** (`Genome.mutateLink()`):
 
 ```typescript
-#mutateWeightRandomNode(): NodeGene | null {
-    // ... (selects non-input node)
-
-    let newWeight = node.bias || this.#neat.WEIGHT_RANDOM_STRENGTH;
-    while (newWeight === node.bias) {
-        newWeight = (Math.random() * newWeight * 2 - newWeight) * this.#neat.WEIGHT_RANDOM_STRENGTH;
-    }
-    node.bias = newWeight;
-    return node;
-}
+con.weight = (Math.random() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
 ```
 
-**For new connections** (`src/genome/genome.ts:352`):
-
-```typescript
-mutateLink(): ConnectionGene | null {
-    // ... (creates new connection)
-    con.weight = (Math.random() * 2 - 1) * this.#neat.WEIGHT_RANDOM_STRENGTH;
-    // New weight in range [-WEIGHT_RANDOM_STRENGTH, +WEIGHT_RANDOM_STRENGTH]
-    this.#connections.addSorted(con);
-    return con;
-}
-```
+New weight in range `[-WEIGHT_RANDOM_STRENGTH, +WEIGHT_RANDOM_STRENGTH]`.
 
 ### Code References
 
-- **Definition:** `src/neat/neat.ts:60` (interface), `src/neat/neat.ts:135` (initialization)
-- **Getter:** `src/neat/neat.ts:347-349`
-- **Usage:** `src/genome/genome.ts:352` (new links), `src/genome/genome.ts:437-472` (random mutations)
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.WEIGHT_RANDOM_STRENGTH`
+- **Usage:** `Genome.mutateLink()` (new links), `Genome.mutateWeightRandomConnection()` (random mutations)
+- **Validation:** `Neat.validateConfiguration()` (throws if 0 while `PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`)
 - **Tests:** `tests/genome/genome.mutate-weights.test.ts`, `tests/genome/genome.mutate-link.test.ts`
 
 ### Tuning Recommendations
@@ -334,3 +316,43 @@ mutateLink(): ConnectionGene | null {
     - Initial evolution: Higher values (1.5-2.0) for broad exploration
     - Later stages: Lower values (0.5-1.0) for refinement
     - Stuck populations: Higher values to escape local optima
+
+---
+
+## BIAS_RANDOM_STRENGTH - Random Bias Assignment Magnitude
+
+**Default:** `1`  
+**Type:** `number` (must not be `0` while random weight mutation is on)  
+**Location:** `INeatParams.BIAS_RANDOM_STRENGTH`, `DEFAULT_PARAMS.BIAS_RANDOM_STRENGTH` (`src/neat/neat.ts`)
+
+### Purpose
+
+Controls the range for randomizing node biases. `PROBABILITY_MUTATE_WEIGHT_RANDOM` controls how often it happens: each random weight mutation changes one connection weight and one node bias (`Genome.mutateWeightRandom()`).
+
+### How It's Used
+
+**In random weight mutation for nodes** (`Genome.mutateWeightRandomNode()`):
+
+```typescript
+let newWeight = node.bias || this._neat.BIAS_RANDOM_STRENGTH;
+while (newWeight === node.bias) {
+    newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
+}
+node.bias = newWeight;
+```
+
+- The node is picked like in the bias shift mutation (output and hidden nodes only; up to 10 random picks)
+- The new bias is `random(-|base|, |base|) × BIAS_RANDOM_STRENGTH`, where `base` is the current bias, or `BIAS_RANDOM_STRENGTH` when the current bias is `0`
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.BIAS_RANDOM_STRENGTH`
+- **Usage:** `Genome.mutateWeightRandomNode()`
+- **Validation:** `Neat.validateConfiguration()` (throws if 0 while `PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`)
+- **Tests:** `tests/genome/genome.mutate-weights.test.ts`
+
+### Tuning Recommendations
+
+- Use a value close to WEIGHT_RANDOM_STRENGTH unless biases need a different range
+- To turn random weight and bias mutation off, use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` (not a strength of `0`)
