@@ -203,20 +203,22 @@ Raw Scores → Apply Complexity Penalty (LAMBDA) → Normalize → Sort → Find
 
 The implementation includes automatic validation that triggers console warnings:
 
-| Condition                           | Warning                                |
-| ----------------------------------- | -------------------------------------- |
-| `C1, C2, C3 < 0`                    | **ERROR:** Must be non-negative        |
-| `SURVIVORS not in [0,1]`            | **ERROR:** Must be between 0 and 1     |
-| `CT > 1000`                         | Unusually high normalization threshold |
-| `CP > 10`                           | Unusually high species threshold       |
-| `MUTATION_RATE > 10`                | Unusually high mutation rate           |
-| `WEIGHT_SHIFT_STRENGTH > 1`         | May cause oscillations                 |
-| `SURVIVORS > 0.6`                   | Weak selection pressure                |
-| `PROBABILITY_MUTATE_LINK > 2`       | Risk of rapid network bloat            |
-| `LAMBDA_HIGH > 0.8`                 | May prevent necessary growth           |
-| `LAMBDA_LOW > 0.5`                  | May restrict exploration               |
-| `EPS outside [1e-6, 1e-2]`          | Outside typical range                  |
-| Weight/Bias strength imbalance >80% | Consider balancing mutation strengths  |
+| Condition                                                                                                              | Warning                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `C1, C2, C3 < 0`                                                                                                       | **ERROR:** Must be non-negative                                                                                       |
+| `SURVIVORS not in [0,1]`                                                                                               | **ERROR:** Must be between 0 and 1                                                                                    |
+| `CT > 1000`                                                                                                            | Unusually high normalization threshold                                                                                |
+| `CP > 10`                                                                                                              | Unusually high species threshold                                                                                      |
+| `MUTATION_RATE > 10`                                                                                                   | Unusually high mutation rate                                                                                          |
+| `WEIGHT_SHIFT_STRENGTH > 1`                                                                                            | May cause oscillations                                                                                                |
+| `WEIGHT_RANDOM_STRENGTH` or `BIAS_RANDOM_STRENGTH` is `0` while `PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0` | **ERROR:** Random weight mutation would never end. Use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` to turn it off           |
+| `WEIGHT_SHIFT_STRENGTH` or `BIAS_SHIFT_STRENGTH` is `0` while `PROBABILITY_MUTATE_WEIGHT_SHIFT × MUTATION_RATE > 0`    | A shift mutation sets the value to `0` (it does not keep it). Use `PROBABILITY_MUTATE_WEIGHT_SHIFT: 0` to turn it off |
+| `SURVIVORS > 0.6`                                                                                                      | Weak selection pressure                                                                                               |
+| `PROBABILITY_MUTATE_LINK > 2`                                                                                          | Risk of rapid network bloat                                                                                           |
+| `LAMBDA_HIGH > 0.8`                                                                                                    | May prevent necessary growth                                                                                          |
+| `LAMBDA_LOW > 0.5`                                                                                                     | May restrict exploration                                                                                              |
+| `EPS outside [1e-6, 1e-2]`                                                                                             | Outside typical range                                                                                                 |
+| Weight/Bias strength imbalance >80%                                                                                    | Consider balancing mutation strengths                                                                                 |
 
 ## Files Organization
 

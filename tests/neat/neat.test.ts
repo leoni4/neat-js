@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
+import { ConnectionGene } from '../../src/genome/connectionGene.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
 import { withSeededRandom } from '../helpers/seededRandom.js';
 
@@ -243,6 +244,92 @@ describe('Neat', () => {
             });
 
             expect(customNeat.PERMANENT_MAIN_CONNECTIONS).toBe(expected);
+        });
+
+        describe('zero mutation strengths', () => {
+            it.each(['WEIGHT_RANDOM_STRENGTH', 'BIAS_RANDOM_STRENGTH'] as const)(
+                'should throw when %s is 0 and random weight mutation can run',
+                key => {
+                    expect(() => new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, { [key]: 0 })).toThrow(
+                        /PROBABILITY_MUTATE_WEIGHT_RANDOM: 0/,
+                    );
+                },
+            );
+
+            it.each([{ PROBABILITY_MUTATE_WEIGHT_RANDOM: 0 }, { MUTATION_RATE: 0 }])(
+                'should construct and evolve with zero random strengths when random weight mutation cannot run (%o)',
+                params => {
+                    const run = withSeededRandom(606, () => {
+                        const zeroNeat = new Neat(3, 1, 10, EActivation.tanh, EActivation.tanh, {
+                            WEIGHT_RANDOM_STRENGTH: 0,
+                            BIAS_RANDOM_STRENGTH: 0,
+                            ...params,
+                        });
+                        for (let gen = 0; gen < 20; gen++) {
+                            zeroNeat.clients.forEach((c, i) => {
+                                c.score = i;
+                            });
+                            zeroNeat.evolve();
+                        }
+
+                        return zeroNeat;
+                    });
+
+                    expect(run.result.evolveCounts).toBe(20);
+                    expect(run.result.clients).toHaveLength(10);
+                },
+            );
+
+            it.each(['WEIGHT_SHIFT_STRENGTH', 'BIAS_SHIFT_STRENGTH'] as const)(
+                'should warn when %s is 0 and weight shift mutation can run',
+                key => {
+                    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+                    try {
+                        new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, { [key]: 0 });
+                        expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${key} is 0`));
+                    } finally {
+                        warn.mockRestore();
+                    }
+                },
+            );
+
+            it('should not warn about a zero shift strength when weight shift mutation cannot run', () => {
+                const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+                try {
+                    new Neat(2, 1, 5, EActivation.sigmoid, EActivation.sigmoid, {
+                        WEIGHT_SHIFT_STRENGTH: 0,
+                        BIAS_SHIFT_STRENGTH: 0,
+                        PROBABILITY_MUTATE_WEIGHT_SHIFT: 0,
+                    });
+                    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('SHIFT_STRENGTH is 0'));
+                } finally {
+                    warn.mockRestore();
+                }
+            });
+
+            it('should still set the mutated weight to 0 when WEIGHT_SHIFT_STRENGTH is 0', () => {
+                const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+                try {
+                    const shiftNeat = new Neat(1, 1, 1, EActivation.sigmoid, EActivation.sigmoid, {
+                        WEIGHT_SHIFT_STRENGTH: 0,
+                    });
+                    const genome = shiftNeat.clients[0].genome;
+                    while (genome.connections.size() === 0) {
+                        genome.mutateLink();
+                    }
+                    const con = genome.connections.get(0);
+                    if (!(con instanceof ConnectionGene)) {
+                        throw new Error('expected one connection');
+                    }
+                    con.weight = 0.8;
+
+                    genome.mutateWeightShift();
+
+                    expect(con.weight).toBe(0);
+                } finally {
+                    warn.mockRestore();
+                }
+            });
         });
     });
 

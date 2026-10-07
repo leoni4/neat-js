@@ -175,6 +175,8 @@ The code will warn you about potentially problematic values:
 - SURVIVORS must be between 0 and 1
 - Very high values for CT, CP, MUTATION_RATE trigger warnings
 - WEIGHT_SHIFT_STRENGTH > 1 may cause oscillations
+- WEIGHT_RANDOM_STRENGTH or BIAS_RANDOM_STRENGTH = 0 throws an error while random weight mutation is on (`PROBABILITY_MUTATE_WEIGHT_RANDOM × MUTATION_RATE > 0`), because the mutation would never end. Use `PROBABILITY_MUTATE_WEIGHT_RANDOM: 0` to turn random weight mutation off
+- WEIGHT_SHIFT_STRENGTH or BIAS_SHIFT_STRENGTH = 0 triggers a warning while shift mutation is on: a shift mutation then sets the value to 0 (it does not keep it). Use `PROBABILITY_MUTATE_WEIGHT_SHIFT: 0` to turn shift mutation off
 - Weight/bias imbalance > 80% triggers rebalancing suggestion
 
 ### Parameter Dependencies

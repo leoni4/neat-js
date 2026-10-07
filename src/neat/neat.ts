@@ -327,6 +327,16 @@ export class Neat {
             console.warn('PROBABILITY_MUTATE_WEIGHT_RANDOM typically should be between 0 and 1');
         }
 
+        if (
+            this._PROBABILITY_MUTATE_WEIGHT_RANDOM * this._MUTATION_RATE > 0 &&
+            (this._WEIGHT_RANDOM_STRENGTH === 0 || this._BIAS_RANDOM_STRENGTH === 0)
+        ) {
+            throw new Error(
+                'WEIGHT_RANDOM_STRENGTH and BIAS_RANDOM_STRENGTH must not be 0 while random weight mutation is on. ' +
+                    'Use PROBABILITY_MUTATE_WEIGHT_RANDOM: 0 to turn random weight mutation off.',
+            );
+        }
+
         if (this.CT > 1000) {
             console.warn(`CT threshold is unusually high: ${this.CT}`);
         }
@@ -344,6 +354,20 @@ export class Neat {
                 `WEIGHT_SHIFT_STRENGTH is very high (${this._WEIGHT_SHIFT_STRENGTH}). ` +
                     'Values > 1 can cause oscillations and prevent convergence. Recommended: 0.1-0.3',
             );
+        }
+
+        if (this._PROBABILITY_MUTATE_WEIGHT_SHIFT * this._MUTATION_RATE > 0) {
+            for (const [name, value] of [
+                ['WEIGHT_SHIFT_STRENGTH', this._WEIGHT_SHIFT_STRENGTH],
+                ['BIAS_SHIFT_STRENGTH', this._BIAS_SHIFT_STRENGTH],
+            ] as const) {
+                if (value === 0) {
+                    console.warn(
+                        `${name} is 0. A shift mutation then sets the mutated value to 0 (it does not keep it). ` +
+                            'Use PROBABILITY_MUTATE_WEIGHT_SHIFT: 0 to turn shift mutation off.',
+                    );
+                }
+            }
         }
 
         if (this._SURVIVORS > 0.6) {
