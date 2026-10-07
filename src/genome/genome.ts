@@ -171,15 +171,20 @@ export class Genome {
     static crossOver(g1: Genome, g2: Genome): Genome {
         const genome: Genome = g1.neat.emptyGenome();
 
+        const childNodes = new Map<number, NodeGene>();
+        for (const node of genome.nodes.data) {
+            if (node instanceof NodeGene) {
+                childNodes.set(node.innovationNumber, node);
+            }
+        }
+
         for (let i = 0; i < g1.nodes.size(); i += 1) {
             const parentNode = g1.nodes.get(i);
             if (!(parentNode instanceof NodeGene) || parentNode.x !== NETWORK_CONSTANTS.OUTPUT_NODE_X) {
                 continue;
             }
-            const childNode = genome.nodes.data.find(
-                n => n instanceof NodeGene && n.innovationNumber === parentNode.innovationNumber,
-            );
-            if (childNode instanceof NodeGene) {
+            const childNode = childNodes.get(parentNode.innovationNumber);
+            if (childNode) {
                 childNode.bias = parentNode.bias;
             }
         }
@@ -188,15 +193,16 @@ export class Genome {
             const fromId = src.from.innovationNumber;
             const toId = src.to.innovationNumber;
 
-            let from = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === fromId) as NodeGene;
-            let to = genome.nodes.data.find(n => n instanceof NodeGene && n.innovationNumber === toId) as NodeGene;
+            let from = childNodes.get(fromId);
+            let to = childNodes.get(toId);
 
             if (!from) {
                 from = new NodeGene(fromId);
                 from.x = src.from.x;
                 from.y = src.from.y;
                 from.bias = src.from.bias;
-                genome.nodes.add(from);
+                genome.nodes.data.push(from);
+                childNodes.set(fromId, from);
             }
 
             if (!to) {
@@ -204,7 +210,10 @@ export class Genome {
                 to.x = src.to.x;
                 to.y = src.to.y;
                 to.bias = src.to.bias;
-                genome.nodes.add(to);
+                if (!childNodes.has(toId)) {
+                    genome.nodes.data.push(to);
+                    childNodes.set(toId, to);
+                }
             }
 
             const con = genome.neat.getConnection(from, to);
@@ -213,6 +222,16 @@ export class Genome {
             con.replaceIndex = src.replaceIndex;
 
             return con;
+        };
+
+        const childConnections = genome.connections.data;
+        const appendConnection = (con: ConnectionGene) => {
+            const last = childConnections[childConnections.length - 1];
+            if (!last || con.innovationNumber > last.innovationNumber) {
+                childConnections.push(con);
+            } else {
+                genome.connections.addSorted(con);
+            }
         };
 
         let indexG1 = 0;
@@ -251,7 +270,7 @@ export class Genome {
             if (!(addedCon instanceof ConnectionGene)) {
                 continue;
             }
-            genome.connections.addSorted(addedCon);
+            appendConnection(addedCon);
         }
         while (indexG1 < g1.connections.size()) {
             const gene1 = g1.connections.get(indexG1);
@@ -260,7 +279,7 @@ export class Genome {
             }
 
             if (!g1.neat.optimization || gene1.enabled) {
-                genome.connections.addSorted(cloneConnectionIntoChild(gene1));
+                appendConnection(cloneConnectionIntoChild(gene1));
             }
             indexG1++;
         }
