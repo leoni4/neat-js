@@ -91,8 +91,8 @@ export class Genome {
     distance(g2: Genome): number {
         let g1: Genome = this;
 
-        const higGene1: ConnectionGene | NodeGene = g1.connections.get(g1.connections.size() - 1);
-        const higGene2: ConnectionGene | NodeGene = g2.connections.get(g2.connections.size() - 1);
+        const higGene1: ConnectionGene | NodeGene | undefined = g1._connections.data[g1._connections.data.length - 1];
+        const higGene2: ConnectionGene | NodeGene | undefined = g2._connections.data[g2._connections.data.length - 1];
 
         const higInnovationG1 = higGene1 instanceof ConnectionGene ? higGene1.innovationNumber : 0;
         const higInnovationG2 = higGene2 instanceof ConnectionGene ? higGene2.innovationNumber : 0;
@@ -102,18 +102,20 @@ export class Genome {
             g2 = tempG;
         }
 
+        const connections1 = g1._connections.data as ConnectionGene[];
+        const connections2 = g2._connections.data as ConnectionGene[];
+        const nodes1 = g1._nodes.data as NodeGene[];
+        const nodes2 = g2._nodes.data as NodeGene[];
+
         let indexG1 = 0;
         let indexG2 = 0;
 
         let disjoint = 0;
         let weightDiff = 0;
         let similar = 0;
-        while (indexG1 < g1.connections.size() && indexG2 < g2.connections.size()) {
-            const gene1: ConnectionGene | NodeGene = g1.connections.get(indexG1);
-            const gene2: ConnectionGene | NodeGene = g2.connections.get(indexG2);
-            if (!(gene1 instanceof ConnectionGene) || !(gene2 instanceof ConnectionGene)) {
-                throw new Error('gene is not a ConnectionGene');
-            }
+        while (indexG1 < connections1.length && indexG2 < connections2.length) {
+            const gene1 = connections1[indexG1];
+            const gene2 = connections2[indexG2];
             const inn1: number = gene1.innovationNumber;
             const inn2: number = gene2.innovationNumber;
 
@@ -130,16 +132,13 @@ export class Genome {
                 weightDiff += Math.abs(gene1.weight - gene2.weight);
             }
         }
-        disjoint += g2.connections.size() - indexG2;
+        disjoint += connections2.length - indexG2;
 
         let indexNode1 = 0;
         let indexNode2 = 0;
-        while (indexNode1 < g1.nodes.size() && indexNode2 < g2.nodes.size()) {
-            const node1: ConnectionGene | NodeGene = g1.nodes.get(indexNode1);
-            const node2: ConnectionGene | NodeGene = g2.nodes.get(indexNode2);
-            if (!(node1 instanceof NodeGene) || !(node2 instanceof NodeGene)) {
-                throw new Error('node is not a NodeGene');
-            }
+        while (indexNode1 < nodes1.length && indexNode2 < nodes2.length) {
+            const node1 = nodes1[indexNode1];
+            const node2 = nodes2[indexNode2];
             const inn1: number = node1.innovationNumber;
             const inn2: number = node2.innovationNumber;
 
@@ -156,14 +155,14 @@ export class Genome {
                 weightDiff += Math.abs(node1.bias - node2.bias);
             }
         }
-        if (g2.nodes.size() > indexNode2) {
-            disjoint += g2.nodes.size() - indexNode2;
+        if (nodes2.length > indexNode2) {
+            disjoint += nodes2.length - indexNode2;
         }
 
         weightDiff /= similar || 1;
 
-        const excess = g1.connections.size() - indexG1 + g1.nodes.size() - indexNode1;
-        let N = Math.max(g1.connections.size(), g2.connections.size());
+        const excess = connections1.length - indexG1 + nodes1.length - indexNode1;
+        let N = Math.max(connections1.length, connections2.length);
         N = N < this._neat.CT ? this._neat.CT : N;
 
         return (this._neat.C1 * excess) / N + (this._neat.C2 * disjoint) / N + this._neat.C3 * weightDiff;
