@@ -66,6 +66,31 @@ describe('Species', () => {
         });
     });
 
+    describe('remove', () => {
+        it('should remove only the given client and clear its species', () => {
+            species.put(client2, true);
+            species.put(client3, true);
+
+            expect(species.remove(client2)).toBe(true);
+            expect(species.clients).toEqual([client1, client3]);
+            expect(client2.species).toBeNull();
+            expect(client1.species).toBe(species);
+        });
+
+        it('should return false for a client that is not a member', () => {
+            client2.species = null;
+
+            expect(species.remove(client2)).toBe(false);
+            expect(species.clients).toEqual([client1]);
+        });
+
+        it('should leave an empty species when the last client is removed', () => {
+            expect(species.remove(client1)).toBe(true);
+            expect(species.size()).toBe(0);
+            expect(client1.species).toBeNull();
+        });
+    });
+
     describe('goExtinct', () => {
         it('should clear all clients', () => {
             species.put(client2, true);

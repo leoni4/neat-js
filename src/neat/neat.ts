@@ -739,7 +739,6 @@ export class Neat {
      * ```
      */
     fit(xTrain: number[][], yTrain: number[][], options: IFitOptions = {}): IFitHistory {
-        // Validate inputs
         if (!xTrain || !yTrain || xTrain.length === 0 || yTrain.length === 0) {
             throw new Error('Training data cannot be empty');
         }
@@ -758,19 +757,16 @@ export class Neat {
             throw new Error(`Output dimension mismatch: expected ${this._outputNodes}, got ${yTrain[0].length}`);
         }
 
-        // Parse options with defaults
         const maxEpochs = options.epochs ?? Infinity;
         const errorThreshold = options.errorThreshold ?? this._OPT_ERR_THRESHOLD;
         const validationSplit = options.validationSplit ?? 0;
         const verbose = options.verbose ?? 1;
         const logInterval = options.logInterval ?? 100;
 
-        // Validate options
         if (validationSplit < 0 || validationSplit >= 1) {
             throw new Error('validationSplit must be between 0 and 1 (exclusive)');
         }
 
-        // Split data into training and validation sets
         let trainX = xTrain;
         let trainY = yTrain;
         let valX: number[][] | null = null;
@@ -788,7 +784,6 @@ export class Neat {
             }
         }
 
-        // Initialize history
         const history: IFitHistory = {
             error: [],
             validationError: valX ? [] : undefined,
@@ -797,18 +792,15 @@ export class Neat {
             stoppedEarly: false,
         };
 
-        // Training loop
         let epoch = 0;
 
         while (epoch < maxEpochs) {
-            // Evaluate all clients on training data
             let topScore = -Infinity;
             let topClient: Client = this._clients[0];
 
             for (const client of this._clients) {
                 let totalError = 0;
 
-                // Calculate error for each training sample
                 for (let i = 0; i < trainX.length; i++) {
                     const output = client.calculate(trainX[i]);
                     const sampleError = output.reduce((sum, val, k) => {
@@ -817,10 +809,8 @@ export class Neat {
                     totalError += sampleError;
                 }
 
-                // Normalize error by number of samples and outputs
                 client.error = totalError / (trainX.length * this._outputNodes);
                 client.score = 1 - client.error;
-                // tiny tie-breaker noise (important on flat landscapes)
                 client.score += Math.random() * 1e-9;
 
                 if (client.score > topScore) {
@@ -832,7 +822,6 @@ export class Neat {
             const trainError = 1 - topScore;
             history.error.push(trainError);
 
-            // Evaluate on validation set if provided
             let valError: number | undefined;
             if (valX && valY) {
                 let totalValError = 0;
@@ -847,7 +836,6 @@ export class Neat {
                 history.validationError!.push(valError);
             }
 
-            // Logging
             if (verbose === 2 || (verbose === 1 && (epoch % logInterval === 0 || epoch === 0))) {
                 const complexity = topClient.genome.connections.size() + topClient.genome.nodes.size();
                 let logMsg = `Epoch ${epoch} - error: ${trainError.toFixed(6)} - complexity: ${complexity}`;
@@ -863,10 +851,7 @@ export class Neat {
                 console.log(logMsg);
             }
 
-            // Check early stopping
             if (trainError <= errorThreshold) {
-                // evolve() will not be called, so explicitly
-                // capture the final evaluated generation.
                 const finalRawBest = this.prepareRawScores();
 
                 this.updateChampion(finalRawBest);
@@ -885,14 +870,12 @@ export class Neat {
                 break;
             }
 
-            // Evolve to next generation
             const shouldOptimize = trainError <= this._OPT_ERR_THRESHOLD;
             this.evolve(shouldOptimize);
 
             epoch++;
         }
 
-        // Training finished (max epochs reached)
         if (!history.stoppedEarly) {
             history.epochs = epoch;
             history.champion = this._champion?.client ?? this._clients[0];
@@ -914,8 +897,6 @@ export class Neat {
         for (const client of this._clients) {
             client.bestScore = false;
 
-            // Strict raw comparison:
-            // no EPS and no complexity tie-break.
             if (client.scoreRaw > bestClient.scoreRaw) {
                 bestClient = client;
             }
@@ -936,10 +917,7 @@ export class Neat {
                 throw new Error(`Client has a non-finite score: ${client.score}`);
             }
 
-            // tiny tie-breaker noise (important on flat landscapes)
             client.score += Math.random() * 1e-9;
-            // Public score is the fitness assigned by fit()
-            // or by an external evaluation loop.
             client.scoreRaw = client.score;
             client.adjustedScore = client.scoreRaw;
             client.complexity = client.genome.connections.size() + client.genome.nodes.size();
@@ -957,25 +935,17 @@ export class Neat {
             return;
         }
 
-        // 1. Capture externally assigned objective fitness.
         const currentRawBest = this.prepareRawScores();
 
-        // 2. Preserve the absolute raw champion.
         this.updateChampion(currentRawBest);
 
-        // 3. Produce complexity-adjusted selection scores.
         this.normalizeScore();
 
-        // 4. Preserve the current complexity-aware winner.
         this.updateRunnerUp(this._clients[0]);
 
-        // 5. During strict champion stagnation,
-        // return both elites into the population.
         const elitesReinserted = this.reinsertElitesIfStagnant();
 
         if (elitesReinserted) {
-            // Recalculate generation-relative scores after
-            // changing the population.
             this.normalizeScore();
         }
 
@@ -1111,7 +1081,6 @@ export class Neat {
             client.score = adjustedSpan <= this._EPS ? 1 : (client.adjustedScore - adjustedMin) / adjustedSpan;
         }
 
-        // Best complexity-adjusted clients first.
         this._clients.sort((a, b) => {
             const scoreDifference = b.score - a.score;
 
@@ -1221,14 +1190,18 @@ export class Neat {
         const insertCount = Math.min(elites.length, this._clients.length);
 
         for (let i = 0; i < insertCount; i++) {
-            // Population is currently sorted by
-            // normalized selection score.
             const targetIndex = this._clients.length - 1 - i;
 
             const replacedClient = this._clients[targetIndex];
 
-            if (replacedClient.species !== null) {
-                replacedClient.species = null;
+            const replacedSpecies = replacedClient.species;
+            if (replacedSpecies !== null) {
+                replacedSpecies.remove(replacedClient);
+
+                const speciesIndex = this._species.indexOf(replacedSpecies);
+                if (replacedSpecies.size() === 0 && speciesIndex !== -1) {
+                    this._species.splice(speciesIndex, 1);
+                }
             }
 
             const eliteCopy = this.copyClient(elites[i]);
@@ -1240,16 +1213,12 @@ export class Neat {
 
         this._champion.epoch = 0;
 
-        // Champion may now be the strongest raw client
-        // in the current population.
         this.markBestRawClient();
 
         return true;
     }
 
     private updateRunnerUp(selectionBest: Client): void {
-        // Snapshot of the current generation's
-        // best complexity-adjusted client.
         this._runnerUp = this.copyClient(selectionBest);
 
         this._runnerUp.bestScore = false;
@@ -1270,7 +1239,6 @@ export class Neat {
         copiedClient.error = client.error;
         copiedClient.bestScore = false;
 
-        // Champion and runnerUp may be used outside evolve().
         copiedClient.generateCalculator();
 
         return copiedClient;

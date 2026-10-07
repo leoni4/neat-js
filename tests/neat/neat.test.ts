@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
+import { Species } from '../../src/neat/species.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
 import { withSeededRandom } from '../helpers/seededRandom.js';
 
@@ -91,6 +92,64 @@ describe('Neat', () => {
 
             const bestClients = neat.clients.filter(c => c.bestScore);
             expect(bestClients.length).toBeGreaterThan(0);
+        });
+
+        it('should keep only population clients in species after elite reinsertion', () => {
+            withSeededRandom(21, () => {
+                const ghostNeat = new Neat(4, 1, 8, EActivation.tanh, EActivation.tanh, { OPTIMIZATION_PERIOD: 5 });
+                let reinsertions = 0;
+                const ghostGenerations: number[] = [];
+
+                for (let g = 0; g < 200; g++) {
+                    ghostNeat.clients.forEach((c, i) => {
+                        c.score = g === 0 && i === 0 ? 1 : 0.5;
+                        c.error = 0.5;
+                    });
+                    const epochBefore = ghostNeat.champion?.epoch ?? 0;
+                    ghostNeat.evolve();
+                    if (epochBefore >= 4 && ghostNeat.champion?.epoch === 0) reinsertions++;
+
+                    const population = new Set(ghostNeat.clients);
+                    const species = (ghostNeat as unknown as { _species: Species[] })._species;
+                    if (species.some(s => s.clients.some(c => !population.has(c)))) {
+                        ghostGenerations.push(g);
+                    }
+                }
+
+                expect(reinsertions).toBeGreaterThan(0);
+                expect(ghostGenerations).toEqual([]);
+            });
+        });
+
+        it('should remove a species that loses all members on elite reinsertion', () => {
+            withSeededRandom(7, () => {
+                const elitesNeat = new Neat(2, 1, 8, EActivation.tanh, EActivation.tanh, { OPTIMIZATION_PERIOD: 1 });
+                elitesNeat.clients.forEach((c, i) => {
+                    c.score = i === 0 ? 1 : 0.5;
+                });
+                elitesNeat.evolve();
+
+                const [x, y, ...others] = elitesNeat.clients;
+                const main = new Species(others[0]);
+                others.slice(1).forEach(c => main.put(c, true));
+                const doomed = new Species(x);
+                doomed.put(y, true);
+                const internal = elitesNeat as unknown as { _species: Species[] };
+                internal._species = [main, doomed];
+
+                elitesNeat.clients.forEach(c => {
+                    c.score = c === x || c === y ? 0 : 0.5;
+                });
+                expect(() => elitesNeat.evolve()).not.toThrow();
+
+                expect(elitesNeat.champion?.epoch).toBe(0);
+                expect(elitesNeat.clients).not.toContain(x);
+                expect(elitesNeat.clients).not.toContain(y);
+                expect(internal._species).not.toContain(doomed);
+                expect(doomed.size()).toBe(0);
+                const population = new Set(elitesNeat.clients);
+                internal._species.forEach(s => s.clients.forEach(c => expect(population.has(c)).toBe(true)));
+            });
         });
     });
 

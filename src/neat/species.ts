@@ -31,6 +31,18 @@ export class Species {
         return false;
     }
 
+    remove(client: Client): boolean {
+        const index = this._clients.indexOf(client);
+        if (index === -1) {
+            return false;
+        }
+
+        this._clients.splice(index, 1);
+        client.species = null;
+
+        return true;
+    }
+
     goExtinct() {
         for (let i = 0; i < this._clients.length; i += 1) {
             const c = this._clients[i];
