@@ -44,6 +44,7 @@ export interface INeatParams {
     PROBABILITY_MUTATE_LINK?: number;
     PROBABILITY_MUTATE_NODES?: number;
     OPT_ERR_THRESHOLD?: number;
+    ERROR_DRIVES_OPTIMIZATION?: boolean;
     OPTIMIZATION_PERIOD?: number;
     PRESSURE_BOOST?: boolean;
     PRESSURE_COMPACT?: boolean;
@@ -91,6 +92,7 @@ const DEFAULT_PARAMS = {
     PROBABILITY_MUTATE_NODES: 0.03,
 
     OPT_ERR_THRESHOLD: 0.005,
+    ERROR_DRIVES_OPTIMIZATION: true,
     OPTIMIZATION_PERIOD: 100,
 
     PRESSURE_BOOST: true,
@@ -226,6 +228,7 @@ export class Neat {
     private _PROBABILITY_MUTATE_NODES: number;
 
     private _OPT_ERR_THRESHOLD: number;
+    private _ERROR_DRIVES_OPTIMIZATION: boolean;
 
     private _EPS: number;
     private _LAMBDA_HIGH: number;
@@ -311,6 +314,7 @@ export class Neat {
         this._PROBABILITY_MUTATE_LINK = params?.PROBABILITY_MUTATE_LINK ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_LINK;
         this._PROBABILITY_MUTATE_NODES = params?.PROBABILITY_MUTATE_NODES ?? DEFAULT_PARAMS.PROBABILITY_MUTATE_NODES;
         this._OPT_ERR_THRESHOLD = params?.OPT_ERR_THRESHOLD ?? DEFAULT_PARAMS.OPT_ERR_THRESHOLD;
+        this._ERROR_DRIVES_OPTIMIZATION = params?.ERROR_DRIVES_OPTIMIZATION ?? DEFAULT_PARAMS.ERROR_DRIVES_OPTIMIZATION;
         this._OPTIMIZATION_PERIOD = params?.OPTIMIZATION_PERIOD ?? DEFAULT_PARAMS.OPTIMIZATION_PERIOD;
         this._PRESSURE_BOOST = params?.PRESSURE_BOOST ?? DEFAULT_PARAMS.PRESSURE_BOOST;
         this._PRESSURE_COMPACT = params?.PRESSURE_COMPACT ?? DEFAULT_PARAMS.PRESSURE_COMPACT;
@@ -511,6 +515,10 @@ export class Neat {
 
     get OPT_ERR_THRESHOLD(): number {
         return this._OPT_ERR_THRESHOLD;
+    }
+
+    get ERROR_DRIVES_OPTIMIZATION(): boolean {
+        return this._ERROR_DRIVES_OPTIMIZATION;
     }
     get PRESSURE(): EMutationPressure {
         return this._PRESSURE;

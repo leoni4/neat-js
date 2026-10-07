@@ -36,7 +36,8 @@ export class Client {
         if (this.bestScore && !force) {
             return;
         }
-        this.genome.mutate(this.error < this.genome.optErrThreshold && !force);
+        const selfOpt = this.genome.neat.ERROR_DRIVES_OPTIMIZATION && this.error < this.genome.optErrThreshold;
+        this.genome.mutate(selfOpt && !force);
     }
 
     calculate(input: Array<number>): Array<number> {

@@ -35,6 +35,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `PROBABILITY_MUTATE_NODES`         | `0.03`          | number  | New node frequency                     |
 | **Optimization & Scoring**         |                 |         |                                        |
 | `OPT_ERR_THRESHOLD`                | `0.005`         | number  | Self-optimization and stagnation limit |
+| `ERROR_DRIVES_OPTIMIZATION`        | `true`          | boolean | Error-driven self-optimization         |
 | `OPTIMIZATION_PERIOD`              | `100`           | number  | Period of global optimization          |
 | `PRESSURE_BOOST`                   | `true`          | boolean | Allow BOOST, ESCAPE, PANIC pressure    |
 | `PRESSURE_COMPACT`                 | `true`          | boolean | Allow COMPACT pressure                 |
@@ -103,6 +104,7 @@ new Neat(inputNodes, outputNodes, clients, EActivation.sigmoid, EActivation.tanh
 **Optimization Parameters** - Control complexity management
 
 - **OPT_ERR_THRESHOLD:** When a client enters self-optimization (`client.error` below it) and the minimum score gain that resets stagnation
+- **ERROR_DRIVES_OPTIMIZATION:** Whether `client.error` can put a client into self-optimization (set `false` when you set only `client.score`)
 - **OPTIMIZATION_PERIOD:** Period of the global optimization phase and of elite reinsertion
 - **PRESSURE_BOOST:** Whether stagnation can raise the pressure level to `BOOST`, `ESCAPE`, and `PANIC`
 - **PRESSURE_COMPACT:** Whether stagnation with complexity growth can set the `COMPACT` pressure level
@@ -216,7 +218,7 @@ After reproduction: CP × 0.95 if species < SPECIES_TARGET_MIN (8), CP × 1.05 i
 
 ```
 evolve(true) OR evolveCounts % OPTIMIZATION_PERIOD === 0 OR pressure COMPACT  →  global optimization mode
-client.error < OPT_ERR_THRESHOLD                                              →  self-optimization of that client
+client.error < OPT_ERR_THRESHOLD AND ERROR_DRIVES_OPTIMIZATION                →  self-optimization of that client
     ↓
 LAMBDA_HIGH applied (global mode only)
     ↓
@@ -271,7 +273,7 @@ docs/params/
 ├── 02_compatibility_thresholds.md # CT, CP
 ├── 03_mutation_strength.md        # MUTATION_RATE, SURVIVORS, *_STRENGTH
 ├── 04_mutation_probabilities.md   # PROBABILITY_* parameters
-└── 05_optimization_and_scoring.md # OPT_ERR_THRESHOLD, OPTIMIZATION_PERIOD, LAMBDA_*, EPS, PERMANENT_MAIN_CONNECTIONS, LOAD_PERCENT
+└── 05_optimization_and_scoring.md # OPT_ERR_THRESHOLD, ERROR_DRIVES_OPTIMIZATION, OPTIMIZATION_PERIOD, LAMBDA_*, EPS, PERMANENT_MAIN_CONNECTIONS, LOAD_PERCENT
 ```
 
 ## See Also

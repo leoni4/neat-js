@@ -131,7 +131,7 @@ Activations (`EActivation`): `none`, `linear`, `sigmoid`, `tanh`, `relu`, `leaky
 The default value of `client.error` is `0`. If you set only `client.score`, all clients are in self-optimization mode from the second `evolve()` call, and the networks stop growing after the first connection.
 
 - Set `client.error` to your error measure, where `0` is perfect (for example, the mean absolute error), as in the manual example above.
-- If your task has no error measure, set `client.error` to a value that is not smaller than `OPT_ERR_THRESHOLD` (for example `1`) while you want the networks to grow.
+- If your task has no error measure, set `client.error` to a value that is not smaller than `OPT_ERR_THRESHOLD` (for example `1`) while you want the networks to grow, or set the param `ERROR_DRIVES_OPTIMIZATION: false`: then `client.error` never turns on self-optimization (see [ERROR_DRIVES_OPTIMIZATION](./docs/params/05_optimization_and_scoring.md#error_drives_optimization---self-optimization-from-clienterror)).
 - `neat.fit()` sets both `client.error` and `client.score` for you.
 
 ### Save and load a model

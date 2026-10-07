@@ -230,7 +230,7 @@ if (protectingMain || (!selfOpt && !this._neat.optimization) || this._connection
 - **Interaction:**
     - Disabled in optimization mode to prevent bloat
     - Boosted when connections < CT to encourage minimum complexity
-    - Self-optimization depends on `client.error` (see [OPT_ERR_THRESHOLD](./05_optimization_and_scoring.md#opt_err_threshold---optimization-error-threshold)). If you never set `client.error`, it is `0`, and the networks stop growing after the first `evolve()` call
+    - Self-optimization depends on `client.error` (see [OPT_ERR_THRESHOLD](./05_optimization_and_scoring.md#opt_err_threshold---optimization-error-threshold)). If you never set `client.error`, it is `0`, and the networks stop growing after the first `evolve()` call (unless `ERROR_DRIVES_OPTIMIZATION` is `false`)
 
 ---
 

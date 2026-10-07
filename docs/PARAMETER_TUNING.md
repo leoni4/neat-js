@@ -11,7 +11,7 @@ All parameters are thoroughly documented in the `docs/params/` directory:
 - **[02_compatibility_thresholds.md](./params/02_compatibility_thresholds.md)** - CT, CP (speciation control)
 - **[03_mutation_strength.md](./params/03_mutation_strength.md)** - MUTATION_RATE, SURVIVORS, strength parameters
 - **[04_mutation_probabilities.md](./params/04_mutation_probabilities.md)** - PROBABILITY\_\* parameters (mutation frequency)
-- **[05_optimization_and_scoring.md](./params/05_optimization_and_scoring.md)** - OPT_ERR_THRESHOLD, OPTIMIZATION_PERIOD, LAMBDA\_\*, EPS, PERMANENT_MAIN_CONNECTIONS, LOAD_PERCENT
+- **[05_optimization_and_scoring.md](./params/05_optimization_and_scoring.md)** - OPT_ERR_THRESHOLD, ERROR_DRIVES_OPTIMIZATION, OPTIMIZATION_PERIOD, LAMBDA\_\*, EPS, PERMANENT_MAIN_CONNECTIONS, LOAD_PERCENT
 
 ## 🎯 Quick Start
 
@@ -43,6 +43,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `PROBABILITY_MUTATE_LINK`          | `0.08`          | How often to add new connections                                     |
 | `PROBABILITY_MUTATE_NODES`         | `0.03`          | How often to add new nodes                                           |
 | `OPT_ERR_THRESHOLD`                | `0.005`         | `client.error` limit for self-optimization; stagnation gain limit    |
+| `ERROR_DRIVES_OPTIMIZATION`        | `true`          | Whether `client.error` can turn on self-optimization                 |
 | `OPTIMIZATION_PERIOD`              | `100`           | Period (in `evolve()` calls) of the global optimization phase        |
 | `PRESSURE_BOOST`                   | `true`          | Allow the `BOOST`, `ESCAPE`, and `PANIC` pressure levels             |
 | `PRESSURE_COMPACT`                 | `true`          | Allow the `COMPACT` pressure level                                   |
@@ -198,7 +199,7 @@ The best client of the generation (`client.bestScore`) is not mutated. Exception
 There are two kinds of optimization:
 
 - **Global optimization mode** (`neat.optimization`) is on for one `evolve()` call when you call `evolve(true)`, when `evolveCounts % OPTIMIZATION_PERIOD === 0` (every 100 `evolve()` calls with the default), or when the pressure level is `COMPACT`.
-- **Self-optimization** is per client: it is on when `client.error < OPT_ERR_THRESHOLD`. See [client.error](../README.md#set-clienterror-and-clientscore) in the README.
+- **Self-optimization** is per client: it is on when `client.error < OPT_ERR_THRESHOLD` and `ERROR_DRIVES_OPTIMIZATION` is `true` (the default). See [client.error](../README.md#set-clienterror-and-clientscore) in the README and [ERROR_DRIVES_OPTIMIZATION](./params/05_optimization_and_scoring.md#error_drives_optimization---self-optimization-from-clienterror).
 
 Effects:
 

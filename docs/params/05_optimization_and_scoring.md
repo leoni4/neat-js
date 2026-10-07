@@ -7,7 +7,7 @@ There are two kinds of optimization. Both use the same clean-up in `Genome.mutat
 | Mode                                      | When it is on                                                                                                       | Scope       |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------- |
 | Global optimization (`neat.optimization`) | `evolve(true)`, or `evolveCounts % OPTIMIZATION_PERIOD === 0`, or pressure level `COMPACT`; for one `evolve()` call | All clients |
-| Self-optimization (`genome.selfOpt`)      | `client.error < OPT_ERR_THRESHOLD`, except in the forced first mutation                                             | One client  |
+| Self-optimization (`genome.selfOpt`)      | `client.error < OPT_ERR_THRESHOLD` and `ERROR_DRIVES_OPTIMIZATION` is `true`, except in the forced first mutation   | One client  |
 
 Effects:
 
@@ -26,7 +26,7 @@ Effects:
 
 OPT_ERR_THRESHOLD has two roles:
 
-1. A client with `client.error < OPT_ERR_THRESHOLD` enters self-optimization mode.
+1. A client with `client.error < OPT_ERR_THRESHOLD` enters self-optimization mode (only when `ERROR_DRIVES_OPTIMIZATION` is `true`, the default).
 2. The champion must improve its raw score by more than OPT_ERR_THRESHOLD to reset the stagnation count, which sets the pressure level.
 
 ### How It's Used
@@ -47,13 +47,15 @@ mutate(force = false) {
     if (this.bestScore && !force) {
         return;
     }
-    this.genome.mutate(this.error < this.genome.optErrThreshold && !force);
+    // `error` starts at 0, so a caller that sets only `score` would always look "solved" here.
+    const selfOpt = this.genome.neat.ERROR_DRIVES_OPTIMIZATION && this.error < this.genome.optErrThreshold;
+    this.genome.mutate(selfOpt && !force);
 }
 ```
 
 `Neat.mutate()` passes `force = true` only in the first `evolve()` call of a population (when `evolveCounts` becomes `1`).
 
-**`client.error` must be set by you.** Its default value is `0`, and `evolve()` does not compute it (`Neat.fit()` does). If you set only `client.score`, every client has `error = 0 < OPT_ERR_THRESHOLD`, so all clients are in self-optimization from the second `evolve()` call, and the networks stop growing after the first connection. Set `client.error` to your error measure (0 = perfect), or to a value ≥ OPT_ERR_THRESHOLD while you want the topology to grow.
+**`client.error` must be set by you.** Its default value is `0`, and `evolve()` does not compute it (`Neat.fit()` does). If you set only `client.score`, every client has `error = 0 < OPT_ERR_THRESHOLD`, so all clients are in self-optimization from the second `evolve()` call, and the networks stop growing after the first connection. Set `client.error` to your error measure (0 = perfect), or to a value ≥ OPT_ERR_THRESHOLD while you want the topology to grow, or set [`ERROR_DRIVES_OPTIMIZATION: false`](#error_drives_optimization---self-optimization-from-clienterror).
 
 **In stagnation tracking** (`Neat.updateStagnationAndPressure()`):
 
@@ -73,7 +75,7 @@ The stagnation count sets `neat.PRESSURE` (see [Mutation Pressure](../PARAMETER_
 
 - **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
 - **Getter:** `Neat.OPT_ERR_THRESHOLD`, `Genome.optErrThreshold`
-- **Usage:** `Client.mutate()` (self-optimization decision), `Genome.mutate()` (optimization behavior), `Neat.updateStagnationAndPressure()` (stagnation), `Neat.fit()` (default `errorThreshold` and `evolve(true)` trigger)
+- **Usage:** `Client.mutate()` (self-optimization decision, see `ERROR_DRIVES_OPTIMIZATION`), `Genome.mutate()` (optimization behavior), `Neat.updateStagnationAndPressure()` (stagnation), `Neat.fit()` (default `errorThreshold` and `evolve(true)` trigger)
 
 ### Behavior When Error < OPT_ERR_THRESHOLD
 
@@ -91,6 +93,42 @@ The stagnation count sets `neat.PRESSURE` (see [Mutation Pressure](../PARAMETER_
     - For MSE on normalized data: 0.005-0.05 reasonable
     - For classification accuracy: depends on encoding
     - For game scores: scale accordingly
+
+---
+
+## ERROR_DRIVES_OPTIMIZATION - Self-Optimization from client.error
+
+**Default:** `true`  
+**Type:** `boolean`  
+**Location:** `INeatParams.ERROR_DRIVES_OPTIMIZATION`, `DEFAULT_PARAMS.ERROR_DRIVES_OPTIMIZATION` (`src/neat/neat.ts`)
+
+### Purpose
+
+ERROR_DRIVES_OPTIMIZATION sets whether `client.error` can put a client into self-optimization mode.
+
+- `true` (default): the old behaviour. A client with `client.error < OPT_ERR_THRESHOLD` is in self-optimization mode.
+- `false`: `Client.mutate()` always passes `selfOpt = false` to `Genome.mutate()`. No client is in self-optimization mode, and `client.error` has no effect on mutation. Global optimization (`evolve(true)`, `OPTIMIZATION_PERIOD`, pressure `COMPACT`) does not change.
+
+Use `false` when you set only `client.score` (for example, in reinforcement tasks without an error measure). With the default, the unset `client.error` is `0`, so all clients are in self-optimization mode and the networks stop growing after the first connection.
+
+### Example
+
+```typescript
+import { Neat, EActivation } from '@leoni4/neat-js';
+
+const neat = new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { ERROR_DRIVES_OPTIMIZATION: false });
+```
+
+### Code References
+
+- **Definition:** `INeatParams`, `DEFAULT_PARAMS`, `Neat` constructor
+- **Getter:** `Neat.ERROR_DRIVES_OPTIMIZATION`
+- **Usage:** `Client.mutate()`
+
+### Interactions
+
+- **`OPT_ERR_THRESHOLD`:** with `false`, it is only the stagnation gain limit and the default `errorThreshold` of `Neat.fit()`.
+- **`Neat.fit()`:** `fit()` sets `client.error`. With `false`, its clients also do not enter self-optimization; the early stop and the `evolve(true)` call of `fit()` do not change.
 
 ---
 
