@@ -1,6 +1,93 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Neat, EActivation } from '../../src/neat/neat.js';
+import { Neat, EActivation, INeatParams } from '../../src/neat/neat.js';
 import { Genome } from '../../src/genome/genome.js';
+import { NodeGene } from '../../src/genome/nodeGene.js';
+import { NETWORK_CONSTANTS } from '../../src/neat/constants.js';
+import { buildGenome, GenomeSpec, NodeLayout, registerLinks } from '../helpers/genomeBuilder.js';
+
+const LAYOUT: NodeLayout = {
+    1: { x: NETWORK_CONSTANTS.INPUT_NODE_X, y: 1 / 3 },
+    2: { x: NETWORK_CONSTANTS.INPUT_NODE_X, y: 2 / 3 },
+    3: { x: NETWORK_CONSTANTS.OUTPUT_NODE_X, y: 0.5 },
+    4: { x: 0.5, y: 0.25 },
+    5: { x: 0.5, y: 0.75 },
+};
+
+const LINK_ORDER: Array<[number, number]> = [
+    [1, 3],
+    [2, 3],
+    [1, 4],
+    [4, 3],
+    [1, 5],
+    [5, 3],
+];
+
+const IO_NODES = { 1: 0, 2: 0, 3: 0 };
+
+function pair(params: INeatParams, specA: GenomeSpec, specB: GenomeSpec, linkOrder = LINK_ORDER): [Genome, Genome] {
+    const neat = new Neat(2, 1, 1, EActivation.sigmoid, EActivation.sigmoid, params);
+    registerLinks(neat, LAYOUT, linkOrder);
+
+    return [buildGenome(neat, LAYOUT, specA), buildGenome(neat, LAYOUT, specB)];
+}
+
+function excessConnectionPair(params: INeatParams): [Genome, Genome] {
+    return pair(
+        params,
+        {
+            nodes: IO_NODES,
+            links: [
+                { from: 1, to: 3, weight: 1 },
+                { from: 2, to: 3, weight: 1 },
+            ],
+        },
+        { nodes: IO_NODES, links: [{ from: 1, to: 3, weight: 1 }] },
+    );
+}
+
+function disjointConnectionPair(params: INeatParams): [Genome, Genome] {
+    const nodes = { ...IO_NODES, 4: 0 };
+
+    return pair(
+        params,
+        {
+            nodes,
+            links: [
+                { from: 1, to: 3, weight: 1 },
+                { from: 1, to: 4, weight: 1 },
+                { from: 4, to: 3, weight: 1 },
+            ],
+        },
+        {
+            nodes,
+            links: [
+                { from: 2, to: 3, weight: 1 },
+                { from: 1, to: 4, weight: 1 },
+                { from: 4, to: 3, weight: 1 },
+            ],
+        },
+    );
+}
+
+function weightDiffPair(params: INeatParams): [Genome, Genome] {
+    return pair(
+        params,
+        {
+            nodes: IO_NODES,
+            links: [
+                { from: 1, to: 3, weight: 0.5 },
+                { from: 2, to: 3, weight: -1 },
+            ],
+        },
+        {
+            nodes: IO_NODES,
+            links: [
+                { from: 1, to: 3, weight: 0.25 },
+                { from: 2, to: 3, weight: 0 },
+            ],
+        },
+    );
+}
 
 describe('Genome - distance', () => {
     let neat: Neat;
@@ -20,197 +107,168 @@ describe('Genome - distance', () => {
         });
 
         it('should return positive distance for different genomes', () => {
-            genome1.mutateLink();
-            genome2.mutateLink();
+            const [a, b] = excessConnectionPair({ C1: 3, C2: 7 });
 
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(1.5);
         });
 
         it('should be symmetric', () => {
-            genome1.mutateNode();
-            genome2.mutateLink();
+            const [a, b] = excessConnectionPair({ C1: 3, C2: 7 });
 
-            const distance1to2 = genome1.distance(genome2);
-            const distance2to1 = genome2.distance(genome1);
-
-            expect(distance1to2).toBeCloseTo(distance2to1, 5);
+            expect(b.distance(a)).toBe(1.5);
+            expect(a.distance(b)).toBe(b.distance(a));
         });
     });
 
     describe('excess genes', () => {
         it('should account for excess connections', () => {
-            // Ensure both genomes have connections first
-            genome1.mutateLink();
-            genome2.mutateLink();
+            const [a, b] = excessConnectionPair({ C1: 3, C2: 7 });
 
-            // Add more connections to genome1
-            for (let i = 0; i < 5; i++) {
-                genome1.mutateLink();
-            }
-
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            // C1 * 1 / 2
+            expect(a.distance(b)).toBe(1.5);
         });
 
         it('should account for excess nodes', () => {
-            // Ensure both have connections first
-            genome1.mutateLink();
-            genome2.mutateLink();
+            const [a, b] = pair(
+                { C1: 3, C2: 7 },
+                {
+                    nodes: { ...IO_NODES, 4: 0 },
+                    links: [
+                        { from: 1, to: 3, weight: 1 },
+                        { from: 1, to: 4, weight: 1 },
+                        { from: 4, to: 3, weight: 1 },
+                    ],
+                },
+                { nodes: IO_NODES, links: [{ from: 1, to: 3, weight: 1 }] },
+            );
 
-            // Add more nodes to genome1
-            for (let i = 0; i < 3; i++) {
-                genome1.mutateNode();
-            }
-
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(3);
         });
     });
 
     describe('disjoint genes', () => {
         it('should account for disjoint connections', () => {
-            // Create different mutations
-            genome1.mutateLink();
-            genome2.mutateNode();
+            const [a, b] = disjointConnectionPair({ C1: 7, C2: 1.5 });
 
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(1);
         });
 
-        it('should increase distance with more disjoint genes', () => {
-            // Base distance
-            const baseDistance = genome1.distance(genome2);
+        it('should count a g2 node that g1 does not have as disjoint', () => {
+            const [a, b] = pair(
+                { C1: 1.5, C2: 0.75 },
+                {
+                    nodes: { ...IO_NODES, 5: 0 },
+                    links: [
+                        { from: 1, to: 3, weight: 1 },
+                        { from: 1, to: 5, weight: 1 },
+                        { from: 5, to: 3, weight: 1 },
+                    ],
+                },
+                {
+                    nodes: { ...IO_NODES, 4: 0 },
+                    links: [
+                        { from: 1, to: 3, weight: 1 },
+                        { from: 1, to: 4, weight: 1 },
+                        { from: 4, to: 3, weight: 1 },
+                    ],
+                },
+            );
 
-            // Add mutations to create disjoint genes
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid);
-            const testGenome1 = testNeat.clients[0].genome;
-            const testGenome2 = testNeat.clients[0].genome;
+            expect(a.distance(b)).toBe(2.25);
+        });
 
-            for (let i = 0; i < 5; i++) {
-                testGenome1.mutateLink();
-            }
+        it('should count nodes in the range and the nodes of g2 after the last g1 node as disjoint', () => {
+            const [a, b] = pair(
+                { C1: 1.5, C2: 0.75 },
+                {
+                    nodes: { ...IO_NODES, 4: 0 },
+                    links: [
+                        { from: 1, to: 3, weight: 1 },
+                        { from: 1, to: 4, weight: 1 },
+                        { from: 4, to: 3, weight: 1 },
+                    ],
+                },
+                {
+                    nodes: { ...IO_NODES, 5: 0 },
+                    links: [
+                        { from: 1, to: 3, weight: 1 },
+                        { from: 1, to: 5, weight: 1 },
+                        { from: 5, to: 3, weight: 1 },
+                    ],
+                },
+                [
+                    [1, 3],
+                    [1, 5],
+                    [5, 3],
+                    [1, 4],
+                    [4, 3],
+                ],
+            );
 
-            const newDistance = testGenome1.distance(testGenome2);
-            expect(newDistance).toBeGreaterThanOrEqual(baseDistance);
+            expect(a.distance(b)).toBe(2);
+            expect(b.distance(a)).toBe(2);
         });
     });
 
     describe('weight differences', () => {
         it('should account for weight differences in matching genes', () => {
-            // Mutate weights
-            genome1.mutateWeightShift();
-            genome1.mutateWeightShift();
-            genome1.mutateWeightShift();
+            const [a, b] = weightDiffPair({ C1: 7, C2: 7, C3: 2 });
 
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(0.5);
         });
 
         it('should consider bias differences', () => {
-            // Add nodes and mutate their biases
-            genome1.mutateNode();
-            genome2.mutateNode();
+            const links = [
+                { from: 1, to: 3, weight: 1 },
+                { from: 2, to: 3, weight: 1 },
+            ];
+            const [a, b] = pair(
+                { C1: 7, C2: 7, C3: 2 },
+                { nodes: { ...IO_NODES, 3: 1 }, links },
+                { nodes: { ...IO_NODES, 3: -0.25 }, links },
+            );
 
-            genome1.mutateWeightRandom();
-            genome2.mutateWeightRandom();
-
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(0.5);
         });
     });
 
     describe('normalization with CT threshold', () => {
-        it('should normalize by N when connections > CT', () => {
-            // Create larger genomes
-            for (let i = 0; i < 30; i++) {
-                genome1.mutateLink();
-            }
-            for (let i = 0; i < 25; i++) {
-                genome2.mutateLink();
-            }
+        it('should normalize by the larger connection count when it is >= CT', () => {
+            const [a, b] = excessConnectionPair({ C1: 2, C2: 7, CT: 1 });
 
-            const distance = genome1.distance(genome2);
-
-            // Distance should be calculated and normalized
-            expect(distance).toBeGreaterThanOrEqual(0);
-            expect(distance).toBeLessThan(1000); // Reasonable upper bound
+            expect(a.distance(b)).toBe(1);
         });
 
-        it('should use N=1 when connections < CT', () => {
-            // Use small genomes (empty)
-            const emptyGenome1 = neat.emptyGenome();
-            const emptyGenome2 = neat.emptyGenome();
+        it('should normalize by CT when CT > the connection counts', () => {
+            const [a, b] = excessConnectionPair({ C1: 2, C2: 7, CT: 4 });
 
-            emptyGenome1.mutateLink();
-
-            const distance = emptyGenome1.distance(emptyGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
-        });
-
-        it('should handle CT threshold correctly', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
-                CT: 10,
-            });
-            const testGenome1 = testNeat.clients[0].genome;
-            const testGenome2 = testNeat.clients[0].genome;
-
-            // Add connections below CT
-            for (let i = 0; i < 5; i++) {
-                testGenome1.mutateLink();
-            }
-
-            const distance = testGenome1.distance(testGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a.distance(b)).toBe(0.5);
         });
     });
 
     describe('distance coefficients', () => {
         it('should use C1 coefficient for excess genes', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
-                C1: 2.0,
-            });
-            const testGenome1 = testNeat.clients[0].genome;
-            const testGenome2 = testNeat.clients[0].genome;
+            const [a1, b1] = excessConnectionPair({ C1: 3, C2: 7 });
+            const [a2, b2] = excessConnectionPair({ C1: 6, C2: 7 });
 
-            // Ensure both have initial connections
-            testGenome1.mutateLink();
-            testGenome2.mutateLink();
-
-            for (let i = 0; i < 5; i++) {
-                testGenome1.mutateLink();
-            }
-
-            const distance = testGenome1.distance(testGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a1.distance(b1)).toBe(1.5);
+            expect(a2.distance(b2)).toBe(3);
         });
 
         it('should use C2 coefficient for disjoint genes', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
-                C2: 2.0,
-            });
-            const testGenome1 = testNeat.clients[0].genome;
-            const testGenome2 = testNeat.clients[0].genome;
+            const [a1, b1] = disjointConnectionPair({ C1: 7, C2: 1.5 });
+            const [a2, b2] = disjointConnectionPair({ C1: 7, C2: 3 });
 
-            testGenome1.mutateLink();
-            testGenome2.mutateNode();
-
-            const distance = testGenome1.distance(testGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a1.distance(b1)).toBe(1);
+            expect(a2.distance(b2)).toBe(2);
         });
 
         it('should use C3 coefficient for weight differences', () => {
-            const testNeat = new Neat(3, 2, 1, EActivation.sigmoid, EActivation.tanh, {
-                C3: 2.0,
-            });
-            const testGenome1 = testNeat.clients[0].genome;
-            const testGenome2 = testNeat.clients[0].genome;
+            const [a1, b1] = weightDiffPair({ C1: 7, C2: 7, C3: 2 });
+            const [a2, b2] = weightDiffPair({ C1: 7, C2: 7, C3: 4 });
 
-            testGenome1.mutateWeightShift();
-            testGenome1.mutateWeightShift();
-
-            const distance = testGenome1.distance(testGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(a1.distance(b1)).toBe(0.5);
+            expect(a2.distance(b2)).toBe(1);
         });
     });
 
@@ -226,29 +284,14 @@ describe('Genome - distance', () => {
         it('should handle genomes with only nodes, no connections', () => {
             const emptyGenome1 = neat.emptyGenome();
             const emptyGenome2 = neat.emptyGenome();
+            const output = emptyGenome1.nodes.get(3);
+            if (!(output instanceof NodeGene)) throw new Error('node 4 is not a NodeGene');
+            output.bias = 2.5;
 
-            // Genomes have nodes but no connections
-            const distance = emptyGenome1.distance(emptyGenome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
-        });
-
-        it('should handle very different genome sizes', () => {
-            // Ensure both have connections first
-            genome1.mutateLink();
-            genome2.mutateLink();
-
-            // Make genome1 much larger
-            for (let i = 0; i < 20; i++) {
-                genome1.mutateLink();
-                genome1.mutateNode();
-            }
-
-            const distance = genome1.distance(genome2);
-            expect(distance).toBeGreaterThanOrEqual(0);
+            expect(emptyGenome1.distance(emptyGenome2)).toBe(0.1);
         });
 
         it('should not throw errors with complex genomes', () => {
-            // Create complex genomes
             for (let i = 0; i < 15; i++) {
                 genome1.mutateLink();
                 genome1.mutateNode();
@@ -263,41 +306,6 @@ describe('Genome - distance', () => {
             expect(() => {
                 genome1.distance(genome2);
             }).not.toThrow();
-        });
-    });
-
-    describe('distance properties', () => {
-        it('should increase with more structural differences', () => {
-            // Establish baseline with some connections
-            genome1.mutateLink();
-            genome2.mutateLink();
-            const baseDistance = genome1.distance(genome2);
-
-            const testGenome1 = neat.clients[0].genome;
-            const testGenome2 = neat.clients[0].genome;
-
-            // Establish baseline for test genomes
-            testGenome1.mutateLink();
-            testGenome2.mutateLink();
-
-            // Add significant differences
-            for (let i = 0; i < 10; i++) {
-                testGenome1.mutateLink();
-                testGenome1.mutateNode();
-            }
-
-            const newDistance = testGenome1.distance(testGenome2);
-            expect(newDistance).toBeGreaterThanOrEqual(baseDistance);
-        });
-
-        it('should be finite and non-negative', () => {
-            genome1.mutateNode();
-            genome2.mutateLink();
-
-            const distance = genome1.distance(genome2);
-
-            expect(distance).toBeGreaterThanOrEqual(0);
-            expect(Number.isFinite(distance)).toBe(true);
         });
     });
 });

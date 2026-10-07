@@ -38,6 +38,25 @@ export function withSeededRandom<T>(seed: number, fn: () => T): SeededRun<T> {
     }
 }
 
+export function withRandomValues<T>(values: number[], fn: () => T): { result: T; calls: number } {
+    const original = Math.random;
+    let calls = 0;
+    Math.random = () => {
+        if (calls >= values.length) {
+            throw new Error(`Unexpected Math.random() call #${calls + 1}`);
+        }
+
+        return values[calls++];
+    };
+    try {
+        const result = fn();
+
+        return { result, calls };
+    } finally {
+        Math.random = original;
+    }
+}
+
 export function float64Hex(values: number[]): string {
     const view = new DataView(new ArrayBuffer(8));
     let hex = '';
