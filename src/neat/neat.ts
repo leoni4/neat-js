@@ -553,10 +553,15 @@ export class Neat {
             node.y = item.y;
         });
 
-        const genome = this.loadGenome(data.genome);
+        let genome: Genome | null = this.loadGenome(data.genome);
 
         const getGenome = (ptc: number): Genome => {
-            if (data && loadPercent && ptc < loadPercent) return genome;
+            if (data && loadPercent && ptc < loadPercent) {
+                const loaded = genome ?? this.loadGenome(data.genome);
+                genome = null;
+
+                return loaded;
+            }
 
             return this.emptyGenome();
         };

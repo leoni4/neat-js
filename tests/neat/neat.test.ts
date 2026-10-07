@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Neat, EActivation } from '../../src/neat/neat.js';
+import type { GenomeSaveData } from '../../src/genome/index.js';
+import { withSeededRandom } from '../helpers/seededRandom.js';
 
 describe('Neat', () => {
     let neat: Neat;
@@ -107,6 +110,34 @@ describe('Neat', () => {
             });
 
             expect(neat2.clients).toHaveLength(10);
+        });
+
+        it('should give each loaded client its own genome copy', () => {
+            const genome = JSON.parse(
+                readFileSync(new URL('../golden/fixtures/load-genome.json', import.meta.url), 'utf8'),
+            ) as GenomeSaveData;
+            expect(genome.connections.length).toBeGreaterThan(0);
+
+            const run = withSeededRandom(1, () => {
+                return new Neat(4, 1, 10, EActivation.sigmoid, EActivation.tanh, {}, { genome, evolveCounts: 5 });
+            });
+            expect(run.calls).toBe(0);
+
+            const neat2 = run.result;
+            const loaded = neat2.clients.slice(0, 5);
+            expect(new Set(loaded.map(client => client.genome)).size).toBe(5);
+            const saved = loaded[0].genome.save();
+            loaded.forEach(client => expect(client.genome.save()).toEqual(saved));
+
+            const best = neat2.clients[0];
+            neat2.clients.forEach(client => {
+                client.score = client === best ? 1 : 0.5;
+                client.error = 0.1;
+            });
+            neat2.evolve();
+
+            expect(best.bestScore).toBe(true);
+            expect(best.genome.save()).toEqual(saved);
         });
     });
 

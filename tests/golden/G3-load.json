@@ -1,19 +1,19 @@
 {
-    "rngCalls": 7086,
-    "rngChecksum": 3672034597,
+    "rngCalls": 7053,
+    "rngChecksum": 968356351,
     "evolveCounts": 27,
     "pressure": "NORMAL",
     "speciesCount": 1,
     "cpBits": "3fd6f16ef0348c95",
-    "championOutputs": "3fe56a77951781593fd8d0015ad3f5b03fd681e4d09b91ba3fe164d43aa651ad3fd9aec6e6c0a4ba3fdebf3def9739393fdfc4f6890e23193fddbf247d5c1b6c3fe1ce59d16cc1a63fdf6fa2f12159c13fda2e39a000849f3fe3c635fc519a643fe309bbca7468573fcf5ebb963631813fe332df3d1ebe573fd649f18154df13",
+    "championOutputs": "3fe5a37c75fbaed13fd7565bcf778f873fd5ab2a0d4e48533fe0e645fd9760313fd8a75e19061a873fdda6550601527d3fdf5298b72487103fdd9d1a9bae4a133fe1c9b6e5d3eabb3fdf1748e6b297453fd8d9a6b9a65aa23fe3eb836df98d9f3fe362b1a242f1253fcc3f42508723073fe2eee1c0dc24e13fd607cf2ae08ef3",
     "clientOutputs": [
-        "3fe56a77951781593fd8d0015ad3f5b03fd681e4d09b91ba3fe164d43aa651ad3fd9aec6e6c0a4ba3fdebf3def9739393fdfc4f6890e23193fddbf247d5c1b6c3fe1ce59d16cc1a63fdf6fa2f12159c13fda2e39a000849f3fe3c635fc519a643fe309bbca7468573fcf5ebb963631813fe332df3d1ebe573fd649f18154df13",
-        "3fe550465d9863e53fd984915db8285c3fd6dc91bf3ad02e3fe20e2a61fe31533fda4a7f7e9711c23fdf4f7037828ab83fe03bd7551000103fdd3d108830664f3fe1ecd3dfddd6dd3fdfcc004d0b921c3fdbe71ba519d7333fe368bbe20bb70d3fe2340baf360b743fd11c1265dd2d9b3fe3c59380f82e733fd4c51c7b4c062f",
-        "3fe55f8f14cbf0843fd92b6c2317e7413fd6410a127200b63fe12e996e0d24583fd9c499eb580b783fde86101bacf5fe3fdf91f7b70a2edf3fdd57ab465e7de73fe1b470d894aeb33fdf5b7998c4af4d3fda606eba3aee4b3fe3d1c3fea4c1e93fe30269b9a0b3463fd0109de99bba923fe318430741180b3fd6035d0e399821",
-        "3fe079a07bc1e9053fe12ab45f96410d3fd797388bb4522a3fdf9abef90dcc3c3fdd65a566a3d43a3fe0a3a27be569f73fda5217dab415613fdae6074c7e20e93fdc0000ed743cd13fdb65273dafea963fdc2f17cbf32fd53fe2f80f8a21ebd53fe16296435904f73fd9bfe657bedcea3fe058e327ead1503fda6667b24c2f64",
-        "3fe4bb8979a9c90f3fd7c4846bc57ad53fd6b308ac6889903fe11e8b29386a733fd96b0f7deefe7e3fdda78b72a558a63fdf86ccdc60da123fdd3f15a10b1dd83fe17c832edad3183fdee09f884c36cd3fda187ce007f0553fe28d62b758885e3fe22cbde84ceb403fcfa657f681e3063fe2febbface5a863fd59fd62d9eeb42"
+        "3fe5a37c75fbaed13fd7565bcf778f873fd5ab2a0d4e48533fe0e645fd9760313fd8a75e19061a873fdda6550601527d3fdf5298b72487103fdd9d1a9bae4a133fe1c9b6e5d3eabb3fdf1748e6b297453fd8d9a6b9a65aa23fe3eb836df98d9f3fe362b1a242f1253fcc3f42508723073fe2eee1c0dc24e13fd607cf2ae08ef3",
+        "3fe5b40d697ebdce3fd6c7e6540b63903fd4cb9c41fcffa73fe0259f7b370af23fd7e06a570556c43fdd00a5d12f97323fde31770444a2a73fdd8aead0180b9f3fe17b54bde9fd783fde573c06fbbdca3fd7141b02be4d723fe45f9cfa53da473fe40e45aa747a4f3fc98ba73112f6163fe24258ef384e793fd71746d1ea237e",
+        "3fe5c06037eb63963fd7263986fb89243fd567b45a28edbc3fe0cc6fe1d325df3fd8a5838cee375f3fdd4f89c729beb13fdf3bdedf87b8c93fdd689a7d1d47a83fe1ca6d121b22883fdef5ac837f105d3fd8c867a7b3d3553fe3c177887d06263fe370f946a3ec043fcbb311656313043fe3086c6b2e11273fd5d805418ab879",
+        "3fe5ae3698457b813fd6fff268def89f3fd63c7b4251d4bd3fe0a3d34d6938c93fd8f502318ca8793fdd0af4246015e53fdfc500e715c7db3fde053638d5da3d3fe1fbaf8991a32c3fdf7b077fc378d93fd8fe5cf7e4669d3fe398c326866ae73fe376277f4e9c2f3fcca57a6b68b31b3fe2e04f3869448e3fd696d55ab0e69a",
+        "3fe5d03f6d7e628f3fd6e0cc1273477c3fd53bbfbbd3f92a3fe06258e850a7fe3fd7f12773df50073fdd742c9dec4d9b3fdeb61f24fdb13b3fdded43ee416bf43fe1b5681e48c0a53fded4c1b922cf863fd7564f255c04fe3fe48e24c5e2191c3fe401b17975e5173fc9fbfd725719e53fe24bf892e895f03fd74075d4e3e392"
     ],
-    "populationSha256": "f051e9c8d33d35ca5b35a17231633e5d3fc58d366891831b7c16f12161626d33",
+    "populationSha256": "7cd41af1725a50fbfec9fd65c3b94b649472e22aa9c09e8f02931d6024673363",
     "model": {
         "nodes": [
             {
@@ -42,13 +42,13 @@
             },
             {
                 "innovationNumber": 5,
-                "bias": 0.03000460846815258,
+                "bias": 0,
                 "x": 0.99,
                 "y": 0.5
             },
             {
                 "innovationNumber": 6,
-                "bias": 0.1787748183796446,
+                "bias": 0.12064369914329454,
                 "x": 0.5,
                 "y": 0.6340602572541685
             }
@@ -64,35 +64,35 @@
             {
                 "replaceIndex": 0,
                 "enabled": true,
-                "weight": 0.2633161976933479,
+                "weight": 0.32960225353017447,
                 "from": 3,
                 "to": 5
             },
             {
                 "replaceIndex": 0,
                 "enabled": true,
-                "weight": 0.7761504618450998,
+                "weight": 0.8729900497943162,
                 "from": 1,
                 "to": 5
             },
             {
                 "replaceIndex": 0,
                 "enabled": true,
-                "weight": 1.2913721013814214,
+                "weight": 1.3443662060424688,
                 "from": 4,
                 "to": 6
             },
             {
                 "replaceIndex": 0,
                 "enabled": true,
-                "weight": -0.19391168532176792,
+                "weight": -0.1959011070358652,
                 "from": 6,
                 "to": 5
             },
             {
                 "replaceIndex": 0,
-                "enabled": false,
-                "weight": 0.2141222828999162,
+                "enabled": true,
+                "weight": 0.1875791970640421,
                 "from": 1,
                 "to": 6
             }
