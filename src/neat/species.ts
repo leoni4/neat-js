@@ -61,7 +61,7 @@ export class Species {
     }
 
     private getRandomClient(): Client {
-        return this._clients[Math.floor(Math.random() * this._clients.length)];
+        return this._clients[Math.floor(this._representative.genome.neat.rng() * this._clients.length)];
     }
 
     reset() {

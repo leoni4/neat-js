@@ -32,7 +32,7 @@ if (protectingMain || (!selfOpt && !this._neat.optimization) || this._connection
     prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
     prob = Math.max(prob, this._neat.CT - this._connections.size());
     prob = protectingMain ? mainCons : prob;
-    while (prob > Math.random()) {
+    while (prob > this._neat.rng()) {
         prob--;
         this.mutateLink();
     }

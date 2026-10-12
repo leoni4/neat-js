@@ -70,6 +70,17 @@ export default [
             'padding-line-between-statements': ['error', { blankLine: 'always', prev: '*', next: 'return' }],
         },
     },
+    // Library code draws random numbers only through the Neat random source (tests patch Math.random)
+    {
+        files: ['src/**/*.ts'],
+        ignores: ['src/neat/random.ts'],
+        rules: {
+            'no-restricted-properties': [
+                'error',
+                { object: 'Math', property: 'random', message: 'Use the Neat random source (neat.rng).' },
+            ],
+        },
+    },
     // Prettier config (must be last to override other configs)
     eslintConfigPrettier,
 ];

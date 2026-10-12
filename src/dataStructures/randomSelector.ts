@@ -1,4 +1,5 @@
 import { Species } from '../neat/index.js';
+import { mathRandom } from '../neat/random.js';
 
 export class RandomSelector {
     private _objects: Array<Species> = [];
@@ -25,8 +26,8 @@ export class RandomSelector {
         });
     }
 
-    random(): Species {
-        const randomScore = Math.abs(Math.random() * this._totalScore * this._survivors);
+    random(rng: () => number = mathRandom): Species {
+        const randomScore = Math.abs(rng() * this._totalScore * this._survivors);
         let scoreIndex = 0;
         for (let i = 0; i < this._objects.length; i++) {
             scoreIndex += Math.abs(this._objects[i].score);

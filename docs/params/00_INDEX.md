@@ -46,6 +46,8 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `EPS`                              | `1e-4` (0.0001) | number  | Tie threshold for normalized scores    |
 | **Loading**                        |                 |         |                                        |
 | `LOAD_PERCENT`                     | `0.5`           | number  | Fraction of clients that get the model |
+| **Randomness**                     |                 |         |                                        |
+| `seed`                             | —               | number  | Seeded random source (reproducible)    |
 
 Pass the parameters as the 6th constructor argument, after both activations:
 
@@ -114,6 +116,10 @@ new Neat(inputNodes, outputNodes, clients, EActivation.sigmoid, EActivation.tanh
 - **LAMBDA_LOW:** Light complexity penalty during exploration
 - **EPS:** Tie threshold (simpler client first when normalized scores are close)
 - **LOAD_PERCENT:** Fraction of clients that get the loaded genome
+
+### Randomness (no separate page)
+
+- **seed:** Seed of the random source of the instance (sfc32). Any safe integer, also `0`. Without `seed`, the library uses `Math.random()`. See [Reproducible runs (seed)](../../README.md#reproducible-runs-seed) for the conditions of reproducibility.
 
 ## Common Tuning Scenarios
 

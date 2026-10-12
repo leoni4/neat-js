@@ -6,7 +6,7 @@ import { NodeGene } from '../../src/genome/nodeGene.js';
 import { Genome } from '../../src/genome/genome.js';
 import { Species } from '../../src/neat/species.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
-import { withSeededRandom } from '../helpers/seededRandom.js';
+import { withRandomValues, withSeededRandom } from '../helpers/seededRandom.js';
 
 describe('Neat', () => {
     let neat: Neat;
@@ -361,6 +361,18 @@ describe('Neat', () => {
                 expect(loaded.getReplaceIndex(nodeById(3), nodeById(4))).toBe(0);
                 expect(loaded.getReplaceIndex(nodeById(2), nodeById(6))).toBe(0);
             });
+        });
+    });
+
+    describe('rng', () => {
+        it('should read Math.random at call time, after construction', () => {
+            const { result, calls } = withRandomValues([0.25], () => neat.rng());
+            expect(result).toBe(0.25);
+            expect(calls).toBe(1);
+        });
+
+        it('should return the same function on each read', () => {
+            expect(neat.rng).toBe(neat.rng);
         });
     });
 

@@ -89,7 +89,7 @@ for (let i = 0; i < this._species.length; i += 1) {
 for (let i = 0; i < this._clients.length; i += 1) {
     const c = this._clients[i];
     if (c.species === null) {
-        const s = selector.random();
+        const s = selector.random(this._rng);
         // PANIC pressure: c.genome is made from an empty genome (see PARAMETER_TUNING.md)
         c.genome = s.breed();
         s.put(c, true);
@@ -136,7 +136,7 @@ SPECIES_SELECTION sets how `Neat.reproduce()` picks the parent species for each 
 - **`'legacy'`** (default): the roulette covers only the first `SURVIVORS` part of the total species score (see [SURVIVORS](#survivors---selection-pressure)). Example: species scores `[0.5, 0.3, 0.2]` and `SURVIVORS: 0.4` → all picks go to the `0.5` species. Weaker species never get offspring.
 - **`'proportional'`**: the roulette covers the full total species score. Each pick selects a species with the probability `species score / total score` (the average normalized score of its clients). Example: `[0.5, 0.3, 0.2]` → about 50%, 30%, and 20% of the picks.
 
-Both modes make one `Math.random()` call per pick. The option does not change `Species.kill()`: `SURVIVORS` still sets how many clients of each species survive. The option sets the probability per pick only; it does not give each species a fixed offspring count.
+Both modes make one random draw per pick. The option does not change `Species.kill()`: `SURVIVORS` still sets how many clients of each species survive. The option sets the probability per pick only; it does not give each species a fixed offspring count.
 
 ```typescript
 new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { SPECIES_SELECTION: 'proportional' });
@@ -168,7 +168,7 @@ Controls the magnitude of small adjustments to existing connection weights. This
 
 ```typescript
 private mutateWeightShiftConnection(): ConnectionGene | null {
-    const con = this._connections.randomElement();
+    const con = this._connections.randomElement(this._neat.rng);
     if (!(con instanceof ConnectionGene)) {
         return null;
     }
@@ -176,7 +176,7 @@ private mutateWeightShiftConnection(): ConnectionGene | null {
     let counter = 0;
     while (newWeight === con.weight && counter < 10) {
         counter++;
-        newWeight = con.weight + (Math.random() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
+        newWeight = con.weight + (this._neat.rng() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
     }
     if (counter >= 10) {
         newWeight = 0;
@@ -252,7 +252,7 @@ private mutateWeightShiftNode(): NodeGene | null {
     let newWeight = node.bias;
     while (newWeight === node.bias && counter < 10) {
         counter++;
-        newWeight = node.bias + (Math.random() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
+        newWeight = node.bias + (this._neat.rng() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
     }
     if (counter >= 10) {
         newWeight = 0;
@@ -305,7 +305,7 @@ Controls the range for randomizing connection weights (rather than shifting them
 ```typescript
 let newWeight = con.weight || this._neat.WEIGHT_RANDOM_STRENGTH;
 while (newWeight === con.weight) {
-    newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
+    newWeight = (this._neat.rng() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
 }
 con.weight = newWeight;
 ```
@@ -315,7 +315,7 @@ The new weight is `random(-|base|, |base|) × WEIGHT_RANDOM_STRENGTH`, where `ba
 **For new connections** (`Genome.mutateLink()`):
 
 ```typescript
-con.weight = (Math.random() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
+con.weight = (this._neat.rng() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
 ```
 
 New weight in range `[-WEIGHT_RANDOM_STRENGTH, +WEIGHT_RANDOM_STRENGTH]`.
@@ -357,7 +357,7 @@ Controls the range for randomizing node biases. `PROBABILITY_MUTATE_WEIGHT_RANDO
 ```typescript
 let newWeight = node.bias || this._neat.BIAS_RANDOM_STRENGTH;
 while (newWeight === node.bias) {
-    newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
+    newWeight = (this._neat.rng() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
 }
 node.bias = newWeight;
 ```
@@ -390,14 +390,14 @@ node.bias = newWeight;
 
 BIAS_NODE_SAMPLING sets how the bias shift and the random bias mutations (`Genome.mutateWeightShiftNode()`, `Genome.mutateWeightRandomNode()`) pick the node. Input node biases never change in either mode.
 
-- **`'legacy'`** (default): pick a random node from all nodes, up to 10 times, until the pick is not an input node. If the 10 tries fail, the call does nothing. A valid node on the 10th try also gives no mutation (this behaviour is kept for compatibility). Each failed call uses 10 `Math.random()` calls.
-- **`'nonInput'`**: pick one of the output and hidden nodes directly, with one `Math.random()` call. The call does nothing only when the genome has no output or hidden node.
+- **`'legacy'`** (default): pick a random node from all nodes, up to 10 times, until the pick is not an input node. If the 10 tries fail, the call does nothing. A valid node on the 10th try also gives no mutation (this behaviour is kept for compatibility). Each failed call uses 10 random draws.
+- **`'nonInput'`**: pick one of the output and hidden nodes directly, with one random draw. The call does nothing only when the genome has no output or hidden node.
 
 ```typescript
 new Neat(85, 1, 100, EActivation.tanh, EActivation.tanh, { BIAS_NODE_SAMPLING: 'nonInput' });
 ```
 
-With many inputs, `'legacy'` often does nothing. Measured (85 inputs, 1 output, 8 hidden nodes, 20,000 calls of the bias shift mutation, one seed): `'legacy'` did nothing in 40.1% of the calls and used 7.2 `Math.random()` calls per call; `'nonInput'` did nothing in 0% of the calls and used 2 `Math.random()` calls per call. So with `'nonInput'`, biases change about 1.7× as often in this shape. The sequence of `Math.random()` calls changes, so a seeded run gives different results than with `'legacy'`.
+With many inputs, `'legacy'` often does nothing. Measured (85 inputs, 1 output, 8 hidden nodes, 20,000 calls of the bias shift mutation, one seed): `'legacy'` did nothing in 40.1% of the calls and used 7.2 random draws per call; `'nonInput'` did nothing in 0% of the calls and used 2 random draws per call. So with `'nonInput'`, biases change about 1.7× as often in this shape. The sequence of random draws changes, so a seeded run gives different results than with `'legacy'`.
 
 ### Code References
 

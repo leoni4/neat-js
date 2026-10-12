@@ -7,7 +7,7 @@ These parameters control HOW OFTEN each type of mutation occurs. `Genome.mutate(
 Each mutation type uses the same loop:
 
 ```typescript
-while (prob > Math.random()) {
+while (prob > this._neat.rng()) {
     prob--;
     this.mutateLink(); // or mutateNode(), mutateLinkToggle(), mutateWeightRandom(), mutateWeightShift()
 }
@@ -37,7 +37,7 @@ Controls how often small weight adjustments occur. This is typically the most fr
 prob = this._neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this._neat.MUTATION_RATE * this._weightsPressure;
 prob = prob > minWeight ? minWeight : prob;
 
-while (prob > Math.random()) {
+while (prob > this._neat.rng()) {
     prob--;
     this.mutateWeightShift(); // Shifts one connection weight and one node bias
 }
@@ -85,7 +85,7 @@ Controls how often connections are toggled between enabled and disabled states. 
 ```typescript
 prob = this._neat.PROBABILITY_MUTATE_TOGGLE_LINK;
 
-while (prob > Math.random()) {
+while (prob > this._neat.rng()) {
     prob--;
     this.mutateLinkToggle();
 }
@@ -95,7 +95,7 @@ while (prob > Math.random()) {
 
 ```typescript
 mutateLinkToggle(): ConnectionGene | null {
-    const con = this._connections.randomElement();
+    const con = this._connections.randomElement(this._neat.rng);
     if (!(con instanceof ConnectionGene)) {
         return null;
     }
@@ -145,7 +145,7 @@ const minWeight = Math.min(this._connections.size(), this._nodes.size() - this._
 prob = this._neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this._neat.MUTATION_RATE * this._weightsPressure;
 prob = prob > minWeight ? minWeight : prob;
 
-while (prob > Math.random()) {
+while (prob > this._neat.rng()) {
     prob--;
     this.mutateWeightRandom(); // Randomizes one connection weight and one node bias
 }
@@ -191,7 +191,7 @@ if (protectingMain || (!selfOpt && !this._neat.optimization) || this._connection
     prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
     prob = Math.max(prob, this._neat.CT - this._connections.size());
     prob = protectingMain ? mainCons : prob;
-    while (prob > Math.random()) {
+    while (prob > this._neat.rng()) {
         prob--;
         this.mutateLink();
     }
@@ -251,7 +251,7 @@ Controls how often new nodes (neurons) are added to the network. This increases 
 ```typescript
 prob = this._neat.PROBABILITY_MUTATE_NODES * this._neat.MUTATION_RATE * this._topologyPressure;
 
-while (prob > Math.random()) {
+while (prob > this._neat.rng()) {
     prob--;
     this.mutateNode();
 }

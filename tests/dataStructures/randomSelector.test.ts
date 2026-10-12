@@ -99,6 +99,19 @@ describe('RandomSelector', () => {
             const result = randomSelector.random();
             expect(randomSelector.objects).toContain(result);
         });
+
+        it('should draw once from the given rng instead of Math.random', () => {
+            const spy = vi.spyOn(Math, 'random');
+            spy.mockClear();
+            const rng = vi.fn(() => 0);
+            try {
+                expect(randomSelector.random(rng)).toBe(randomSelector.objects[0]);
+                expect(rng).toHaveBeenCalledTimes(1);
+                expect(spy).not.toHaveBeenCalled();
+            } finally {
+                spy.mockRestore();
+            }
+        });
     });
 
     describe('reset', () => {

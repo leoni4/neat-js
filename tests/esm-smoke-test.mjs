@@ -130,5 +130,33 @@ try {
     process.exit(1);
 }
 
+// Test 7: Test the seed option
+try {
+    const run = () => {
+        const neat = new Neat(2, 1, 20, EActivation.sigmoid, EActivation.tanh, { seed: 42 });
+        for (let g = 0; g < 5; g++) {
+            neat.clients.forEach((client, i) => {
+                client.score = (i % 7) / 7;
+                client.error = 1 - client.score;
+            });
+            neat.evolve();
+        }
+
+        return {
+            model: JSON.stringify(neat.model()),
+            population: JSON.stringify(neat.clients.map(client => client.genome.save())),
+        };
+    };
+    const first = run();
+    const second = run();
+    if (first.model !== second.model || first.population !== second.population) {
+        throw new Error('Two runs with the same seed gave different results');
+    }
+    console.log('✓ Seeded runs are reproducible');
+} catch (error) {
+    console.error('✗ Seed test failed:', error.message);
+    process.exit(1);
+}
+
 console.log('\n✅ All ESM smoke tests passed!');
 console.log('The package can be successfully imported and used in Node.js ESM environment.');

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RandomHashSet } from '../../src/dataStructures/randomHashSet.js';
 import { NodeGene } from '../../src/genome/nodeGene.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
@@ -107,6 +107,26 @@ describe('RandomHashSet', () => {
 
             const element = randomHashSet.randomElement();
             expect([node1, node2, node3]).toContain(element);
+        });
+
+        it('should draw from the given rng instead of Math.random', () => {
+            randomHashSet.add(node1);
+            randomHashSet.add(node2);
+            randomHashSet.add(node3);
+            const spy = vi.spyOn(Math, 'random');
+            try {
+                expect(randomHashSet.randomElement(() => 0.99)).toBe(node3);
+                expect(randomHashSet.randomElement(() => 0)).toBe(node1);
+                expect(spy).not.toHaveBeenCalled();
+            } finally {
+                spy.mockRestore();
+            }
+        });
+
+        it('should not call rng for an empty set', () => {
+            const rng = vi.fn(() => 0.5);
+            expect(randomHashSet.randomElement(rng)).toBeNull();
+            expect(rng).not.toHaveBeenCalled();
         });
     });
 

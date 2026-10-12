@@ -53,6 +53,7 @@ The defaults are the values of `DEFAULT_PARAMS` in `src/neat/neat.ts`.
 | `LAMBDA_LOW`                       | `0.1`           | Complexity penalty during exploration                                |
 | `EPS`                              | `1e-4` (0.0001) | Tie threshold for normalized scores                                  |
 | `LOAD_PERCENT`                     | `0.5`           | Fraction of clients that get the loaded genome (load only)           |
+| `seed`                             | —               | Seed of the random source; without it, `Math.random()` is used       |
 
 ## 🧱 Constructor
 
@@ -190,7 +191,7 @@ N = max(connections of genome 1, connections of genome 2, CT)
 
 `MUTATION_RATE` and the pressure multipliers apply to the link, node, random-weight, and shift-weight probabilities. They do **not** apply to `PROBABILITY_MUTATE_TOGGLE_LINK`.
 
-A probability `p` can be larger than 1. The code runs `while (p > Math.random()) { p--; mutate(); }`, so `p = 0.3` gives one mutation with a 30% chance, and `p = 2.5` gives two mutations plus a third with a 50% chance.
+A probability `p` can be larger than 1. The code runs `while (p > this._neat.rng()) { p--; mutate(); }`, so `p = 0.3` gives one mutation with a 30% chance, and `p = 2.5` gives two mutations plus a third with a 50% chance.
 
 The best client of the generation (`client.bestScore`) is not mutated. Exception: in the first `evolve()` call of a population (when `evolveCounts` becomes `1`), all clients are mutated.
 
@@ -237,7 +238,7 @@ With both switches `false`, the level is always `NORMAL`. Use them when the fitn
 
 Each `evolve()` call (`prepareRawScores()`, `normalizeScore()`, `kill()`, `reproduce()`):
 
-1. Read `client.score` (raw fitness; higher is better). `NaN` and `±Infinity` throw an error. A tie-breaker `Math.random() × 1e-9` is added, and the result is stored in `client.scoreRaw`
+1. Read `client.score` (raw fitness; higher is better). `NaN` and `±Infinity` throw an error. A tie-breaker `rng() × 1e-9` is added (`rng` is the seeded generator with `seed`, `Math.random()` without `seed`), and the result is stored in `client.scoreRaw`
 2. Complexity = connections + nodes. Penalty: `adjusted = raw − lambda × ln(1 + complexity) / ln(1 + maxComplexity) × max(rawMax − rawMin, 0.05)`
 3. Normalize the adjusted scores to [0, 1] (all scores are `1` if the adjusted span is ≤ `EPS`)
 4. Sort by normalized score; if two scores differ by not more than `EPS` → the simpler client comes first
@@ -275,6 +276,7 @@ It **throws an error** when:
 - LAMBDA_HIGH or LAMBDA_LOW is negative
 - CP_MIN is negative or not finite, or CP_MIN > 0 and CP < CP_MIN
 - SPECIES_TARGET_MIN or SPECIES_TARGET_MAX is not an integer, SPECIES_TARGET_MIN is negative, or SPECIES_TARGET_MIN > SPECIES_TARGET_MAX
+- seed is set (not `undefined` or `null`) and is not a safe integer
 
 It **warns** (console) when:
 

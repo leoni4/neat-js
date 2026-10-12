@@ -1,4 +1,5 @@
 import { ConnectionGene, NodeGene } from '../genome/index.js';
+import { mathRandom } from '../neat/random.js';
 
 export class RandomHashSet {
     private _data: Array<NodeGene | ConnectionGene>;
@@ -17,12 +18,12 @@ export class RandomHashSet {
         return false;
     }
 
-    randomElement(): NodeGene | ConnectionGene | null {
+    randomElement(rng: () => number = mathRandom): NodeGene | ConnectionGene | null {
         if (!this._data.length) {
             return null;
         }
 
-        return this._data[Math.floor(this._data.length * Math.random())];
+        return this._data[Math.floor(this._data.length * rng())];
     }
 
     add(gene: NodeGene | ConnectionGene) {

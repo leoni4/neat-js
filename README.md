@@ -117,11 +117,35 @@ The parameters are the **6th** argument. Pass both activations before them. All 
 
 Activations (`EActivation`): `none`, `linear`, `sigmoid`, `tanh`, `relu`, `leakyRelu`, `softmax`. As the output activation, `softmax` normalizes all outputs together. As the hidden activation, `softmax` acts as `linear`.
 
+### Reproducible runs (seed)
+
+Set the `seed` param to make a run reproducible:
+
+```typescript
+import { Neat, EActivation } from '@leoni4/neat-js';
+
+const neat = new Neat(12, 2, 100, EActivation.sigmoid, EActivation.tanh, {
+    seed: 12345,
+});
+```
+
+- With `seed`, the instance uses its own seeded generator, sfc32 ("Small Fast Counting" RNG v4 from PractRand), for all random draws. It does not read or change `Math.random`. Each `Neat` instance has its own generator state, so two instances with the same seed do not affect each other.
+- The seed can be any safe integer (`Number.isSafeInteger(seed)`), also `0` and negative values. `0` and `-0` give the same sequence. Other values (for example `1.5`, `NaN`, `Infinity`, `2 ** 53`, or a string) make the constructor throw `seed must be a safe integer (got …)`.
+- Without `seed` (or with `seed: undefined` or `null`), the library uses `Math.random()`, as before. It reads `Math.random` at each draw.
+- The same seed gives the same mutations, innovation IDs, crossover, species, selection, and evolution history (`evolve()` and `fit()`). This is true only with all of these:
+    - the same seed;
+    - the same configuration (all constructor arguments and params, also the loaded model);
+    - the same library version;
+    - the same sequence of operations (the same calls in the same order, with the same `client.score` and `client.error` values);
+    - the same JavaScript runtime. Identical results on other engines or engine versions are not verified: scores and activations use `Math.exp`, `Math.tanh`, and `Math.log1p`, and the last bit of these results can be different between engines.
+- Your fitness code must also be deterministic. If it uses `Math.random`, the time, or the order of async operations, the scores change and the run is not reproducible.
+- `model()` does not save the seed or the generator state. A model that you load with a seed starts the random stream again from the beginning. It does not continue the random stream of the original run.
+
 ### Score rules
 
 - Set `client.score` for **each** client before **each** `neat.evolve()` call. A higher score is better.
 - The score can be any finite number (also negative). `evolve()` throws an error when a score is `NaN`, `Infinity`, or `-Infinity`.
-- `evolve()` changes `client.score`. It adds a small random tie-breaker (`Math.random() * 1e-9`) and stores the result in `client.scoreRaw`. Then it replaces `client.score` with a normalized score in [0, 1] that includes a complexity penalty. Do not read `client.score` after `evolve()` as your own value.
+- `evolve()` changes `client.score`. It adds a small random tie-breaker (`neat.rng() * 1e-9`; the seeded generator with `seed`, `Math.random()` without `seed`) and stores the result in `client.scoreRaw`. Then it replaces `client.score` with a normalized score in [0, 1] that includes a complexity penalty. Do not read `client.score` after `evolve()` as your own value.
 - `neat.evolve()` takes one optional argument: `evolve(true)` turns on the global optimization mode for this call.
 
 ### Set `client.error` and `client.score`
@@ -203,9 +227,13 @@ The demo will start a Vite development server at http://localhost:3000 with a vi
 - **`RandomHashSet`** - Efficient random selection from a set
 - **`RandomSelector`** - Weighted random selection
 
+`RandomHashSet.randomElement(rng?)` and `RandomSelector.random(rng?)` take an optional random function that returns values in [0, 1). The default is `Math.random()`. `Neat` gives them its `rng`.
+
 ### Internal methods
 
 These `Neat` methods are public in TypeScript, but they are internal. Do not call them from your code: `load()`, `loadGenome()`, `reset()`, `getConnection()`, `getNode()`, `setReplaceIndex()`, `getReplaceIndex()`, `emptyGenome()`, and the static `Neat.getConnection()`. For example, `load()` on an instance that already has clients adds a second set of clients. To load a model, use the 7th constructor argument (see [Save and load a model](#save-and-load-a-model)).
+
+The `neat.rng` getter is also internal. It returns the random function of the instance (the seeded generator, or `Math.random()` without `seed`). Each call takes one draw from the stream and changes all later draws. Do not call it in your code when you need reproducible results.
 
 ### Contributing
 

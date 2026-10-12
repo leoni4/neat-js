@@ -254,12 +254,12 @@ export class Genome {
                 }
                 indexG1++;
             } else {
-                const pick = Math.random() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD ? gene1 : gene2;
+                const pick = genome.neat.rng() > MUTATION_CONSTANTS.CROSSOVER_GENE_SELECTION_THRESHOLD ? gene1 : gene2;
 
                 addedCon = cloneConnectionIntoChild(pick);
 
                 if (gene1.enabled !== gene2.enabled) {
-                    addedCon.enabled = Math.random() < 0.75 ? false : true;
+                    addedCon.enabled = genome.neat.rng() < 0.75 ? false : true;
                 } else {
                     addedCon.enabled = gene1.enabled;
                 }
@@ -353,8 +353,8 @@ export class Genome {
     }
 
     mutateLink(triesTotal = 0): ConnectionGene | null {
-        let geneA = this._nodes.randomElement();
-        let geneB = this._nodes.randomElement();
+        let geneA = this._nodes.randomElement(this._neat.rng);
+        let geneB = this._nodes.randomElement(this._neat.rng);
 
         if (!(geneA instanceof NodeGene) || !(geneB instanceof NodeGene)) {
             return null;
@@ -366,7 +366,7 @@ export class Genome {
             if (triesCount > maxTries) {
                 return null;
             }
-            geneB = this._nodes.randomElement();
+            geneB = this._nodes.randomElement(this._neat.rng);
         }
 
         if (!(geneB instanceof NodeGene)) {
@@ -395,7 +395,7 @@ export class Genome {
         }
 
         const con: ConnectionGene = this._neat.getConnection(geneA, geneB);
-        con.weight = (Math.random() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
+        con.weight = (this._neat.rng() * 2 - 1) * this._neat.WEIGHT_RANDOM_STRENGTH;
 
         this._connections.addSorted(con);
 
@@ -421,7 +421,7 @@ export class Genome {
         };
 
         for (let tries = 0; tries < 20; tries++) {
-            const c = this._connections.randomElement();
+            const c = this._connections.randomElement(this._neat.rng);
             if (c instanceof ConnectionGene && c.enabled) {
                 con = c;
                 break;
@@ -437,7 +437,7 @@ export class Genome {
         const middleX = (from.x + to.x) / 2;
         let middleY =
             (from.y + to.y) / 2 +
-            Math.random() * NETWORK_CONSTANTS.NODE_Y_VARIATION -
+            this._neat.rng() * NETWORK_CONSTANTS.NODE_Y_VARIATION -
             NETWORK_CONSTANTS.NODE_Y_VARIATION / 2;
         middleY =
             middleY < NETWORK_CONSTANTS.NODE_Y_MIN
@@ -508,7 +508,7 @@ export class Genome {
             if (!count) {
                 return null;
             }
-            let index = Math.floor(count * Math.random());
+            let index = Math.floor(count * this._neat.rng());
             for (const node of nodes) {
                 if (node.x !== NETWORK_CONSTANTS.INPUT_NODE_X && index-- === 0) {
                     return node;
@@ -522,7 +522,7 @@ export class Genome {
         let node;
         while ((!(node instanceof NodeGene) || node.x === NETWORK_CONSTANTS.INPUT_NODE_X) && counter < 10) {
             counter++;
-            node = this._nodes.randomElement();
+            node = this._nodes.randomElement(this._neat.rng);
         }
         if (counter >= 10) {
             return null;
@@ -543,7 +543,7 @@ export class Genome {
         let newWeight = node.bias;
         while (newWeight === node.bias && counter < 10) {
             counter++;
-            newWeight = node.bias + (Math.random() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
+            newWeight = node.bias + (this._neat.rng() * 2 - 1) * this._neat.BIAS_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -554,7 +554,7 @@ export class Genome {
     }
 
     private mutateWeightShiftConnection(): ConnectionGene | null {
-        const con = this._connections.randomElement();
+        const con = this._connections.randomElement(this._neat.rng);
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
@@ -562,7 +562,7 @@ export class Genome {
         let counter = 0;
         while (newWeight === con.weight && counter < 10) {
             counter++;
-            newWeight = con.weight + (Math.random() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
+            newWeight = con.weight + (this._neat.rng() * 2 - 1) * this._neat.WEIGHT_SHIFT_STRENGTH;
         }
         if (counter >= 10) {
             newWeight = 0;
@@ -585,7 +585,7 @@ export class Genome {
 
         let newWeight = node.bias || this._neat.BIAS_RANDOM_STRENGTH;
         while (newWeight === node.bias) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
+            newWeight = (this._neat.rng() * newWeight * 2 - newWeight) * this._neat.BIAS_RANDOM_STRENGTH;
         }
         node.bias = newWeight;
 
@@ -593,14 +593,14 @@ export class Genome {
     }
 
     private mutateWeightRandomConnection(): ConnectionGene | null {
-        const con = this._connections.randomElement();
+        const con = this._connections.randomElement(this._neat.rng);
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
 
         let newWeight = con.weight || this._neat.WEIGHT_RANDOM_STRENGTH;
         while (newWeight === con.weight) {
-            newWeight = (Math.random() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
+            newWeight = (this._neat.rng() * newWeight * 2 - newWeight) * this._neat.WEIGHT_RANDOM_STRENGTH;
         }
         con.weight = newWeight;
 
@@ -613,7 +613,7 @@ export class Genome {
     }
 
     mutateLinkToggle(): ConnectionGene | null {
-        const con = this._connections.randomElement();
+        const con = this._connections.randomElement(this._neat.rng);
         if (!(con instanceof ConnectionGene)) {
             return null;
         }
@@ -762,14 +762,14 @@ export class Genome {
             prob = this._neat.PROBABILITY_MUTATE_LINK * this._neat.MUTATION_RATE * this._topologyPressure;
             prob = Math.max(prob, this._neat.CT - this._connections.size());
             prob = protectingMain ? mainCons : prob;
-            while (prob > Math.random()) {
+            while (prob > this._neat.rng()) {
                 prob--;
                 this.mutateLink();
             }
 
             prob = this._neat.PROBABILITY_MUTATE_NODES * this._neat.MUTATION_RATE * this._topologyPressure;
 
-            while (prob > Math.random()) {
+            while (prob > this._neat.rng()) {
                 prob--;
                 this.mutateNode();
             }
@@ -777,7 +777,7 @@ export class Genome {
 
         prob = this._neat.PROBABILITY_MUTATE_TOGGLE_LINK;
 
-        while (prob > Math.random()) {
+        while (prob > this._neat.rng()) {
             prob--;
             this.mutateLinkToggle();
         }
@@ -786,7 +786,7 @@ export class Genome {
         prob = this._neat.PROBABILITY_MUTATE_WEIGHT_RANDOM * this._neat.MUTATION_RATE * this._weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
 
-        while (prob > Math.random()) {
+        while (prob > this._neat.rng()) {
             prob--;
             this.mutateWeightRandom();
         }
@@ -794,7 +794,7 @@ export class Genome {
         prob = this._neat.PROBABILITY_MUTATE_WEIGHT_SHIFT * this._neat.MUTATION_RATE * this._weightsPressure;
         prob = prob > minWeight ? minWeight : prob;
 
-        while (prob > Math.random()) {
+        while (prob > this._neat.rng()) {
             prob--;
             this.mutateWeightShift();
         }

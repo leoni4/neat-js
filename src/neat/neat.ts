@@ -10,6 +10,7 @@ import { NETWORK_CONSTANTS } from './constants.js';
 import { RandomHashSet, RandomSelector } from '../dataStructures/index.js';
 import { Client } from './client.js';
 import { Species } from './species.js';
+import { createRng } from './random.js';
 
 export enum EActivation {
     none = 'none',
@@ -54,6 +55,7 @@ export interface INeatParams {
     LAMBDA_LOW?: number;
     EPS?: number;
     LOAD_PERCENT?: number;
+    seed?: number;
 }
 
 const HISTORY_WINDOW = 80;
@@ -274,6 +276,9 @@ export class Neat {
 
     private _PRESSURE = EMutationPressure.NORMAL;
 
+    private readonly _seed: number | undefined;
+    private readonly _rng: () => number;
+
     constructor(
         inputNodes: number,
         outputNodes: number,
@@ -324,6 +329,8 @@ export class Neat {
         this._LAMBDA_LOW = params?.LAMBDA_LOW ?? DEFAULT_PARAMS.LAMBDA_LOW;
         this._EPS = params?.EPS ?? DEFAULT_PARAMS.EPS;
 
+        this._seed = params?.seed ?? undefined;
+
         this._outputActivation = outputActivation;
         this._hiddenActivation = hiddenActivation;
         this._inputNodes = inputNodes;
@@ -331,6 +338,8 @@ export class Neat {
         this._maxClients = clients;
 
         this.validateConfiguration();
+
+        this._rng = createRng(this._seed);
 
         if (loadData) {
             this.load(loadData, params?.LOAD_PERCENT ?? DEFAULT_PARAMS.LOAD_PERCENT);
@@ -340,6 +349,10 @@ export class Neat {
     }
 
     private validateConfiguration(): void {
+        if (this._seed !== undefined && !Number.isSafeInteger(this._seed)) {
+            throw new Error(`seed must be a safe integer (got ${String(this._seed)})`);
+        }
+
         if (this._C1 < 0 || this._C2 < 0 || this._C3 < 0) {
             throw new Error('Distance coefficients (C1, C2, C3) must be non-negative');
         }
@@ -526,6 +539,10 @@ export class Neat {
 
     get optimization(): boolean {
         return this._optimization;
+    }
+
+    get rng(): () => number {
+        return this._rng;
     }
 
     get clients(): ReadonlyArray<Client> {
@@ -926,7 +943,7 @@ export class Neat {
 
                 client.error = totalError / (trainX.length * this._outputNodes);
                 client.score = 1 - client.error;
-                client.score += Math.random() * 1e-9;
+                client.score += this._rng() * 1e-9;
 
                 if (client.score > topScore) {
                     topScore = client.score;
@@ -1032,7 +1049,7 @@ export class Neat {
                 throw new Error(`Client has a non-finite score: ${client.score}`);
             }
 
-            client.score += Math.random() * 1e-9;
+            client.score += this._rng() * 1e-9;
             client.scoreRaw = client.score;
             client.adjustedScore = client.scoreRaw;
             client.complexity = client.genome.connections.size() + client.genome.nodes.size();
@@ -1082,8 +1099,6 @@ export class Neat {
     }
 
     private reproduce() {
-        // 'proportional' uses the same roulette with factor 1 (x * 1 is exact), so both modes make one
-        // Math.random() call per pick.
         const selector = new RandomSelector(this._SPECIES_SELECTION === 'proportional' ? 1 : this._SURVIVORS);
         for (let i = 0; i < this._species.length; i += 1) {
             selector.add(this._species[i]);
@@ -1091,14 +1106,12 @@ export class Neat {
         for (let i = 0; i < this._clients.length; i += 1) {
             const c = this._clients[i];
             if (c.species === null) {
-                const s = selector.random();
+                const s = selector.random(this._rng);
                 if (this._PRESSURE === EMutationPressure.PANIC && this._champion) {
                     const emptyGenome = this.emptyGenome();
                     emptyGenome.mutate();
                     c.genome =
-                        Math.random() > 0.5
-                            ? Genome.crossOver(this._champion?.client.genome, emptyGenome)
-                            : emptyGenome;
+                        this._rng() > 0.5 ? Genome.crossOver(this._champion?.client.genome, emptyGenome) : emptyGenome;
                     c.genome.mutate();
                     c.genome.mutate();
                 } else {
