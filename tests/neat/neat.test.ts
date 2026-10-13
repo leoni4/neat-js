@@ -283,14 +283,17 @@ describe('Neat', () => {
                     });
                     let mid = null;
                     while (!mid) mid = D.mutateNode();
+                    const replaceIndexInC = R.replaceIndex;
+                    R.replaceIndex = neat2.getReplaceIndex(R.from, R.to);
                     R.enabled = false;
                     for (let i = 0; i < 30 && C.nodes.size() < 7; i++) C.mutateNode();
                     R.enabled = true;
                     neat2.clients[0].genome = C;
 
-                    return { neat2, C, R };
+                    return { neat2, C, R, replaceIndexInC };
                 });
-                const { neat2, C, R } = run.result;
+                const { neat2, C, R, replaceIndexInC } = run.result;
+                expect(replaceIndexInC).toBe(0);
                 const localIds = C.nodes.data.map(n => (n as NodeGene).innovationNumber).sort((a, b) => a - b);
                 expect(R.replaceIndex).not.toBe(0);
                 expect(localIds).not.toContain(R.replaceIndex);

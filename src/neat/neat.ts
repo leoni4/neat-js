@@ -750,7 +750,7 @@ export class Neat {
             const geneA = nodeMap.get(con.from);
             const geneB = nodeMap.get(con.to);
             if (!geneA || !geneB) return;
-            const connectionNode = this.getConnection(geneA, geneB);
+            const connectionNode = this.getConnection(geneA, geneB, con.replaceIndex);
             connectionNode.weight = con.weight;
             connectionNode.replaceIndex = con.replaceIndex;
             connectionNode.enabled = con.enabled;
@@ -811,15 +811,18 @@ export class Neat {
         return connectionGene;
     }
 
-    getConnection(node1: NodeGene, node2: NodeGene): ConnectionGene {
+    getConnection(node1: NodeGene, node2: NodeGene, replaceIndex = 0): ConnectionGene {
         const connectionGene = new ConnectionGene(0, node1, node2);
         const hashKey = connectionGene.getHashKey();
         if (this._allConnections.has(hashKey)) {
             const foundCon = this._allConnections.get(hashKey);
             connectionGene.innovationNumber = foundCon ? foundCon.innovationNumber : 0;
         } else {
-            this._allConnections.set(hashKey, connectionGene);
-            connectionGene.innovationNumber = this._allConnections.size + 1;
+            const record = new ConnectionGene(0, node1, node2);
+            record.replaceIndex = replaceIndex;
+            this._allConnections.set(hashKey, record);
+            record.innovationNumber = this._allConnections.size + 1;
+            connectionGene.innovationNumber = record.innovationNumber;
         }
 
         return connectionGene;

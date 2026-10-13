@@ -216,7 +216,7 @@ export class Genome {
                 }
             }
 
-            const con = genome.neat.getConnection(from, to);
+            const con = genome.neat.getConnection(from, to, src.replaceIndex);
             con.weight = src.weight;
             con.enabled = src.enabled;
             con.replaceIndex = src.replaceIndex;
@@ -449,10 +449,13 @@ export class Genome {
             return null;
         }
         if (replaceIndex === 0) {
-            middle = this._neat.getNode();
+            const global = this._neat.getNode();
+            global.x = middleX;
+            global.y = middleY;
+            this._neat.setReplaceIndex(from, to, global.innovationNumber);
+            middle = new NodeGene(global.innovationNumber);
             middle.x = middleX;
             middle.y = middleY;
-            this._neat.setReplaceIndex(from, to, middle.innovationNumber);
         } else {
             middle = getLocalNodeById(replaceIndex);
             middle.x = middle.x || middleX;
