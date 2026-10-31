@@ -22,3 +22,4 @@ export { RandomSelector } from './dataStructures/randomSelector.js';
 // Enums and types
 export { EActivation, EMutationPressure } from './neat/neat.js';
 export type { INeatParams, IFitOptions, IFitHistory, LoadData } from './neat/neat.js';
+export type { NeatRandomState } from './neat/random.js';

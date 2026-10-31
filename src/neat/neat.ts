@@ -10,7 +10,7 @@ import { NETWORK_CONSTANTS } from './constants.js';
 import { RandomHashSet, RandomSelector } from '../dataStructures/index.js';
 import { Client } from './client.js';
 import { Species } from './species.js';
-import { createRng } from './random.js';
+import { mathRandom, SeededRandom, type NeatRandomState } from './random.js';
 
 export enum EActivation {
     none = 'none',
@@ -277,6 +277,7 @@ export class Neat {
     private _PRESSURE = EMutationPressure.NORMAL;
 
     private readonly _seed: number | undefined;
+    private readonly _seededRandom: SeededRandom | null;
     private readonly _rng: () => number;
 
     constructor(
@@ -339,7 +340,8 @@ export class Neat {
 
         this.validateConfiguration();
 
-        this._rng = createRng(this._seed);
+        this._seededRandom = this._seed === undefined ? null : new SeededRandom(this._seed);
+        this._rng = this._seededRandom === null ? mathRandom : this._seededRandom.rng;
 
         if (loadData) {
             this.load(loadData, params?.LOAD_PERCENT ?? DEFAULT_PARAMS.LOAD_PERCENT);
@@ -622,6 +624,31 @@ export class Neat {
 
     get runnerUp(): Client | null {
         return this._runnerUp;
+    }
+
+    /**
+     * Returns the position of the seeded random stream as plain JSON data. It takes no draw.
+     * Throws an error when the instance has no seed.
+     */
+    randomState(): NeatRandomState {
+        return this.requireSeededRandom('randomState').state();
+    }
+
+    /**
+     * Sets the seeded random stream to a state from randomState(), also after a JSON round trip. The next
+     * draws are the draws that followed randomState() in the source instance. `rng` stays the same function.
+     * Throws an error when the state is invalid (the current state stays) or when the instance has no seed.
+     */
+    restoreRandomState(state: NeatRandomState): void {
+        this.requireSeededRandom('restoreRandomState').restore(state);
+    }
+
+    private requireSeededRandom(method: string): SeededRandom {
+        if (this._seededRandom === null) {
+            throw new Error(`${method}() needs a Neat instance with a seed`);
+        }
+
+        return this._seededRandom;
     }
 
     reset(inputNodes: number, outputNodes: number) {

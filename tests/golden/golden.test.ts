@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { Neat, EActivation } from '../../src/neat/index.js';
+import { Neat, EActivation, Client } from '../../src/neat/index.js';
 import type { GenomeSaveData } from '../../src/genome/index.js';
-import { float64Hex, mulberry32, withSeededRandom } from '../helpers/seededRandom.js';
+import { float64Hex, mulberry32, withRandomValues, withSeededRandom } from '../helpers/seededRandom.js';
 
 const UPDATE = process.env.UPDATE_GOLDEN === '1';
 const GOLDEN_DIR = fileURLToPath(new URL('./', import.meta.url));
@@ -117,6 +117,8 @@ function getTypicalRun() {
     return typicalRun;
 }
 
+const SEEDS = [0, 1, 42, -1, Number.MAX_SAFE_INTEGER];
+
 describe('golden determinism fingerprints', () => {
     it('G1-fresh-small', () => {
         const run = withSeededRandom(101, () => {
@@ -220,5 +222,45 @@ describe('golden determinism fingerprints', () => {
             outputs: float64Hex(actual.flat()),
             modelSha256: sha256(JSON.stringify(saved)),
         });
+    });
+
+    // G6 and G7 pin the seeded (sfc32) path. withRandomValues([]) throws on any Math.random call.
+    it('G6-seeded-draws', () => {
+        const { result } = withRandomValues([], () =>
+            SEEDS.map(seed => {
+                const neat = new Neat(4, 1, 30, EActivation.sigmoid, EActivation.tanh, { seed });
+
+                return Array.from({ length: 64 }, () => neat.rng());
+            }),
+        );
+        checkGolden('G6-seeded-draws', Object.fromEntries(SEEDS.map((seed, i) => [`seed ${seed}`, result[i]])));
+    });
+
+    it('G7-seeded-offspring', () => {
+        const probes = randomVectors(4, 16, 9007);
+        const { result } = withRandomValues([], () => {
+            const neat = new Neat(4, 2, 10, EActivation.sigmoid, EActivation.tanh, { seed: 42 });
+            const offspring: Client[] = [];
+            let parent = neat.clients[0];
+            for (let i = 0; i < 200; i++) {
+                const child = new Client(neat.loadGenome(parent.genome.save()), EActivation.sigmoid, EActivation.tanh);
+                child.mutate(true);
+                offspring.push(child);
+                parent = child;
+            }
+            const last = offspring.slice(-3);
+
+            return {
+                offspringSha256: sha256(JSON.stringify(offspring.map(child => child.genome.save()))),
+                lastGenomes: last.map(child => child.genome.save()),
+                lastOutputs: last.map(child => outputBits(input => child.calculate(input), probes)),
+                connections: neat.allConnections.size,
+                nodes: neat.allNodes.size(),
+                nextDraws: Array.from({ length: 4 }, () => neat.rng()),
+            };
+        });
+
+        expect(result.nodes).toBeGreaterThan(4 + 2);
+        checkGolden('G7-seeded-offspring', result);
     });
 });

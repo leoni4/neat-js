@@ -158,5 +158,25 @@ try {
     process.exit(1);
 }
 
+// Test 8: Save and restore the random stream
+try {
+    const source = new Neat(2, 1, 20, EActivation.sigmoid, EActivation.tanh, { seed: 42 });
+    for (let i = 0; i < 100; i++) {
+        source.rng();
+    }
+    const state = JSON.parse(JSON.stringify(source.randomState()));
+    const target = new Neat(2, 1, 20, EActivation.sigmoid, EActivation.tanh, { seed: 7 });
+    target.restoreRandomState(state);
+    for (let i = 0; i < 1000; i++) {
+        if (source.rng() !== target.rng()) {
+            throw new Error(`Draw ${i} differs after restoreRandomState()`);
+        }
+    }
+    console.log('✓ Random state round trip works');
+} catch (error) {
+    console.error('✗ Random state test failed:', error.message);
+    process.exit(1);
+}
+
 console.log('\n✅ All ESM smoke tests passed!');
 console.log('The package can be successfully imported and used in Node.js ESM environment.');

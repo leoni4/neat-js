@@ -139,7 +139,34 @@ const neat = new Neat(12, 2, 100, EActivation.sigmoid, EActivation.tanh, {
     - the same sequence of operations (the same calls in the same order, with the same `client.score` and `client.error` values);
     - the same JavaScript runtime. Identical results on other engines or engine versions are not verified: scores and activations use `Math.exp`, `Math.tanh`, and `Math.log1p`, and the last bit of these results can be different between engines.
 - Your fitness code must also be deterministic. If it uses `Math.random`, the time, or the order of async operations, the scores change and the run is not reproducible.
-- `model()` does not save the seed or the generator state. A model that you load with a seed starts the random stream again from the beginning. It does not continue the random stream of the original run.
+- `model()` does not save the seed or the generator state. A model that you load with a seed starts the random stream again from the beginning. It does not continue the random stream of the original run. To save and set the position of the random stream, see [Save and restore the random stream](#save-and-restore-the-random-stream).
+
+### Save and restore the random stream
+
+An instance with `seed` can give the position of its random stream as plain JSON data. Another instance with `seed` (the seed value can be different) can continue the stream from that position:
+
+```typescript
+import { Neat, EActivation, type NeatRandomState } from '@leoni4/neat-js';
+
+const neat = new Neat(2, 1, 100, EActivation.sigmoid, EActivation.tanh, { seed: 12345 });
+// ... evolve, or make and mutate clients ...
+
+// Save
+const state: NeatRandomState = neat.randomState();
+const json = JSON.stringify(state);
+
+// Restore
+const restored = new Neat(2, 1, 100, EActivation.sigmoid, EActivation.tanh, { seed: 12345 });
+restored.restoreRandomState(JSON.parse(json));
+// The next draws of `restored` are the draws that came after randomState() in `neat`.
+```
+
+- `randomState()` returns a new object `{ algorithm: 'sfc32', a, b, c, counter }`. `a`, `b`, `c`, and `counter` are integers in [0, 2^32 − 1]. The call takes no draw and does not change the stream.
+- `restoreRandomState(state)` checks the state first: it must be a plain object, `algorithm` must be `'sfc32'`, and each of `a`, `b`, `c`, and `counter` must be an integer in [0, 2^32 − 1]. For an invalid state, it throws an error that names the field, and the instance keeps its current state.
+- Without `seed`, both methods throw an error.
+- `neat.rng` stays the same function. A reference to `neat.rng` that you took before `restoreRandomState()` continues from the restored state.
+- The two methods save and set the random stream only. They do not save or set the clients, the genomes, the species, the champion, the innovation IDs, or `evolveCounts`. The next results are the same as in the original run only when all of this other state is also the same as at `randomState()`.
+- A restored stream gives the same results only with the same library version, the same configuration, and the same sequence of operations.
 
 ### Score rules
 
