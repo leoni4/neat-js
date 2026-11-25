@@ -72,6 +72,12 @@ describe('Neat', () => {
             expect(genome.nodes.size()).toBe(5); // 3 input + 2 output
             expect(genome.connections.size()).toBe(0);
         });
+
+        it('should add its nodes through the set, so that contains() finds them', () => {
+            const genome = neat.emptyGenome();
+
+            expect(genome.nodes.data.map(node => genome.nodes.contains(node))).toEqual([true, true, true, true, true]);
+        });
     });
 
     describe('evolve', () => {

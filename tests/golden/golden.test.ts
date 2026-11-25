@@ -119,6 +119,77 @@ function getTypicalRun() {
 
 const SEEDS = [0, 1, 42, -1, Number.MAX_SAFE_INTEGER];
 
+const LONG_INPUTS = 6;
+const LONG_OUTPUTS = 2;
+const LONG_CLIENTS = 30;
+const LONG_PARAMS = { PROBABILITY_MUTATE_NODES: 0.3, PROBABILITY_MUTATE_LINK: 0.5 };
+
+// G8 was recorded with the 1.3.0 source (tag v1.3.0) as the reference for 1.3.x performance work. It runs 300
+// seeded generations with a model() save and load between them. Each trail entry hashes the exact JSON bytes of
+// all genome.save() data and the float64 bits of all outputs of one generation (the full final population is
+// about 280 KB, so the file keeps the full JSON only for the two models). Do not re-record it for a
+// performance-only change.
+function runLongEvolution() {
+    const data = mulberry32(1311);
+    const samples = Array.from({ length: 12 }, () => Array.from({ length: LONG_INPUTS }, () => data() * 2 - 1));
+    const targets = samples.map(x => [Math.tanh(x[0] - 0.5 * x[1] + x[2] * x[3]), Math.tanh(x[4] * x[5] - 0.3 * x[0])]);
+    const probes = randomVectors(LONG_INPUTS, 8, 9008);
+    const clientOutputs = (neat: Neat) =>
+        neat.clients.map(client => outputBits(input => client.calculate(input), probes));
+    const populationJson = (neat: Neat) => JSON.stringify(neat.clients.map(client => client.genome.save()));
+    const trail: string[] = [];
+
+    const generation = (neat: Neat, g: number) => {
+        neat.clients.forEach((client, i) => {
+            let error = 0;
+            samples.forEach((x, k) => {
+                const output = client.calculate(x);
+                error += Math.abs(output[0] - targets[k][0]) + Math.abs(output[1] - targets[k][1]);
+            });
+            error /= samples.length * LONG_OUTPUTS;
+            // An error below OPT_ERR_THRESHOLD starts self-optimization, so that genes are also removed.
+            client.error = (i + g) % 7 === 0 ? 0.001 : error;
+            client.score = 1 - error;
+        });
+        neat.evolve();
+        trail.push(
+            `${sha256(populationJson(neat)).slice(0, 16)} ${sha256(clientOutputs(neat).join('|')).slice(0, 16)}`,
+        );
+    };
+
+    const first = new Neat(LONG_INPUTS, LONG_OUTPUTS, LONG_CLIENTS, EActivation.tanh, EActivation.tanh, {
+        ...LONG_PARAMS,
+        seed: 1301,
+    });
+    for (let g = 0; g < 200; g++) generation(first, g);
+    const firstModel = first.model();
+
+    const second = new Neat(
+        LONG_INPUTS,
+        LONG_OUTPUTS,
+        LONG_CLIENTS,
+        EActivation.tanh,
+        EActivation.tanh,
+        { ...LONG_PARAMS, seed: 1302, LOAD_PERCENT: 0.5 },
+        { genome: firstModel, evolveCounts: first.evolveCounts },
+    );
+    for (let g = 0; g < 100; g++) generation(second, g);
+    const champion = second.champion?.client;
+
+    return {
+        trail,
+        firstModel,
+        firstRandomState: first.randomState(),
+        evolveCounts: second.evolveCounts,
+        registry: { nodes: second.allNodes.size(), connections: second.allConnections.size },
+        championOutputs: champion ? outputBits(input => champion.calculate(input), probes) : null,
+        clientOutputs: clientOutputs(second),
+        model: second.model(),
+        populationSha256: sha256(populationJson(second)),
+        randomState: second.randomState(),
+    };
+}
+
 describe('golden determinism fingerprints', () => {
     it('G1-fresh-small', () => {
         const run = withSeededRandom(101, () => {
@@ -262,5 +333,12 @@ describe('golden determinism fingerprints', () => {
 
         expect(result.nodes).toBeGreaterThan(4 + 2);
         checkGolden('G7-seeded-offspring', result);
+    });
+
+    it('G8-long-evolution', () => {
+        const { result } = withRandomValues([], runLongEvolution);
+
+        expect(result.trail).toHaveLength(300);
+        checkGolden('G8-long-evolution', result);
     });
 });

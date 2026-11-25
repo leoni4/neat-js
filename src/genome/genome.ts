@@ -201,7 +201,7 @@ export class Genome {
                 from.x = src.from.x;
                 from.y = src.from.y;
                 from.bias = src.from.bias;
-                genome.nodes.data.push(from);
+                genome.nodes.add(from);
                 childNodes.set(fromId, from);
             }
 
@@ -211,7 +211,7 @@ export class Genome {
                 to.y = src.to.y;
                 to.bias = src.to.bias;
                 if (!childNodes.has(toId)) {
-                    genome.nodes.data.push(to);
+                    genome.nodes.add(to);
                     childNodes.set(toId, to);
                 }
             }
@@ -228,7 +228,7 @@ export class Genome {
         const appendConnection = (con: ConnectionGene) => {
             const last = childConnections[childConnections.length - 1];
             if (!last || con.innovationNumber > last.innovationNumber) {
-                childConnections.push(con);
+                genome.connections.add(con);
             } else {
                 genome.connections.addSorted(con);
             }

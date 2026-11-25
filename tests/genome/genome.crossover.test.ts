@@ -265,6 +265,21 @@ describe('Genome - crossOver', () => {
             const ids = child.nodes.data.map(n => n.innovationNumber);
             expect(new Set(ids).size).toBe(ids.length);
         });
+
+        it('should add each child gene through the set, so that contains() and removeConnection() find it', () => {
+            const { result: child } = withRandomValues([0.9, 0.9, 0.9, 0.9], () => Genome.crossOver(parentA, parentB));
+
+            for (const node of child.nodes.data) {
+                expect(child.nodes.contains(node), `node ${node.innovationNumber}`).toBe(true);
+            }
+            for (const con of child.connections.data) {
+                expect(child.connections.contains(con), `connection ${con.innovationNumber}`).toBe(true);
+            }
+            const hidden = connectionGenes(child).find(c => c.from.x !== NETWORK_CONSTANTS.INPUT_NODE_X);
+            if (!hidden) throw new Error('the child has no connection from a hidden node');
+            expect(child.removeConnection(hidden, true)).toBe(true);
+            expect(child.connections.contains(hidden)).toBe(false);
+        });
     });
 
     describe('connection and node consistency', () => {

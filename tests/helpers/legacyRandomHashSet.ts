@@ -1,0 +1,85 @@
+import { ConnectionGene } from '../../src/genome/connectionGene.js';
+import { NodeGene } from '../../src/genome/nodeGene.js';
+
+// The RandomHashSet algorithm of 1.3.0 (linear scans, no index). It is the reference for the equivalence tests and
+// the benchmark. Do not change it. randomElement() is not here, because 1.3.1 did not change it.
+export class LegacyRandomHashSet {
+    private _data: Array<NodeGene | ConnectionGene> = [];
+
+    contains(gene: NodeGene | ConnectionGene): boolean {
+        for (let i = 0; i < this._data.length; i += 1) {
+            if (this._data[i].innovationNumber === gene.innovationNumber) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    add(gene: NodeGene | ConnectionGene) {
+        if (!this.contains(gene)) {
+            this._data.push(gene);
+        }
+    }
+
+    addSorted(gene: NodeGene | ConnectionGene) {
+        if (!this.contains(gene)) {
+            for (let i = 0; i < this.size(); i++) {
+                const innovation = this.get(i).innovationNumber;
+                if (gene.innovationNumber < innovation) {
+                    this._data.splice(i, 0, gene);
+
+                    return;
+                }
+            }
+            this._data.push(gene);
+        }
+    }
+
+    size(): number {
+        return this._data.length;
+    }
+
+    clear() {
+        this._data = [];
+    }
+
+    get(index: number): NodeGene | ConnectionGene {
+        return this._data[index];
+    }
+
+    remove(arg: number | ConnectionGene | NodeGene) {
+        if (arg instanceof ConnectionGene || arg instanceof NodeGene) {
+            const index = this._data.indexOf(arg);
+            if (index === -1) {
+                console.warn('Trying to remove() none existing Gene');
+
+                return;
+            }
+
+            this._data.splice(index, 1);
+        } else {
+            if (arg < 0 || arg >= this._data.length) {
+                console.warn('Trying to remove() none existing Gene');
+
+                return;
+            }
+            this._data.splice(arg, 1);
+        }
+    }
+
+    removeByInnovation(innovationNumber: number) {
+        const index = this._data.findIndex(g => g.innovationNumber === innovationNumber);
+        if (index === -1) {
+            console.warn('Trying to removeByInnovation none existing Gene');
+
+            return;
+        }
+
+        this._data.splice(index, 1);
+    }
+
+    get data(): Array<NodeGene | ConnectionGene> {
+        return this._data;
+    }
+}

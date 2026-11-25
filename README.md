@@ -239,6 +239,7 @@ The demo will start a Vite development server at http://localhost:3000 with a vi
 - `npm run test:watch` - Run tests in watch mode
 - `npm run lint` - Lint the codebase
 - `npm run typecheck` - Run TypeScript type checking
+- `npm run bench` - Run the `RandomHashSet` micro-benchmark against the 1.3.0 algorithm (not part of `npm test`)
 
 ## API
 
@@ -255,6 +256,18 @@ The demo will start a Vite development server at http://localhost:3000 with a vi
 - **`RandomSelector`** - Weighted random selection
 
 `RandomHashSet.randomElement(rng?)` and `RandomSelector.random(rng?)` take an optional random function that returns values in [0, 1). The default is `Math.random()`. `Neat` gives them its `rng`.
+
+Complexity of `RandomHashSet` with n genes (since 1.3.1, the set keeps a `Map` from innovation number to gene next to its array):
+
+| Method                             | Cost                                                                                                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contains()`, `add()`              | O(1)                                                                                                                                                           |
+| `addSorted()`                      | O(1) when the innovation number is not lower than any innovation number added since the last `clear()` (an append). Other inserts scan for the position: O(n). |
+| `remove()`, `removeByInnovation()` | O(n)                                                                                                                                                           |
+
+Thus a set of n genes from `add()`, or from `addSorted()` in ascending order (for example when a saved genome is loaded), takes O(n) to build. In 1.3.0 it took O(n²). The gene order and all results are the same as in 1.3.0.
+
+`RandomHashSet.data` returns the internal array. Treat it as read-only, and change a set only with `add()`, `addSorted()`, `remove()`, `removeByInnovation()`, and `clear()`. A direct change of the array (for example `set.data.push(gene)`) bypasses the index, and then `contains()` and `addSorted()` can give wrong results.
 
 ### Internal methods
 

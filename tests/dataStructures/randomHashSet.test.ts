@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RandomHashSet } from '../../src/dataStructures/randomHashSet.js';
 import { NodeGene } from '../../src/genome/nodeGene.js';
 import { ConnectionGene } from '../../src/genome/connectionGene.js';
+import { LegacyRandomHashSet } from '../helpers/legacyRandomHashSet.js';
+import { mulberry32 } from '../helpers/seededRandom.js';
+
+const innovations = (set: RandomHashSet): number[] => set.data.map(gene => gene.innovationNumber);
 
 describe('RandomHashSet', () => {
     let randomHashSet: RandomHashSet;
@@ -230,6 +234,131 @@ describe('RandomHashSet', () => {
             expect(data).toHaveLength(2);
             expect(data).toContain(node1);
             expect(data).toContain(node2);
+        });
+    });
+
+    describe('innovation index (same results as 1.3.0)', () => {
+        it('should not contain a gene after each kind of removal, and add() should put it back', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            [node1, node2, node3].forEach(gene => randomHashSet.add(gene));
+
+            randomHashSet.remove(node1);
+            randomHashSet.remove(0);
+            randomHashSet.removeByInnovation(3);
+            expect([node1, node2, node3].map(gene => randomHashSet.contains(gene))).toEqual([false, false, false]);
+
+            randomHashSet.add(node2);
+            randomHashSet.add(new NodeGene(2));
+            expect(randomHashSet.data).toEqual([node2]);
+
+            randomHashSet.clear();
+            expect(randomHashSet.contains(node2)).toBe(false);
+            randomHashSet.addSorted(node2);
+            expect(randomHashSet.data).toEqual([node2]);
+            expect(warn).not.toHaveBeenCalled();
+            warn.mockRestore();
+        });
+
+        it('should remove by a non-integer index like 1.3.0 (splice rounds it down)', () => {
+            [node1, node2, node3].forEach(gene => randomHashSet.add(gene));
+
+            randomHashSet.remove(1.5);
+
+            expect(randomHashSet.data).toEqual([node1, node3]);
+            expect(randomHashSet.contains(node2)).toBe(false);
+        });
+
+        it('should scan again in addSorted() after the largest gene is removed', () => {
+            [1, 5, 9].forEach(id => randomHashSet.addSorted(new NodeGene(id)));
+            randomHashSet.removeByInnovation(9);
+
+            [7, 8, 6].forEach(id => randomHashSet.addSorted(new NodeGene(id)));
+
+            expect(innovations(randomHashSet)).toEqual([1, 5, 6, 7, 8]);
+        });
+
+        it('should insert before the first larger gene in a set built with add()', () => {
+            [5, 2, 8].forEach(id => randomHashSet.add(new NodeGene(id)));
+
+            [3, 9, 1].forEach(id => randomHashSet.addSorted(new NodeGene(id)));
+
+            expect(innovations(randomHashSet)).toEqual([1, 3, 5, 2, 8, 9]);
+        });
+
+        it('should never match NaN, like the === scan of 1.3.0', () => {
+            const a = new NodeGene(NaN);
+            const b = new NodeGene(NaN);
+
+            randomHashSet.add(a);
+            randomHashSet.addSorted(b);
+
+            expect(randomHashSet.data).toEqual([a, b]);
+            expect(randomHashSet.contains(a)).toBe(false);
+        });
+
+        it('should give the same data order, contains() results, and warnings as 1.3.0 for random operations', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const next = mulberry32(131);
+            const pick = (count: number) => Math.floor(next() * count);
+            const nodes = Array.from({ length: 40 }, (_, i) => new NodeGene((i % 30) + 1));
+            const pool: Array<NodeGene | ConnectionGene> = [
+                ...nodes,
+                ...Array.from({ length: 10 }, (_, i) => new ConnectionGene(i * 3 + 1, nodes[i], nodes[i + 1])),
+                new NodeGene(NaN),
+            ];
+            const current = new RandomHashSet();
+            const legacy = new LegacyRandomHashSet();
+            const warnings = (run: () => void): number => {
+                const before = warn.mock.calls.length;
+                run();
+
+                return warn.mock.calls.length - before;
+            };
+            const counts = { add: 0, addSorted: 0, removeGene: 0, removeIndex: 0, removeByInnovation: 0, clear: 0 };
+
+            for (let step = 0; step < 20_000; step++) {
+                const op = pick(100);
+                const gene = pool[pick(pool.length)];
+                let warned: [number, number];
+                if (op < 30) {
+                    counts.add++;
+                    warned = [warnings(() => current.add(gene)), warnings(() => legacy.add(gene))];
+                } else if (op < 60) {
+                    counts.addSorted++;
+                    warned = [warnings(() => current.addSorted(gene)), warnings(() => legacy.addSorted(gene))];
+                } else if (op < 72) {
+                    counts.removeGene++;
+                    warned = [warnings(() => current.remove(gene)), warnings(() => legacy.remove(gene))];
+                } else if (op < 84) {
+                    counts.removeIndex++;
+                    const index = pick(legacy.size() + 2) - 1;
+                    warned = [warnings(() => current.remove(index)), warnings(() => legacy.remove(index))];
+                } else if (op < 98) {
+                    counts.removeByInnovation++;
+                    const id = pick(32);
+                    warned = [
+                        warnings(() => current.removeByInnovation(id)),
+                        warnings(() => legacy.removeByInnovation(id)),
+                    ];
+                } else {
+                    counts.clear++;
+                    current.clear();
+                    legacy.clear();
+                    warned = [0, 0];
+                }
+
+                expect(warned[0], `step ${step}: warnings`).toBe(warned[1]);
+                expect(current.size(), `step ${step}: size`).toBe(legacy.size());
+                expect(
+                    current.data.every((g, i) => g === legacy.data[i]),
+                    `step ${step}: data order`,
+                ).toBe(true);
+                const probe = pool[pick(pool.length)];
+                expect(current.contains(probe), `step ${step}: contains`).toBe(legacy.contains(probe));
+            }
+
+            expect(Math.min(...Object.values(counts))).toBeGreaterThan(100);
+            warn.mockRestore();
         });
     });
 });
